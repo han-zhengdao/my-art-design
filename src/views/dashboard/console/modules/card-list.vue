@@ -1,17 +1,31 @@
 <template>
   <ElRow :gutter="20" class="flex">
-    <ElCol v-for="(item, index) in dataList" :key="index" :sm="12" :md="6" :lg="6">
+    <ElCol v-for="(item, index) in dataList" :key="index" :sm="12" :md="12" :lg="6">
       <div class="art-card relative flex flex-col justify-center h-35 px-5 mb-5 max-sm:mb-4">
-        <span class="text-g-700 text-sm">{{ item.des }}</span>
-        <ArtCountTo class="text-[26px] font-medium mt-2" :target="item.num" :duration="1300" />
-        <div class="flex-c mt-1">
-          <span class="text-xs text-g-600">较上周</span>
+        <span class="text-g-700 text-sm">{{ item.label }}</span>
+        <div class="flex-c mt-2">
+          <ArtCountTo class="text-[26px] font-medium" :target="item.value" :duration="1300" />
+          <span v-if="item.unit" class="ml-1 text-base text-g-700">{{ item.unit }}</span>
+        </div>
+
+        <div v-if="item.momChangePercent != null" class="flex-c mt-1">
+          <span class="text-xs text-g-600">{{ item.momPeriodLabel ?? '较上月' }}</span>
           <span
             class="ml-1 text-xs font-semibold"
-            :class="[item.change.indexOf('+') === -1 ? 'text-danger' : 'text-success']"
+            :class="[item.momChangePercent >= 0 ? 'text-success' : 'text-danger']"
           >
-            {{ item.change }}
+            {{ formatMomPercent(item.momChangePercent) }}
           </span>
+        </div>
+
+        <div v-else-if="item.onlineRatePercent != null" class="flex-c mt-1 text-xs text-g-600">
+          <span>在线率</span>
+          <span class="ml-1 font-semibold text-g-800">{{ item.onlineRatePercent }}%</span>
+          <span class="ml-1">(在使用数 / 车轮总数)</span>
+        </div>
+
+        <div class="flex-c mt-1 text-xs text-g-600 line-clamp-2">
+          {{ item.description }}
         </div>
         <div
           class="absolute top-0 bottom-0 right-5 m-auto size-12.5 rounded-xl flex-cc bg-theme/10"
@@ -24,51 +38,14 @@
 </template>
 
 <script setup lang="ts">
-  interface CardDataItem {
-    des: string
-    icon: string
-    startVal: number
-    duration: number
-    num: number
-    change: string
-  }
+  import { dashboardMock, type CoreKpiItem } from '../mock'
 
-  /**
-   * 卡片统计数据列表
-   * 展示总访问次数、在线访客数、点击量和新用户等核心数据指标
-   */
-  const dataList = reactive<CardDataItem[]>([
-    {
-      des: '总访问次数',
-      icon: 'ri:pie-chart-line',
-      startVal: 0,
-      duration: 1000,
-      num: 9120,
-      change: '+20%'
-    },
-    {
-      des: '在线访客数',
-      icon: 'ri:group-line',
-      startVal: 0,
-      duration: 1000,
-      num: 182,
-      change: '+10%'
-    },
-    {
-      des: '点击量',
-      icon: 'ri:fire-line',
-      startVal: 0,
-      duration: 1000,
-      num: 9520,
-      change: '-12%'
-    },
-    {
-      des: '新用户',
-      icon: 'ri:progress-2-line',
-      startVal: 0,
-      duration: 1000,
-      num: 156,
-      change: '+30%'
-    }
-  ])
+  type CardDataItem = CoreKpiItem
+
+  const dataList = reactive<CardDataItem[]>(dashboardMock.coreKpis)
+
+  const formatMomPercent = (n: number) => {
+    const sign = n > 0 ? '+' : ''
+    return `${sign}${n}%`
+  }
 </script>

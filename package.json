@@ -1,5 +1,5 @@
 {
-  "name": "art-design-pro",
+  "name": "pos-wheel",
   "version": "0.0.0",
   "type": "module",
   "engines": {
@@ -70,6 +70,7 @@
     "ohash": "^2.0.11",
     "pinia": "^3.0.3",
     "pinia-plugin-persistedstate": "^4.3.0",
+    "pnpm": "^10.33.0",
     "qrcode.vue": "^3.6.0",
     "tailwindcss": "^4.1.14",
     "vue": "^3.5.21",

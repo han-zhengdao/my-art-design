@@ -17,12 +17,12 @@
       <div class="flex-c flex-1 min-w-0 leading-15" style="display: flex">
         <!-- 系统信息  -->
         <div class="flex-c c-p" @click="toHome" v-if="isTopMenu">
-          <ArtLogo class="pl-4.5" />
-          <p v-if="width >= 1400" class="my-0 mx-2 ml-2 text-lg">{{ AppConfig.systemInfo.name }}</p>
+          <ArtLogo class="pl-4.5" :size="42" />
         </div>
 
         <ArtLogo
           class="!hidden pl-3.5 overflow-hidden align-[-0.15em] fill-current"
+          :size="42"
           @click="toHome"
         />
 

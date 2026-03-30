@@ -523,7 +523,7 @@
 
       .form-buttons {
         display: flex;
-        gap: 8px;
+        gap: 4px;
       }
 
       .filter-toggle {

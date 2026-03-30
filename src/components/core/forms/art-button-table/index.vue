@@ -3,6 +3,8 @@
   <div
     :class="[
       'inline-flex items-center justify-center min-w-8 h-8 px-2.5 mr-2.5 text-sm c-p rounded-md align-middle',
+      'cursor-pointer select-none transition-all duration-150 ease-out',
+      'hover:-translate-y-0.5 hover:shadow-sm',
       buttonClass
     ]"
     :style="{ backgroundColor: buttonBgColor, color: iconColor }"

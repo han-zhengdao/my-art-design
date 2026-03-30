@@ -2,8 +2,7 @@
 <template>
   <div class="login-left-view">
     <div class="logo">
-      <ArtLogo class="icon" size="46" />
-      <h1 class="title">{{ AppConfig.systemInfo.name }}</h1>
+      <ArtLogo class="icon" size="220" margin="0 auto" />
     </div>
 
     <div class="left-img">

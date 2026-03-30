@@ -135,4 +135,35 @@ declare namespace Api {
         }
     >
   }
+
+  /** 合作商管理 */
+  namespace Partner {
+    interface PartnerListItem {
+      id: number
+      partnerName: string
+      country: string
+      countryCode: string
+      iotToken: string
+      tenantId: string
+      dcBalance: number
+      contactName: string
+      phone: string
+      enterpriseAddress: string
+      regionCount: number
+      storeCount: number
+      wheelCount: number
+      beaconCount: number
+      operatorName: string
+      createTime: string
+    }
+
+    type PartnerList = Api.Common.PaginatedResponse<PartnerListItem>
+
+    type PartnerSearchParams = Partial<
+      Api.Common.CommonSearchParams & {
+        partnerName?: string
+        countryCode?: string
+      }
+    >
+  }
 }

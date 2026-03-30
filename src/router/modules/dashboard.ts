@@ -6,7 +6,7 @@ export const dashboardRoutes: AppRouteRecord = {
   component: '/index/index',
   meta: {
     title: 'menus.dashboard.title',
-    icon: 'ri:pie-chart-line',
+    icon: 'ri:home-smile-2-line',
     roles: ['R_SUPER', 'R_ADMIN']
   },
   children: [
@@ -16,9 +16,19 @@ export const dashboardRoutes: AppRouteRecord = {
       component: '/dashboard/console',
       meta: {
         title: 'menus.dashboard.console',
-        icon: 'ri:home-smile-2-line',
+        icon: 'ri:pie-chart-line',
         keepAlive: false,
         fixedTab: true
+      }
+    },
+    {
+      path: 'map-view',
+      name: 'DashboardMapView',
+      component: '/dashboard/map-view',
+      meta: {
+        title: 'menus.dashboard.mapView',
+        icon: 'ri:map-pin-line',
+        keepAlive: true
       }
     },
     {

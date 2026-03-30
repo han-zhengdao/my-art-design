@@ -129,8 +129,8 @@
   },
   "login": {
     "leftView": {
-      "title": "A backend system of beauty and efficiency",
-      "subTitle": "A sleek and practical interface for a great user experience"
+      "title": "Smart Wheels, Smarter Cart Management.",
+      "subTitle": "Track Every Cart, Protect Every Asset."
     },
     "title": "Welcome back",
     "subTitle": "Please enter your account and password to login",
@@ -222,8 +222,9 @@
       "title": "Outside"
     },
     "dashboard": {
-      "title": "Dashboard",
-      "console": "Console",
+      "title": "Console",
+      "console": "Dashboard",
+      "mapView": "Map View",
       "analysis": "Analysis",
       "ecommerce": "Ecommerce"
     },
@@ -301,6 +302,10 @@
       "menu31": "Menu 3-1",
       "menu32": "Menu 3-2",
       "menu321": "Menu 3-2-1"
+    },
+    "partner": {
+      "title": "Partner Management",
+      "list": "Partner List"
     },
     "safeguard": {
       "title": "Safeguard",
