@@ -307,6 +307,10 @@
       "title": "Partner Management",
       "list": "Partner List"
     },
+    "region": {
+      "title": "Region Management",
+      "list": "Region List"
+    },
     "safeguard": {
       "title": "Safeguard",
       "server": "Server"

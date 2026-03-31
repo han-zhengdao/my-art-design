@@ -4,6 +4,8 @@
     v-model="formData"
     :items="formItems"
     :rules="rules"
+    :is-expand="true"
+    :show-expand="false"
     @reset="handleReset"
     @search="handleSearch"
   >
@@ -34,66 +36,65 @@
     // userName: [{ required: true, message: '请输入用户名', trigger: 'blur' }]
   }
 
-  // 动态 options
-  const statusOptions = ref<{ label: string; value: string; disabled?: boolean }[]>([])
+  const statusOptions = [
+    { label: '全部', value: '' },
+    { label: '正常', value: 'normal' },
+    { label: '注销', value: 'disabled' }
+  ]
 
-  // 模拟接口返回状态数据
-  function fetchStatusOptions(): Promise<typeof statusOptions.value> {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve([
-          { label: '在线', value: '1' },
-          { label: '离线', value: '2' },
-          { label: '异常', value: '3' },
-          { label: '注销', value: '4' }
-        ])
-      }, 1000)
-    })
-  }
-
-  onMounted(async () => {
-    statusOptions.value = await fetchStatusOptions()
-  })
+  const roleOptions = [
+    { label: '全部', value: '' },
+    { label: '系统管理员', value: 'R_ADMIN' },
+    { label: '合作商管理员', value: 'PARTNER_ADMIN' },
+    { label: '区域管理员', value: 'REGION_ADMIN' },
+    { label: '门店管理员', value: 'STORE_ADMIN' },
+    { label: '门店员工', value: 'STORE_STAFF' }
+  ]
 
   // 表单配置
   const formItems = computed(() => [
     {
-      label: '用户名',
-      key: 'userName',
+      label: '用户名/邮箱',
+      key: 'keyword',
       type: 'input',
-      placeholder: '请输入用户名',
+      labelWidth: 'auto',
+      placeholder: '支持模糊搜索',
       clearable: true
     },
     {
-      label: '手机号',
-      key: 'userPhone',
-      type: 'input',
-      props: { placeholder: '请输入手机号', maxlength: '11' }
-    },
-    {
-      label: '邮箱',
-      key: 'userEmail',
-      type: 'input',
-      props: { placeholder: '请输入邮箱' }
+      label: '角色',
+      key: 'role',
+      type: 'select',
+      labelWidth: 'auto',
+      span: 4,
+      props: {
+        placeholder: '全部',
+        clearable: true,
+        options: roleOptions
+      }
     },
     {
       label: '状态',
       key: 'status',
       type: 'select',
+      labelWidth: 'auto',
+      span: 4,
       props: {
-        placeholder: '请选择状态',
-        options: statusOptions.value
+        placeholder: '全部',
+        clearable: true,
+        options: statusOptions
       }
     },
     {
-      label: '性别',
-      key: 'userGender',
-      type: 'radiogroup',
+      label: '注销时间',
+      key: 'logoutTimeRange',
+      type: 'daterange',
+      labelWidth: 'auto',
       props: {
-        options: [
-          { label: '男', value: '1' },
-          { label: '女', value: '2' }
-        ]
+        type: 'daterange',
+        startPlaceholder: '开始日期',
+        endPlaceholder: '结束日期',
+        valueFormat: 'YYYY-MM-DD HH:mm:ss'
       }
     }
   ])

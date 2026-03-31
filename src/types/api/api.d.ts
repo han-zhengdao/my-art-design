@@ -82,6 +82,8 @@ declare namespace Api {
       userName: string
       email: string
       avatar?: string
+      /** 合作商管理员绑定的合作商 ID（后端返回时用于数据范围） */
+      partnerId?: number
     }
   }
 
@@ -101,6 +103,8 @@ declare namespace Api {
       userPhone: string
       userEmail: string
       userRoles: string[]
+      /** 对应资产名称（公司/企业名等） */
+      assetName?: string
       createBy: string
       createTime: string
       updateBy: string
@@ -109,8 +113,16 @@ declare namespace Api {
 
     /** 用户搜索参数 */
     type UserSearchParams = Partial<
-      Pick<UserListItem, 'id' | 'userName' | 'userGender' | 'userPhone' | 'userEmail' | 'status'> &
-        Api.Common.CommonSearchParams
+      Api.Common.CommonSearchParams & {
+        /** 用户名或邮箱模糊搜索 */
+        keyword?: string
+        /** 对应角色 */
+        role?: string
+        /** 状态（正常/注销） */
+        status?: string
+        /** 注销时间范围：开始、结束 */
+        logoutTimeRange?: [string, string]
+      }
     >
 
     /** 角色列表 */
@@ -140,6 +152,10 @@ declare namespace Api {
   namespace Partner {
     interface PartnerListItem {
       id: number
+      /** 关联用户昵称 */
+      userNickName?: string
+      /** 关联用户登录邮箱 */
+      loginEmail?: string
       partnerName: string
       country: string
       countryCode: string
@@ -163,6 +179,39 @@ declare namespace Api {
       Api.Common.CommonSearchParams & {
         partnerName?: string
         countryCode?: string
+      }
+    >
+  }
+
+  /** 区域管理 */
+  namespace Region {
+    interface RegionListItem {
+      id: number
+      regionName: string
+      regionAddress: string
+      regionContactName: string
+      regionPhone: string
+      partnerId: number
+      partnerName: string
+      country: string
+      countryCode: string
+      dcBalance: number
+      storeCount: number
+      wheelCount: number
+      beaconCount: number
+      pendingTicketCount: number
+      createTime: string
+      operatorName: string
+    }
+
+    type RegionList = Api.Common.PaginatedResponse<RegionListItem>
+
+    type RegionSearchParams = Partial<
+      Api.Common.CommonSearchParams & {
+        regionName?: string
+        /** 必选：筛选该国家下的区域 */
+        countryCode?: string
+        partnerId?: number
       }
     >
   }

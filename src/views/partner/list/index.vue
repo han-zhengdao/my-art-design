@@ -87,6 +87,8 @@
       columnsFactory: () => [
         { type: 'index', width: 'auto', minWidth: 60, label: '序号' },
         { prop: 'id', label: 'ID', width: 'auto', minWidth: 90 },
+        { prop: 'userNickName', label: '用户昵称', width: 'auto', minWidth: 130 },
+        { prop: 'loginEmail', label: '登录邮箱', width: 'auto', minWidth: 200 },
         { prop: 'partnerName', label: '合作商名称', width: 'auto', minWidth: 160 },
         { prop: 'enterpriseAddress', label: '企业地址', width: 'auto', minWidth: 180 },
         { prop: 'contactName', label: '联系人', width: 'auto', minWidth: 100 },
@@ -106,31 +108,29 @@
           label: '操作',
           width: 160,
           fixed: 'right',
-          formatter: (row: PartnerItem) => {
-            const nodes = [
-              h(ArtButtonTable, {
-                type: 'view',
-                onClick: () => {
-                  dialogMode.value = 'detail'
-                  currentRow.value = row
-                  dialogVisible.value = true
-                }
-              }),
-              h(ArtButtonTable, {
-                type: 'edit',
-                onClick: () => openDialog('edit', row)
-              })
-            ]
-            if (userStore.info.roles?.includes('R_SUPER')) {
-              nodes.push(
+          formatter: (row: PartnerItem) =>
+            h(
+              'div',
+              [
                 h(ArtButtonTable, {
-                  type: 'delete',
-                  onClick: () => handleDelete(row)
-                })
-              )
-            }
-            return h('div', { class: 'flex items-center justify-center flex-wrap' }, nodes)
-          }
+                  type: 'view',
+                  onClick: () => {
+                    dialogMode.value = 'detail'
+                    currentRow.value = row
+                    dialogVisible.value = true
+                  }
+                }),
+                h(ArtButtonTable, {
+                  type: 'edit',
+                  onClick: () => openDialog('edit', row)
+                }),
+                userStore.info.roles?.includes('R_SUPER') &&
+                  h(ArtButtonTable, {
+                    type: 'delete',
+                    onClick: () => handleDelete(row)
+                  })
+              ].filter(Boolean) as any
+            )
         }
       ]
     }
@@ -147,7 +147,24 @@
     getData()
   }
 
+  /** 是否存在需先清空的关联资产（任一项非 0 则不允许删除） */
+  const hasPartnerAssetData = (row: PartnerItem) => {
+    return (
+      (row.dcBalance ?? 0) !== 0 ||
+      (row.regionCount ?? 0) !== 0 ||
+      (row.storeCount ?? 0) !== 0 ||
+      (row.wheelCount ?? 0) !== 0 ||
+      (row.beaconCount ?? 0) !== 0
+    )
+  }
+
   const handleDelete = (row: PartnerItem) => {
+    if (hasPartnerAssetData(row)) {
+      ElMessage.warning(
+        '该合作商下仍关联有效资产数据，不允许删除。请先清空其关联的 DC 余额、区域、门店、车轮及信标信息。'
+      )
+      return
+    }
     ElMessageBox.confirm(`确定删除合作商「${row.partnerName}」吗？`, '删除确认', {
       type: 'warning',
       confirmButtonText: '删除',

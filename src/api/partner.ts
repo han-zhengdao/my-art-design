@@ -5,6 +5,8 @@
 const MOCK_ROWS: Api.Partner.PartnerListItem[] = [
   {
     id: 1001,
+    userNickName: '合作商管理员-A',
+    loginEmail: 'partner-a@example.com',
     partnerName: '华东零售集团',
     country: '中国',
     countryCode: 'CN',
@@ -23,6 +25,8 @@ const MOCK_ROWS: Api.Partner.PartnerListItem[] = [
   },
   {
     id: 1002,
+    userNickName: '合作商管理员-B',
+    loginEmail: 'partner-b@example.com',
     partnerName: 'Pacific Foods LLC',
     country: '美国',
     countryCode: 'US',
@@ -41,6 +45,8 @@ const MOCK_ROWS: Api.Partner.PartnerListItem[] = [
   },
   {
     id: 1003,
+    userNickName: '合作商管理员-C',
+    loginEmail: 'partner-c@example.com',
     partnerName: '关东鲜选',
     country: '日本',
     countryCode: 'JP',
@@ -59,6 +65,8 @@ const MOCK_ROWS: Api.Partner.PartnerListItem[] = [
   },
   {
     id: 1004,
+    userNickName: '合作商管理员-D',
+    loginEmail: 'partner-d@example.com',
     partnerName: '西南商贸',
     country: '中国',
     countryCode: 'CN',
@@ -77,6 +85,8 @@ const MOCK_ROWS: Api.Partner.PartnerListItem[] = [
   },
   {
     id: 1005,
+    userNickName: '合作商管理员-E',
+    loginEmail: 'partner-e@example.com',
     partnerName: 'Nordic Retail AS',
     country: '挪威',
     countryCode: 'NO',
@@ -108,6 +118,13 @@ function filterRows(params: Api.Partner.PartnerSearchParams): Api.Partner.Partne
     list = list.filter((r) => r.countryCode === params.countryCode)
   }
   return list
+}
+
+/** 按国家拉取合作商（用于下拉联动等） */
+export function fetchPartnersByCountry(
+  countryCode: string
+): Promise<Api.Partner.PartnerListItem[]> {
+  return fetchPartnerList({ countryCode, current: 1, size: 500 }).then((res) => res.records)
 }
 
 export function fetchPartnerList(
@@ -148,6 +165,8 @@ export function createPartner(
       const createTime = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`
       const row: Api.Partner.PartnerListItem = {
         id: nextId,
+        userNickName: payload.userNickName ?? '',
+        loginEmail: payload.loginEmail ?? '',
         partnerName: payload.partnerName,
         country: payload.country,
         countryCode: payload.countryCode,

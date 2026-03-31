@@ -307,6 +307,10 @@
       "title": "合作商管理",
       "list": "合作商列表"
     },
+    "region": {
+      "title": "区域管理",
+      "list": "区域列表"
+    },
     "safeguard": {
       "title": "运维管理",
       "server": "服务器管理"

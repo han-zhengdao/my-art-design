@@ -92,4 +92,4 @@ export type Language = 'zh-CN' | 'en-US'
 export type Environment = 'development' | 'production' | 'test'
 
 // 弹窗类型
-export type DialogType = 'add' | 'edit'
+export type DialogType = 'add' | 'edit' | 'view'

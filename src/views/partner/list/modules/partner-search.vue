@@ -4,8 +4,7 @@
     v-model="formData"
     :items="formItems"
     :rules="rules"
-    :span="5"
-    :gutter="20"
+    :button-left-limit="1"
     @reset="handleReset"
     @search="handleSearch"
   />
@@ -53,6 +52,8 @@
     {
       label: '所属国家',
       key: 'countryCode',
+      labelWidth: 'auto',
+      span: 4,
       type: 'select',
       props: {
         placeholder: '全部',

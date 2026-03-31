@@ -3,8 +3,7 @@
   <div
     :class="[
       'inline-flex items-center justify-center min-w-8 h-8 px-2.5 mr-2.5 text-sm c-p rounded-md align-middle',
-      'cursor-pointer select-none transition-all duration-150 ease-out',
-      'hover:-translate-y-0.5 hover:shadow-sm',
+      'cursor-pointer select-none transition-colors duration-150 ease-out',
       buttonClass
     ]"
     :style="{ backgroundColor: buttonBgColor, color: iconColor }"
@@ -38,11 +37,31 @@
 
   // 默认按钮配置
   const defaultButtons = {
-    add: { icon: 'ri:add-fill', class: 'bg-theme/12 text-theme' },
-    edit: { icon: 'ri:pencil-line', class: 'bg-secondary/12 text-secondary' },
-    delete: { icon: 'ri:delete-bin-5-line', class: 'bg-error/12 text-error' },
-    view: { icon: 'ri:eye-line', class: 'bg-info/12 text-info' },
-    more: { icon: 'ri:more-2-fill', class: '' }
+    add: {
+      icon: 'ri:add-fill',
+      class:
+        'bg-theme/12 text-theme hover:bg-theme/22 hover:text-theme/90 active:bg-theme/18 active:text-theme'
+    },
+    edit: {
+      icon: 'ri:pencil-line',
+      class:
+        'bg-secondary/12 text-secondary hover:bg-secondary/22 hover:text-secondary/90 active:bg-secondary/18 active:text-secondary'
+    },
+    delete: {
+      icon: 'ri:delete-bin-5-line',
+      class:
+        'bg-error/12 text-error hover:bg-error/22 hover:text-error/90 active:bg-error/18 active:text-error'
+    },
+    view: {
+      icon: 'ri:eye-line',
+      class:
+        'bg-info/12 text-info hover:bg-info/22 hover:text-info/90 active:bg-info/18 active:text-info'
+    },
+    more: {
+      icon: 'ri:more-2-fill',
+      class:
+        'bg-g-300/15 text-g-700 hover:bg-g-300/30 hover:text-g-900 dark:bg-g-600/25 dark:text-g-200 dark:hover:bg-g-600/40 dark:hover:text-white'
+    }
   } as const
 
   // 获取图标内容

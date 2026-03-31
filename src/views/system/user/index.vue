@@ -13,7 +13,7 @@
       <ArtTableHeader v-model:columns="columnChecks" :loading="loading" @refresh="refreshData">
         <template #left>
           <ElSpace wrap>
-            <ElButton @click="showDialog('add')" v-ripple>新增用户</ElButton>
+            <ElButton type="primary" @click="showDialog('add')" v-ripple>新增用户</ElButton>
           </ElSpace>
         </template>
       </ArtTableHeader>
@@ -43,13 +43,12 @@
 
 <script setup lang="ts">
   import ArtButtonTable from '@/components/core/forms/art-button-table/index.vue'
-  import { ACCOUNT_TABLE_DATA } from '@/mock/temp/formData'
   import { useTable } from '@/hooks/core/useTable'
-  import { fetchGetUserList } from '@/api/system-manage'
   import UserSearch from './modules/user-search.vue'
   import UserDialog from './modules/user-dialog.vue'
-  import { ElTag, ElMessageBox, ElImage } from 'element-plus'
+  import { ElMessage, ElMessageBox, ElTag } from 'element-plus'
   import { DialogType } from '@/types'
+  import { useUserStore } from '@/store/modules/user'
 
   defineOptions({ name: 'User' })
 
@@ -63,33 +62,216 @@
   // 选中行
   const selectedRows = ref<UserListItem[]>([])
 
+  const userStore = useUserStore()
+  const isSuperAdmin = computed(() => userStore.info.roles?.includes('R_SUPER') ?? false)
+
+  /**
+   * 本地 mock 用户数据（临时替代接口 /api/user/list）
+   * 可根据需要自行调整/扩展
+   */
+  const MOCK_ROWS: UserListItem[] = [
+    {
+      id: 1,
+      avatar: '',
+      status: '1',
+      userName: 'super',
+      userGender: 'male',
+      nickName: '系统超管',
+      userPhone: '13800000001',
+      userEmail: 'super@example.com',
+      userRoles: ['R_SUPER'],
+      assetName: '平台总部',
+      createBy: '系统',
+      createTime: '2025-01-01 10:00:00',
+      updateBy: '系统',
+      updateTime: '2025-01-01 10:00:00'
+    },
+    {
+      id: 2,
+      avatar: '',
+      status: '1',
+      userName: 'partner-admin',
+      userGender: 'female',
+      nickName: '合作商管理员-A',
+      userPhone: '13800000002',
+      userEmail: 'partner-admin@example.com',
+      userRoles: ['PARTNER_ADMIN'],
+      assetName: '华东零售集团',
+      createBy: '系统超管',
+      createTime: '2025-02-10 09:30:00',
+      updateBy: '系统超管',
+      updateTime: '2025-02-10 09:30:00'
+    },
+    {
+      id: 3,
+      avatar: '',
+      status: '1',
+      userName: 'region-admin',
+      userGender: 'male',
+      nickName: '区域管理员-B',
+      userPhone: '13800000003',
+      userEmail: 'region-admin@example.com',
+      userRoles: ['REGION_ADMIN'],
+      assetName: '华东一区',
+      createBy: '系统超管',
+      createTime: '2025-03-15 14:20:00',
+      updateBy: '系统超管',
+      updateTime: '2025-03-15 14:20:00'
+    },
+    {
+      id: 4,
+      avatar: '',
+      status: '4',
+      userName: 'store-admin',
+      userGender: 'female',
+      nickName: '门店管理员-C',
+      userPhone: '13800000004',
+      userEmail: 'store-admin@example.com',
+      userRoles: ['STORE_ADMIN'],
+      assetName: '上海世纪门店',
+      createBy: '系统超管',
+      createTime: '2024-03-01 08:00:00',
+      updateBy: '系统超管',
+      updateTime: '2024-03-01 08:00:00'
+    },
+    {
+      id: 5,
+      avatar: '',
+      status: '4',
+      userName: 'store-staff',
+      userGender: 'male',
+      nickName: '门店员工-D',
+      userPhone: '13800000005',
+      userEmail: 'store-staff@example.com',
+      userRoles: ['STORE_STAFF'],
+      assetName: '成都高新门店',
+      createBy: '门店管理员-C',
+      createTime: '2024-05-20 11:15:00',
+      updateBy: '门店管理员-C',
+      updateTime: '2024-05-20 11:15:00'
+    },
+    {
+      id: 6,
+      avatar: '',
+      status: '4',
+      userName: 'region-admin',
+      userGender: 'male',
+      nickName: '区域管理员-B',
+      userPhone: '13800000003',
+      userEmail: 'region-admin@example.com',
+      userRoles: ['REGION_ADMIN'],
+      assetName: '华东一区',
+      createBy: '系统超管',
+      createTime: '2024-03-01 08:00:00',
+      updateBy: '系统超管',
+      updateTime: '2026-03-01 08:00:00'
+    }
+  ]
+
+  let mockRows: UserListItem[] = [...MOCK_ROWS]
+
+  function filterMockRows(params: Api.SystemManage.UserSearchParams): UserListItem[] {
+    let list = [...mockRows]
+    const keyword = params.keyword?.trim()
+    if (keyword) {
+      list = list.filter(
+        (r) =>
+          r.userName.includes(keyword) ||
+          r.userEmail.includes(keyword) ||
+          r.nickName.includes(keyword)
+      )
+    }
+    if (params.role) {
+      list = list.filter((r) => r.userRoles.includes(params.role!))
+    }
+    if (params.status) {
+      const wantDisabled = params.status === 'disabled'
+      list = list.filter((r) => (wantDisabled ? r.status === '4' : r.status !== '4'))
+    }
+    // 注销时间筛选仅对已注销用户生效
+    if (params.logoutTimeRange && params.logoutTimeRange.length === 2) {
+      const [start, end] = params.logoutTimeRange
+      const startTs = start ? new Date(start).getTime() : NaN
+      const endTs = end ? new Date(end).getTime() : NaN
+      list = list.filter((r) => {
+        if (r.status !== '4') return false
+        const t = new Date(r.updateTime).getTime()
+        if (Number.isNaN(t)) return false
+        if (!Number.isNaN(startTs) && t < startTs) return false
+        if (!Number.isNaN(endTs) && t > endTs) return false
+        return true
+      })
+    }
+    return list
+  }
+
+  function fetchMockUserList(
+    params: Api.SystemManage.UserSearchParams
+  ): Promise<Api.SystemManage.UserList> {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        const current = params.current ?? 1
+        const size = params.size ?? 20
+        const filtered = filterMockRows(params)
+        const start = (current - 1) * size
+        const records = filtered.slice(start, start + size)
+        resolve({
+          records,
+          current,
+          size,
+          total: filtered.length
+        })
+      }, 200)
+    })
+  }
+
   // 搜索表单
   const searchForm = ref({
-    userName: undefined,
-    userGender: undefined,
-    userPhone: undefined,
-    userEmail: undefined,
-    status: '1'
+    keyword: undefined as string | undefined,
+    role: undefined as string | undefined,
+    status: undefined as string | undefined,
+    logoutTimeRange: undefined as [string, string] | undefined
   })
 
-  // 用户状态配置
+  // 用户状态配置（仅展示 正常 / 注销）
   const USER_STATUS_CONFIG = {
-    '1': { type: 'success' as const, text: '在线' },
-    '2': { type: 'info' as const, text: '离线' },
-    '3': { type: 'warning' as const, text: '异常' },
-    '4': { type: 'danger' as const, text: '注销' }
+    normal: { type: 'success' as const, text: '正常' },
+    disabled: { type: 'danger' as const, text: '注销' }
   } as const
 
   /**
    * 获取用户状态配置
    */
   const getUserStatusConfig = (status: string) => {
-    return (
-      USER_STATUS_CONFIG[status as keyof typeof USER_STATUS_CONFIG] || {
-        type: 'info' as const,
-        text: '未知'
-      }
-    )
+    const key = status === '4' ? 'disabled' : 'normal'
+    return USER_STATUS_CONFIG[key]
+  }
+
+  const getUserRoleLabel = (roles?: string[]): string => {
+    if (!Array.isArray(roles) || roles.length === 0) return '-'
+    const map: Record<string, string> = {
+      R_SUPER: '系统超级管理员',
+      R_ADMIN: '系统管理员',
+      PARTNER_ADMIN: '合作商管理员',
+      partner_admin: '合作商管理员',
+      REGION_ADMIN: '区域管理员',
+      region_admin: '区域管理员',
+      STORE_ADMIN: '门店管理员',
+      store_admin: '门店管理员',
+      STORE_STAFF: '门店员工',
+      store_staff: '门店员工'
+    }
+    const matched = roles
+      .map((r) => map[r])
+      .filter(Boolean)
+      .join('、')
+    return matched || '-'
+  }
+
+  const getLogoutDate = (row: UserListItem) => {
+    // 仅对已注销用户展示注销日期（暂用 updateTime 占位），否则显示 --
+    if (row.status !== '4') return '--'
+    return row.updateTime || '--'
   }
 
   const {
@@ -107,7 +289,7 @@
   } = useTable({
     // 核心配置
     core: {
-      apiFn: fetchGetUserList,
+      apiFn: fetchMockUserList,
       apiParams: {
         current: 1,
         size: 20,
@@ -119,39 +301,44 @@
       //   size: 'pageSize'
       // },
       columnsFactory: () => [
-        { type: 'selection' }, // 勾选列
         { type: 'index', width: 60, label: '序号' }, // 序号
         {
-          prop: 'userInfo',
-          label: '用户名',
-          width: 280,
-          // visible: false, // 默认是否显示列
-          formatter: (row) => {
-            return h('div', { class: 'user flex-c' }, [
-              h(ElImage, {
-                class: 'size-9.5 rounded-md',
-                src: row.avatar,
-                previewSrcList: [row.avatar],
-                // 图片预览是否插入至 body 元素上，用于解决表格内部图片预览样式异常
-                previewTeleported: true
-              }),
-              h('div', { class: 'ml-2' }, [
-                h('p', { class: 'user-name' }, row.userName),
-                h('p', { class: 'email' }, row.userEmail)
-              ])
-            ])
-          }
+          prop: 'id',
+          label: 'ID',
+          width: 80
         },
         {
-          prop: 'userGender',
-          label: '性别',
-          sortable: true,
-          formatter: (row) => row.userGender
+          prop: 'nickName',
+          label: '昵称',
+          width: 160
         },
-        { prop: 'userPhone', label: '手机号' },
+        {
+          prop: 'userEmail',
+          label: '登录邮箱',
+          width: 220
+        },
+        {
+          prop: 'password',
+          label: '登录密码',
+          width: 140,
+          formatter: () => '******'
+        },
+        {
+          prop: 'userRoles',
+          label: '对应角色',
+          width: 200,
+          formatter: (row: UserListItem) => getUserRoleLabel(row.userRoles)
+        },
+        {
+          prop: 'assetName',
+          label: '对应资产',
+          width: 220,
+          formatter: (row: UserListItem) => row.assetName || '--'
+        },
         {
           prop: 'status',
           label: '状态',
+          width: 100,
           formatter: (row) => {
             const statusConfig = getUserStatusConfig(row.status)
             return h(ElTag, { type: statusConfig.type }, () => statusConfig.text)
@@ -159,46 +346,49 @@
         },
         {
           prop: 'createTime',
-          label: '创建日期',
-          sortable: true
+          label: '创建时间',
+          sortable: true,
+          width: 180
+        },
+        {
+          prop: 'createBy',
+          label: '操作人',
+          width: 120
+        },
+        {
+          prop: 'logoutTime',
+          label: '注销日期',
+          width: 180,
+          sortable: true,
+          formatter: (row: UserListItem) => getLogoutDate(row)
         },
         {
           prop: 'operation',
           label: '操作',
-          width: 120,
+          width: 160,
           fixed: 'right', // 固定列
           formatter: (row) =>
-            h('div', [
-              h(ArtButtonTable, {
-                type: 'edit',
-                onClick: () => showDialog('edit', row)
-              }),
-              h(ArtButtonTable, {
-                type: 'delete',
-                onClick: () => deleteUser(row)
-              })
-            ])
+            h(
+              'div',
+              [
+                h(ArtButtonTable, {
+                  type: 'view',
+                  onClick: () => showDialog('view', row)
+                }),
+                isSuperAdmin.value &&
+                  h(ArtButtonTable, {
+                    type: 'edit',
+                    onClick: () => showDialog('edit', row)
+                  }),
+                isSuperAdmin.value &&
+                  h(ArtButtonTable, {
+                    type: 'delete',
+                    onClick: () => deleteUser(row)
+                  })
+              ].filter(Boolean) as any
+            )
         }
       ]
-    },
-    // 数据处理
-    transform: {
-      // 数据转换器 - 替换头像
-      dataTransformer: (records) => {
-        // 类型守卫检查
-        if (!Array.isArray(records)) {
-          console.warn('数据转换器: 期望数组类型，实际收到:', typeof records)
-          return []
-        }
-
-        // 使用本地头像替换接口返回的头像
-        return records.map((item, index: number) => {
-          return {
-            ...item,
-            avatar: ACCOUNT_TABLE_DATA[index % ACCOUNT_TABLE_DATA.length].avatar
-          }
-        })
-      }
     }
   })
 
@@ -227,13 +417,39 @@
    * 删除用户
    */
   const deleteUser = (row: UserListItem): void => {
-    console.log('删除用户:', row)
-    ElMessageBox.confirm(`确定要注销该用户吗？`, '注销用户', {
+    if (!isSuperAdmin.value) {
+      ElMessage.warning('仅平台超级管理员可删除用户')
+      return
+    }
+    if (row.status !== '4') {
+      ElMessage.warning('仅已注销的用户可删除')
+      return
+    }
+    const logoutStr = getLogoutDate(row)
+    if (!logoutStr) {
+      ElMessage.warning('缺少注销日期，无法删除')
+      return
+    }
+    const logoutTime = new Date(logoutStr).getTime()
+    if (Number.isNaN(logoutTime)) {
+      ElMessage.warning('注销日期格式不正确，无法删除')
+      return
+    }
+    const now = Date.now()
+    const oneYearMs = 365 * 24 * 60 * 60 * 1000
+    if (now - logoutTime < oneYearMs) {
+      ElMessage.warning('用户注销未满一年，暂不允许删除')
+      return
+    }
+
+    ElMessageBox.confirm(`确定要永久删除该用户吗？`, '删除用户', {
       confirmButtonText: '确定',
       cancelButtonText: '取消',
-      type: 'error'
+      type: 'warning'
     }).then(() => {
-      ElMessage.success('注销成功')
+      // 此处预留给真实删除接口
+      ElMessage.success('删除成功')
+      refreshData()
     })
   }
 
