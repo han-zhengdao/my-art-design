@@ -9,7 +9,7 @@ export function fetchGetUserList(params: Api.SystemManage.UserSearchParams) {
   })
 }
 
-// 获取角色列表
+// 获取角色列表（真实接口；当前页面已改用 @/api/role-mock）
 export function fetchGetRoleList(params: Api.SystemManage.RoleSearchParams) {
   return request.get<Api.SystemManage.RoleList>({
     url: '/api/role/list',

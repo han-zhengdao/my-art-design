@@ -136,6 +136,8 @@ declare namespace Api {
       description: string
       enabled: boolean
       createTime: string
+      /** 操作人（创建人/维护人） */
+      operatorName?: string
     }
 
     /** 角色搜索参数 */
@@ -187,6 +189,10 @@ declare namespace Api {
   namespace Region {
     interface RegionListItem {
       id: number
+      /** 区域管理员账户昵称（列表展示） */
+      userNickName?: string
+      /** 区域管理员登录邮箱（列表展示） */
+      loginEmail?: string
       regionName: string
       regionAddress: string
       regionContactName: string
@@ -212,6 +218,56 @@ declare namespace Api {
         /** 必选：筛选该国家下的区域 */
         countryCode?: string
         partnerId?: number
+      }
+    >
+  }
+
+  /** 门店管理 */
+  namespace Store {
+    type MapProvider = 'TENCENT' | 'GOOGLE'
+
+    interface GeoPoint {
+      lng: number
+      lat: number
+    }
+
+    interface StoreListItem {
+      id: number
+      /** 门店管理员账户昵称（列表展示） */
+      userNickName?: string
+      /** 门店管理员登录邮箱（列表展示） */
+      loginEmail?: string
+      storeName: string
+      storeAddress: string
+      contactName: string
+      phone: string
+      regionId?: number
+      regionName?: string
+      partnerId: number
+      partnerName: string
+      country: string
+      countryCode: string
+      mapProvider: MapProvider
+      storeCoordinate: GeoPoint
+      geofence: GeoPoint[]
+      timezone: string
+      dcBalance: number
+      wheelCount: number
+      beaconCount: number
+      pendingTicketCount: number
+      createTime: string
+      operatorName: string
+    }
+
+    type StoreList = Api.Common.PaginatedResponse<StoreListItem>
+
+    type StoreSearchParams = Partial<
+      Api.Common.CommonSearchParams & {
+        storeName?: string
+        countryCode?: string
+        partnerId?: number
+        /** NONE 表示查询无区域 */
+        regionId?: number | 'NONE'
       }
     >
   }

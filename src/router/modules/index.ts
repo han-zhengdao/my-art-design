@@ -6,6 +6,7 @@ import { examplesRoutes } from './examples'
 import { systemRoutes } from './system'
 import { partnerRoutes } from './partner'
 import { regionRoutes } from './region'
+import { storeRoutes } from './store'
 import { articleRoutes } from './article'
 import { resultRoutes } from './result'
 import { exceptionRoutes } from './exception'
@@ -20,6 +21,7 @@ export const routeModules: AppRouteRecord[] = [
   systemRoutes,
   partnerRoutes,
   regionRoutes,
+  storeRoutes,
   templateRoutes,
   widgetsRoutes,
   examplesRoutes,

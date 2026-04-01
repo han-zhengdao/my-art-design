@@ -2,9 +2,13 @@
  * 区域管理（当前为前端 mock，对接后端时替换为真实接口）
  */
 
+import { appendRegionAdminUserFromRegion } from '@/api/user-mock'
+
 const MOCK_ROWS: Api.Region.RegionListItem[] = [
   {
     id: 2001,
+    userNickName: '区域管理员-华东一',
+    loginEmail: 'region-hd1@example.com',
     regionName: '华东一区',
     regionAddress: '上海市浦东新区世纪大道 100 号',
     regionContactName: '李四',
@@ -23,6 +27,8 @@ const MOCK_ROWS: Api.Region.RegionListItem[] = [
   },
   {
     id: 2002,
+    userNickName: '区域管理员-西南',
+    loginEmail: 'region-xn@example.com',
     regionName: '西南运营中心',
     regionAddress: '成都市高新区天府大道 200 号',
     regionContactName: '王芳',
@@ -41,6 +47,8 @@ const MOCK_ROWS: Api.Region.RegionListItem[] = [
   },
   {
     id: 2003,
+    userNickName: '区域管理员-湾区',
+    loginEmail: 'region-ca@example.com',
     regionName: '加州湾区',
     regionAddress: 'San Francisco, CA',
     regionContactName: 'John Smith',
@@ -59,6 +67,8 @@ const MOCK_ROWS: Api.Region.RegionListItem[] = [
   },
   {
     id: 2004,
+    userNickName: '区域管理员-东京圈',
+    loginEmail: 'region-tokyo@example.com',
     regionName: '关东鲜选·东京圈',
     regionAddress: '東京都千代田区',
     regionContactName: '佐藤健',
@@ -77,6 +87,8 @@ const MOCK_ROWS: Api.Region.RegionListItem[] = [
   },
   {
     id: 2005,
+    userNickName: '区域管理员-奥斯陆',
+    loginEmail: 'region-oslo@example.com',
     regionName: '奥斯陆北区',
     regionAddress: 'Oslo City Center',
     regionContactName: 'Erik Hansen',
@@ -143,7 +155,11 @@ export function createRegion(
     | 'partnerName'
     | 'country'
     | 'countryCode'
-  > & { operatorName: string }
+  > & {
+    operatorName: string
+    userNickName?: string
+    loginEmail?: string
+  }
 ): Promise<Api.Region.RegionListItem> {
   return new Promise((resolve) => {
     setTimeout(() => {
@@ -153,6 +169,8 @@ export function createRegion(
       const createTime = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`
       const row: Api.Region.RegionListItem = {
         id: nextId,
+        userNickName: payload.userNickName ?? '',
+        loginEmail: payload.loginEmail ?? '',
         regionName: payload.regionName,
         regionAddress: payload.regionAddress,
         regionContactName: payload.regionContactName,
@@ -170,6 +188,14 @@ export function createRegion(
         operatorName: payload.operatorName
       }
       mockRows = [row, ...mockRows]
+      if (payload.userNickName?.trim() && payload.loginEmail?.trim()) {
+        appendRegionAdminUserFromRegion({
+          nickName: payload.userNickName.trim(),
+          userEmail: payload.loginEmail.trim(),
+          regionName: row.regionName,
+          operatorName: payload.operatorName
+        })
+      }
       resolve(row)
     }, 200)
   })

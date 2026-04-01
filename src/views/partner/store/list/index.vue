@@ -1,17 +1,16 @@
-<!-- 区域列表 -->
 <template>
-  <div class="region-list-page art-full-height">
-    <RegionSearch v-model="searchForm" @search="handleSearch" @reset="handleReset" />
+  <div class="store-list-page art-full-height">
+    <StoreSearch v-model="searchForm" @search="handleSearch" @reset="handleReset" />
 
     <ElCard class="art-table-card">
       <ArtTableHeader v-model:columns="columnChecks" :loading="loading" @refresh="refreshData">
         <template #left>
           <ElSpace wrap>
-            <ElButton v-if="canOperateRegion" type="primary" @click="openDialog('add')" v-ripple>
-              新增区域
+            <ElButton v-if="canOperateStore" type="primary" @click="openDialog('add')" v-ripple>
+              新增门店
             </ElButton>
             <ElButton
-              v-if="canOperateRegion"
+              v-if="canOperateStore"
               type="danger"
               plain
               :disabled="selectedRows.length === 0"
@@ -34,7 +33,7 @@
       />
     </ElCard>
 
-    <RegionDialog
+    <StoreDialog
       v-model="dialogVisible"
       :mode="dialogMode"
       :row="currentRow"
@@ -49,47 +48,47 @@
   import ArtButtonTable from '@/components/core/forms/art-button-table/index.vue'
   import { useTable } from '@/hooks/core/useTable'
   import {
-    fetchRegionList,
-    createRegion,
-    updateRegion,
-    deleteRegion,
-    batchDeleteRegions
-  } from '@/api/region'
+    fetchStoreList,
+    createStore,
+    updateStore,
+    deleteStore,
+    batchDeleteStores
+  } from '@/api/store'
   import { useUserStore } from '@/store/modules/user'
-  import RegionSearch from './modules/region-search.vue'
-  import RegionDialog from './modules/region-dialog.vue'
+  import StoreSearch from './modules/store-search.vue'
+  import StoreDialog from './modules/store-dialog.vue'
   import { ElMessage, ElMessageBox } from 'element-plus'
   import { computed, h, nextTick, ref } from 'vue'
 
-  defineOptions({ name: 'RegionList' })
+  defineOptions({ name: 'StoreList' })
 
-  type RegionItem = Api.Region.RegionListItem
+  type StoreItem = Api.Store.StoreListItem
   type DialogMode = 'add' | 'edit' | 'detail'
 
   const userStore = useUserStore()
 
   const dialogVisible = ref(false)
   const dialogMode = ref<DialogMode>('add')
-  const currentRow = ref<RegionItem | null>(null)
-  const selectedRows = ref<RegionItem[]>([])
+  const currentRow = ref<StoreItem | null>(null)
+  const selectedRows = ref<StoreItem[]>([])
 
-  const searchForm = ref<Api.Region.RegionSearchParams>({
-    regionName: undefined,
+  const searchForm = ref<Api.Store.StoreSearchParams>({
+    storeName: undefined,
     countryCode: undefined,
-    partnerId: undefined
+    partnerId: undefined,
+    regionId: undefined
   })
 
-  /** 平台超级管理员或合作商管理员（可管理区域） */
-  const canOperateRegion = computed(() => {
+  /** 平台超级管理员或门店管理员（可管理门店） */
+  const canOperateStore = computed(() => {
     const roles = userStore.info.roles ?? []
-    return roles.includes('R_SUPER') || roles.includes('R_ADMIN')
+    return roles.includes('R_SUPER') || roles.includes('STORE_ADMIN')
   })
 
-  /** 合作商管理员绑定的合作商（后端返回 partnerId 时锁定所属合作商） */
   const lockedPartnerId = computed(() => {
     const roles = userStore.info.roles ?? []
     if (roles.includes('R_SUPER')) return undefined
-    if (roles.includes('R_ADMIN') && userStore.info.partnerId != null) {
+    if (roles.includes('STORE_ADMIN') && userStore.info.partnerId != null) {
       return userStore.info.partnerId
     }
     return undefined
@@ -98,22 +97,19 @@
   function canManagePartnerRow(partnerId: number): boolean {
     const roles = userStore.info.roles ?? []
     if (roles.includes('R_SUPER')) return true
-    if (!roles.includes('R_ADMIN')) return false
+    if (!roles.includes('STORE_ADMIN')) return false
     const scoped = userStore.info.partnerId
     if (scoped == null) return true
     return scoped === partnerId
   }
 
-  const hasRegionAssetData = (row: RegionItem) =>
-    (row.dcBalance ?? 0) !== 0 ||
-    (row.storeCount ?? 0) !== 0 ||
-    (row.wheelCount ?? 0) !== 0 ||
-    (row.beaconCount ?? 0) !== 0
+  const hasStoreAssetData = (row: StoreItem) =>
+    (row.dcBalance ?? 0) !== 0 || (row.wheelCount ?? 0) !== 0 || (row.beaconCount ?? 0) !== 0
 
   const ASSET_BLOCK_MSG =
-    '该区域下仍关联有效资产数据，不允许删除。请先清空其关联的 DC 余额、门店、车轮及信标信息。'
+    '该合作商下仍关联有效资产数据，不允许删除。请先清空其关联的 DC 余额、车轮及信标信息。'
 
-  const openDialog = (mode: DialogMode, row?: RegionItem) => {
+  const openDialog = (mode: DialogMode, row?: StoreItem) => {
     dialogMode.value = mode
     currentRow.value = row ?? null
     nextTick(() => {
@@ -135,7 +131,7 @@
   } = useTable({
     core: {
       immediate: true,
-      apiFn: fetchRegionList,
+      apiFn: fetchStoreList,
       apiParams: {
         current: 1,
         size: 20,
@@ -147,16 +143,38 @@
         { prop: 'id', label: 'ID', width: 'auto', minWidth: 90 },
         { prop: 'userNickName', label: '用户昵称', width: 'auto', minWidth: 130 },
         { prop: 'loginEmail', label: '登录邮箱', width: 'auto', minWidth: 200 },
-        { prop: 'regionName', label: '区域名称', width: 'auto', minWidth: 140 },
-        { prop: 'regionAddress', label: '区域地址', width: 'auto', minWidth: 180 },
-        { prop: 'regionContactName', label: '区域联系人', width: 'auto', minWidth: 110 },
-        { prop: 'regionPhone', label: '区域联系电话', width: 'auto', minWidth: 140 },
-        { prop: 'partnerName', label: '所属合作商', width: 'auto', minWidth: 140 },
+        { prop: 'storeName', label: '门店名称', width: 'auto', minWidth: 150 },
+        { prop: 'storeAddress', label: '门店地址', width: 'auto', minWidth: 200 },
+        { prop: 'contactName', label: '联系人', width: 'auto', minWidth: 100 },
+        { prop: 'phone', label: '联系电话', width: 'auto', minWidth: 140 },
+        { prop: 'regionName', label: '所属区域', width: 'auto', minWidth: 140 },
+        { prop: 'partnerName', label: '所属合作商', width: 'auto', minWidth: 160 },
         { prop: 'country', label: '所属国家', width: 'auto', minWidth: 100 },
-        { prop: 'dcBalance', label: 'DC余额', width: 'auto', minWidth: 100 },
-        { prop: 'storeCount', label: '门店数', width: 'auto', minWidth: 88 },
-        { prop: 'wheelCount', label: '车轮总数', width: 'auto', minWidth: 88 },
-        { prop: 'beaconCount', label: '信标总数', width: 'auto', minWidth: 88 },
+        {
+          prop: 'mapProvider',
+          label: '地图选择',
+          width: 'auto',
+          minWidth: 130,
+          formatter: (row: StoreItem) => (row.mapProvider === 'GOOGLE' ? '谷歌地图' : '腾讯地图')
+        },
+        {
+          prop: 'storeCoordinate',
+          label: '门店坐标',
+          width: 'auto',
+          minWidth: 200,
+          formatter: (row: StoreItem) => `${row.storeCoordinate.lng},${row.storeCoordinate.lat}`
+        },
+        {
+          prop: 'geofence',
+          label: '电子围栏',
+          width: 'auto',
+          minWidth: 200,
+          formatter: (row: StoreItem) => row.geofence.map((p) => `${p.lng},${p.lat}`).join('; ')
+        },
+        { prop: 'timezone', label: '时区', width: 'auto', minWidth: 140 },
+        { prop: 'dcBalance', label: 'DC余额', width: 'auto', minWidth: 90 },
+        { prop: 'wheelCount', label: '车轮总数', width: 'auto', minWidth: 90 },
+        { prop: 'beaconCount', label: '信标总数', width: 'auto', minWidth: 90 },
         { prop: 'pendingTicketCount', label: '未处理工单数', width: 'auto', minWidth: 120 },
         { prop: 'createTime', label: '创建时间', width: 'auto', minWidth: 170 },
         { prop: 'operatorName', label: '操作人', width: 'auto', minWidth: 110 },
@@ -165,25 +183,21 @@
           label: '操作',
           width: 160,
           fixed: 'right',
-          formatter: (row: RegionItem) =>
+          formatter: (row: StoreItem) =>
             h(
               'div',
               [
                 h(ArtButtonTable, {
                   type: 'view',
-                  onClick: () => {
-                    dialogMode.value = 'detail'
-                    currentRow.value = row
-                    dialogVisible.value = true
-                  }
+                  onClick: () => openDialog('detail', row)
                 }),
-                canOperateRegion.value &&
+                canOperateStore.value &&
                   canManagePartnerRow(row.partnerId) &&
                   h(ArtButtonTable, {
                     type: 'edit',
                     onClick: () => openDialog('edit', row)
                   }),
-                canOperateRegion.value &&
+                canOperateStore.value &&
                   canManagePartnerRow(row.partnerId) &&
                   h(ArtButtonTable, {
                     type: 'delete',
@@ -196,43 +210,48 @@
     }
   })
 
-  const handleSelectionChange = (selection: RegionItem[]) => {
+  const handleSelectionChange = (selection: StoreItem[]) => {
     selectedRows.value = selection
   }
 
-  const handleSearch = (params: Api.Region.RegionSearchParams) => {
+  const handleSearch = (params: Api.Store.StoreSearchParams) => {
     replaceSearchParams(params)
     getData()
   }
 
   const handleReset = () => {
-    searchForm.value = { regionName: undefined, countryCode: undefined, partnerId: undefined }
-    replaceSearchParams({ regionName: undefined, countryCode: undefined, partnerId: undefined })
+    searchForm.value = {
+      storeName: undefined,
+      countryCode: undefined,
+      partnerId: undefined,
+      regionId: undefined
+    }
+    replaceSearchParams({ ...searchForm.value })
     getData()
   }
 
-  const handleDelete = (row: RegionItem) => {
+  const handleDelete = (row: StoreItem) => {
     if (!canManagePartnerRow(row.partnerId)) {
-      ElMessage.warning('无权限删除该区域')
+      ElMessage.warning('无权限删除该门店')
       return
     }
-    if (hasRegionAssetData(row)) {
+    if (hasStoreAssetData(row)) {
       ElMessage.warning(ASSET_BLOCK_MSG)
       return
     }
-    ElMessageBox.confirm(`确定删除区域「${row.regionName}」吗？`, '删除确认', {
+    ElMessageBox.confirm(`确定删除门店「${row.storeName}」吗？`, '删除确认', {
       type: 'warning',
       confirmButtonText: '删除',
       cancelButtonText: '取消'
     }).then(async () => {
-      await deleteRegion(row.id)
+      await deleteStore(row.id)
       ElMessage.success('已删除')
       refreshData()
     })
   }
 
   const handleBatchDelete = () => {
-    if (!canOperateRegion.value) return
+    if (!canOperateStore.value) return
     const manageable = selectedRows.value.filter((r) => canManagePartnerRow(r.partnerId))
     const blocked = selectedRows.value.filter((r) => !canManagePartnerRow(r.partnerId))
     if (blocked.length) {
@@ -242,13 +261,13 @@
       ElMessage.warning('没有可删除的记录')
       return
     }
-    const withAsset = manageable.filter(hasRegionAssetData)
+    const withAsset = manageable.filter(hasStoreAssetData)
     if (withAsset.length > 0) {
       ElMessage.warning(ASSET_BLOCK_MSG)
       return
     }
     ElMessageBox.confirm(
-      `确定批量删除选中的 ${manageable.length} 条区域吗？此操作不可恢复。`,
+      `确定批量删除选中的 ${manageable.length} 条门店吗？此操作不可恢复。`,
       '批量删除确认',
       {
         type: 'warning',
@@ -256,7 +275,7 @@
         cancelButtonText: '取消'
       }
     ).then(async () => {
-      await batchDeleteRegions(manageable.map((r) => r.id))
+      await batchDeleteStores(manageable.map((r) => r.id))
       ElMessage.success('已批量删除')
       selectedRows.value = []
       refreshData()
@@ -264,9 +283,7 @@
   }
 
   const handleDialogSubmit = async (
-    payload: Partial<RegionItem> & {
-      country?: string
-      countryCode?: string
+    payload: Partial<StoreItem> & {
       userNickName?: string
       loginEmail?: string
     }
@@ -274,30 +291,42 @@
     const operatorName = userStore.info.userName ?? '系统'
     try {
       if (dialogMode.value === 'add') {
-        await createRegion({
-          regionName: payload.regionName!,
-          regionAddress: payload.regionAddress!,
-          regionContactName: payload.regionContactName!,
-          regionPhone: payload.regionPhone!,
+        await createStore({
+          storeName: payload.storeName!,
+          storeAddress: payload.storeAddress!,
+          contactName: payload.contactName!,
+          phone: payload.phone!,
+          regionId: payload.regionId,
+          regionName: payload.regionName,
           partnerId: payload.partnerId!,
           partnerName: payload.partnerName!,
           country: payload.country!,
           countryCode: payload.countryCode!,
+          mapProvider: payload.mapProvider!,
+          storeCoordinate: payload.storeCoordinate!,
+          geofence: payload.geofence!,
+          timezone: payload.timezone!,
           operatorName,
           userNickName: payload.userNickName,
           loginEmail: payload.loginEmail
         })
         ElMessage.success('新增成功')
-      } else if (dialogMode.value === 'edit' && currentRow.value?.id != null) {
-        await updateRegion(currentRow.value.id, {
+      } else if (dialogMode.value === 'edit' && payload.id != null) {
+        await updateStore(payload.id, {
+          storeName: payload.storeName,
+          storeAddress: payload.storeAddress,
+          contactName: payload.contactName,
+          phone: payload.phone,
+          regionId: payload.regionId,
           regionName: payload.regionName,
-          regionAddress: payload.regionAddress,
-          regionContactName: payload.regionContactName,
-          regionPhone: payload.regionPhone,
           partnerId: payload.partnerId,
           partnerName: payload.partnerName,
           country: payload.country,
-          countryCode: payload.countryCode
+          countryCode: payload.countryCode,
+          mapProvider: payload.mapProvider,
+          storeCoordinate: payload.storeCoordinate,
+          geofence: payload.geofence,
+          timezone: payload.timezone
         })
         ElMessage.success('保存成功')
       }

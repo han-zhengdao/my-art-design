@@ -11,7 +11,14 @@
         <ElInput v-model="form.roleName" placeholder="请输入角色名称" />
       </ElFormItem>
       <ElFormItem label="角色编码" prop="roleCode">
-        <ElInput v-model="form.roleCode" placeholder="请输入角色编码" />
+        <ElSelect v-model="form.roleCode" placeholder="请选择角色编码" class="w-full">
+          <ElOption
+            v-for="opt in systemRoleCodeOptions"
+            :key="opt.value"
+            :label="opt.label"
+            :value="opt.value"
+          />
+        </ElSelect>
       </ElFormItem>
       <ElFormItem label="描述" prop="description">
         <ElInput
@@ -34,6 +41,8 @@
 
 <script setup lang="ts">
   import type { FormInstance, FormRules } from 'element-plus'
+  import { createRole, updateRole } from '@/api/role-mock'
+  import { useUserStore } from '@/store/modules/user'
 
   type RoleListItem = Api.SystemManage.RoleListItem
 
@@ -56,6 +65,9 @@
 
   const emit = defineEmits<Emits>()
 
+  const userStore = useUserStore()
+  const getOperatorName = () => userStore.info.userName ?? '系统'
+
   const formRef = ref<FormInstance>()
 
   /**
@@ -66,6 +78,15 @@
     set: (value) => emit('update:modelValue', value)
   })
 
+  /** 与用户管理「对应角色」一致（系统管理员、合作商管理员等） */
+  const systemRoleCodeOptions = [
+    { label: '系统管理员', value: 'R_ADMIN' },
+    { label: '合作商管理员', value: 'PARTNER_ADMIN' },
+    { label: '区域管理员', value: 'REGION_ADMIN' },
+    { label: '门店管理员', value: 'STORE_ADMIN' },
+    { label: '门店员工', value: 'STORE_STAFF' }
+  ]
+
   /**
    * 表单验证规则
    */
@@ -74,10 +95,7 @@
       { required: true, message: '请输入角色名称', trigger: 'blur' },
       { min: 2, max: 20, message: '长度在 2 到 20 个字符', trigger: 'blur' }
     ],
-    roleCode: [
-      { required: true, message: '请输入角色编码', trigger: 'blur' },
-      { min: 2, max: 50, message: '长度在 2 到 50 个字符', trigger: 'blur' }
-    ],
+    roleCode: [{ required: true, message: '请选择角色编码', trigger: 'change' }],
     description: [{ required: true, message: '请输入角色描述', trigger: 'blur' }]
   })
 
@@ -150,13 +168,31 @@
 
     try {
       await formRef.value.validate()
-      // TODO: 调用新增/编辑接口
+      const op = getOperatorName()
+      if (props.dialogType === 'add') {
+        await createRole({
+          roleName: form.roleName,
+          roleCode: form.roleCode,
+          description: form.description,
+          enabled: form.enabled,
+          operatorName: op
+        })
+      } else if (props.roleData?.roleId != null) {
+        await updateRole(props.roleData.roleId, {
+          roleName: form.roleName,
+          roleCode: form.roleCode,
+          description: form.description,
+          enabled: form.enabled,
+          operatorName: op
+        })
+      }
       const message = props.dialogType === 'add' ? '新增成功' : '修改成功'
       ElMessage.success(message)
       emit('success')
       handleClose()
     } catch (error) {
-      console.log('表单验证失败:', error)
+      console.log('提交失败:', error)
+      ElMessage.error('操作失败')
     }
   }
 </script>

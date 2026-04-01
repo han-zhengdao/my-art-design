@@ -54,12 +54,13 @@
 <script setup lang="ts">
   import { ButtonMoreItem } from '@/components/core/forms/art-button-more/index.vue'
   import { useTable } from '@/hooks/core/useTable'
-  import { fetchGetRoleList } from '@/api/system-manage'
+  import { fetchMockRoleList, deleteRoleById } from '@/api/role-mock'
+  import { isRoleCodeUsedByAnyUser } from '@/api/user-mock'
   import ArtButtonMore from '@/components/core/forms/art-button-more/index.vue'
   import RoleSearch from './modules/role-search.vue'
   import RoleEditDialog from './modules/role-edit-dialog.vue'
   import RolePermissionDialog from './modules/role-permission-dialog.vue'
-  import { ElTag, ElMessageBox } from 'element-plus'
+  import { ElTag, ElMessage, ElMessageBox } from 'element-plus'
 
   defineOptions({ name: 'Role' })
 
@@ -98,7 +99,7 @@
   } = useTable({
     // 核心配置
     core: {
-      apiFn: fetchGetRoleList,
+      apiFn: fetchMockRoleList,
       apiParams: {
         current: 1,
         size: 20
@@ -114,7 +115,7 @@
         {
           prop: 'roleName',
           label: '角色名称',
-          minWidth: 120
+          minWidth: 100
         },
         {
           prop: 'roleCode',
@@ -147,6 +148,11 @@
           label: '创建日期',
           width: 180,
           sortable: true
+        },
+        {
+          prop: 'operatorName',
+          label: '操作人',
+          minWidth: 80
         },
         {
           prop: 'operation',
@@ -223,13 +229,17 @@
   }
 
   const deleteRole = (row: RoleListItem) => {
-    ElMessageBox.confirm(`确定删除角色"${row.roleName}"吗？此操作不可恢复！`, '删除确认', {
+    if (isRoleCodeUsedByAnyUser(row.roleCode)) {
+      ElMessage.warning('该角色已被账户使用，不允许删除。')
+      return
+    }
+    ElMessageBox.confirm(`确定删除角色「${row.roleName}」吗？此操作不可恢复。`, '删除确认', {
       confirmButtonText: '确定',
       cancelButtonText: '取消',
       type: 'warning'
     })
-      .then(() => {
-        // TODO: 调用删除接口
+      .then(async () => {
+        await deleteRoleById(row.roleId)
         ElMessage.success('删除成功')
         refreshData()
       })

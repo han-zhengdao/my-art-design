@@ -190,6 +190,8 @@
           iotToken: payload.iotToken!,
           tenantId: payload.tenantId!,
           operatorName,
+          userNickName: payload.userNickName,
+          loginEmail: payload.loginEmail,
           regionCount: 0,
           storeCount: 0,
           wheelCount: 0,

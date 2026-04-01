@@ -2,6 +2,8 @@
  * 合作商管理（当前为前端 mock，对接后端时替换为真实接口）
  */
 
+import { appendPartnerAdminUserFromPartner } from '@/api/user-mock'
+
 const MOCK_ROWS: Api.Partner.PartnerListItem[] = [
   {
     id: 1001,
@@ -184,6 +186,14 @@ export function createPartner(
         createTime
       }
       mockRows = [row, ...mockRows]
+      if (payload.userNickName?.trim() && payload.loginEmail?.trim()) {
+        appendPartnerAdminUserFromPartner({
+          nickName: payload.userNickName.trim(),
+          userEmail: payload.loginEmail.trim(),
+          partnerName: row.partnerName,
+          operatorName: payload.operatorName
+        })
+      }
       resolve(row)
     }, 200)
   })
