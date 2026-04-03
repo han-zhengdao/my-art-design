@@ -129,6 +129,13 @@ const MOCK_ROWS: Api.Store.StoreListItem[] = [
 
 let mockRows: Api.Store.StoreListItem[] = [...MOCK_ROWS]
 
+/** 是否作为有效筛选条件（兼容运行时空串、ElSelect 字符串化等，避免与声明类型比较触发 TS 报错） */
+function isActiveFilter(v: unknown): boolean {
+  if (v == null) return false
+  if (typeof v === 'string' && v.trim() === '') return false
+  return true
+}
+
 function filterRows(params: Api.Store.StoreSearchParams): Api.Store.StoreListItem[] {
   let list = [...mockRows]
   const name = params.storeName?.trim()
@@ -138,16 +145,17 @@ function filterRows(params: Api.Store.StoreSearchParams): Api.Store.StoreListIte
   if (params.countryCode) {
     list = list.filter((r) => r.countryCode === params.countryCode)
   }
-  if (params.partnerId != null) {
-    list = list.filter((r) => r.partnerId === params.partnerId)
+  if (isActiveFilter(params.partnerId)) {
+    list = list.filter((r) => r.partnerId == params.partnerId)
   }
-  if (params.regionId != null) {
+  if (isActiveFilter(params.regionId)) {
     if (params.regionId === 'NONE') {
       list = list.filter((r) => r.regionId == null)
     } else {
-      list = list.filter((r) => r.regionId === params.regionId)
+      // ElSelect 可能把数字选项变成字符串，用宽松比较避免筛不出门店
+      list = list.filter((r) => r.regionId == params.regionId)
     }
-  } else if (params.partnerId != null) {
+  } else if (isActiveFilter(params.partnerId)) {
     // 当已选合作商但未选区域时，仅显示该合作商下无区域门店
     list = list.filter((r) => r.regionId == null)
   }

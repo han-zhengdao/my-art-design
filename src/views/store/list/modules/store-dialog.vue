@@ -3,6 +3,7 @@
     v-model="visible"
     :title="dialogTitle"
     width="680px"
+    align-center
     destroy-on-close
     @closed="handleClosed"
   >
@@ -60,7 +61,7 @@
         <ElSelect
           v-model="form.regionId"
           class="w-full"
-          :disabled="!form.partnerId"
+          :disabled="!form.partnerId || lockedRegionId != null"
           :placeholder="form.partnerId ? '请选择区域（可选）' : '请先选择合作商'"
         >
           <ElOption
@@ -78,21 +79,67 @@
         </ElSelect>
       </ElFormItem>
       <ElFormItem label="门店坐标" prop="storeCoordinateText">
-        <ElInput
-          v-model="form.storeCoordinateText"
-          placeholder="格式：经度,纬度；如 121.503,31.236"
-        />
+        <div class="flex w-full flex-col gap-2 sm:flex-row sm:items-center">
+          <ElInput
+            v-model="form.storeCoordinateText"
+            class="flex-1"
+            placeholder="经度,纬度；可点击右侧在地图上选点"
+          />
+          <ElButton type="primary" plain @click="openMapPicker('coordinate')">地图选点</ElButton>
+        </div>
       </ElFormItem>
       <ElFormItem label="电子围栏" prop="geofenceText">
-        <ElInput
-          v-model="form.geofenceText"
-          type="textarea"
-          :rows="3"
-          placeholder="多点格式：lng,lat;lng,lat;lng,lat"
-        />
+        <div class="flex w-full flex-col gap-2">
+          <div class="flex w-full flex-col gap-2 sm:flex-row sm:items-start">
+            <ElInput
+              v-model="form.geofenceText"
+              class="flex-1"
+              type="textarea"
+              :rows="3"
+              placeholder="至少 3 个顶点：lng,lat;lng,lat;… 可通过地图绘制填入"
+            />
+            <ElButton type="primary" plain @click="openMapPicker('geofence')"
+              >地图绘制围栏</ElButton
+            >
+          </div>
+          <span class="text-xs text-[var(--el-text-color-secondary)]">
+            与上方「地图选择」一致：在子窗口中操作地图，确定后填入此处，不影响其它页面。
+          </span>
+        </div>
       </ElFormItem>
       <ElFormItem label="时区" prop="timezone">
-        <ElInput v-model="form.timezone" placeholder="如 Asia/Shanghai" />
+        <div class="w-full">
+          <ElSelect
+            v-model="form.timezone"
+            class="w-full"
+            filterable
+            placeholder="搜索城市、地区或在分组中选择"
+          >
+            <ElOptionGroup v-for="group in timezoneGroups" :key="group.label" :label="group.label">
+              <ElOption
+                v-for="opt in group.options"
+                :key="opt.value"
+                :label="opt.label"
+                :value="opt.value"
+              />
+            </ElOptionGroup>
+          </ElSelect>
+          <div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
+            <span class="text-xs text-[var(--el-text-color-secondary)]">
+              <template v-if="mode === 'add'">新增时默认已选本机时区（由浏览器提供）。</template>
+              优先在「常用」中选择；其余按地区分组，支持输入关键字筛选。
+            </span>
+            <ElButton
+              v-if="suggestedTimezone"
+              link
+              type="primary"
+              class="!h-auto !p-0 text-xs"
+              @click="form.timezone = suggestedTimezone"
+            >
+              填入{{ countryNameForSuggest }}推荐时区
+            </ElButton>
+          </div>
+        </div>
       </ElFormItem>
     </ElForm>
 
@@ -151,7 +198,9 @@
       <ElDescriptionsItem label="电子围栏">{{
         geofenceToText(detailRow?.geofence)
       }}</ElDescriptionsItem>
-      <ElDescriptionsItem label="时区">{{ detailRow?.timezone }}</ElDescriptionsItem>
+      <ElDescriptionsItem label="时区">{{
+        formatTimezoneLabel(detailRow?.timezone)
+      }}</ElDescriptionsItem>
       <ElDescriptionsItem label="DC余额">{{ detailRow?.dcBalance }}</ElDescriptionsItem>
       <ElDescriptionsItem label="车轮总数">{{ detailRow?.wheelCount }}</ElDescriptionsItem>
       <ElDescriptionsItem label="信标总数">{{ detailRow?.beaconCount }}</ElDescriptionsItem>
@@ -175,12 +224,28 @@
       </template>
     </template>
   </ElDialog>
+
+  <StoreMapPickerDialog
+    v-model="mapPickerVisible"
+    :map-provider="form.mapProvider"
+    :pick-mode="mapPickMode"
+    :initial-coordinate-text="form.storeCoordinateText"
+    :initial-geofence-text="form.geofenceText"
+    @confirm="onMapPickerConfirm"
+  />
 </template>
 
 <script setup lang="ts">
   import { computed, reactive, ref, watch } from 'vue'
   import { fetchPartnersByCountry } from '@/api/partner'
   import { fetchRegionList } from '@/api/region'
+  import {
+    formatTimezoneLabel,
+    getBrowserLocalTimeZone,
+    getGroupedTimezoneSelectOptions,
+    getSuggestedTimezoneForCountry
+  } from '@/utils/timezone-options'
+  import StoreMapPickerDialog from './store-map-picker-dialog.vue'
   import type { FormInstance, FormRules } from 'element-plus'
 
   type DialogMode = 'add' | 'edit' | 'detail'
@@ -197,6 +262,8 @@
     row?: Api.Store.StoreListItem | null
     countryCode?: string
     lockedPartnerId?: number
+    /** 区域管理员新增/编辑时锁定为本人管辖区域 */
+    lockedRegionId?: number
   }>()
 
   const emit = defineEmits<{
@@ -231,6 +298,10 @@
   const partnerOptions = ref<Api.Partner.PartnerListItem[]>([])
   const regionOptions = ref<{ label: string; value: number | 'NONE' }[]>([])
 
+  /** 子窗口地图选点/围栏（append-to-body，叠在主弹窗之上） */
+  const mapPickerVisible = ref(false)
+  const mapPickMode = ref<'coordinate' | 'geofence'>('coordinate')
+
   const showStoreForm = computed(() => {
     if (props.mode === 'edit') return true
     if (props.mode === 'add') return addStep.value === 0
@@ -251,6 +322,17 @@
     timezone: ''
   })
 
+  /** 常用置顶 + 按地区分组；编辑时旧值不在标准列表则单独一组 */
+  const timezoneGroups = computed(() => getGroupedTimezoneSelectOptions(form.timezone))
+
+  const suggestedTimezone = computed(() => getSuggestedTimezoneForCountry(form.countryCode))
+
+  const countryNameForSuggest = computed(() => {
+    const code = form.countryCode
+    if (!code) return ''
+    return countryOptions.find((c) => c.value === code)?.label ?? code
+  })
+
   const accountForm = reactive({
     userNickName: '',
     loginEmail: '',
@@ -269,10 +351,10 @@
   const requiredGeofence = (_: unknown, value: string, callback: (err?: Error) => void) => {
     try {
       const points = parsePoints(value)
-      if (points.length < 1) throw new Error('empty')
+      if (points.length < 3) throw new Error('need3')
       callback()
     } catch {
-      callback(new Error('请输入正确围栏格式：lng,lat;lng,lat'))
+      callback(new Error('围栏至少 3 个顶点，格式：lng,lat;lng,lat;…'))
     }
   }
 
@@ -284,9 +366,11 @@
     countryCode: [{ required: true, message: '请选择所属国家', trigger: 'change' }],
     partnerId: [{ required: true, message: '请选择所属合作商', trigger: 'change' }],
     mapProvider: [{ required: true, message: '请选择地图', trigger: 'change' }],
-    storeCoordinateText: [{ required: true, validator: requiredCoordinate, trigger: 'blur' }],
-    geofenceText: [{ required: true, validator: requiredGeofence, trigger: 'blur' }],
-    timezone: [{ required: true, message: '请输入时区', trigger: 'blur' }]
+    storeCoordinateText: [
+      { required: true, validator: requiredCoordinate, trigger: ['blur', 'change'] }
+    ],
+    geofenceText: [{ required: true, validator: requiredGeofence, trigger: ['blur', 'change'] }],
+    timezone: [{ required: true, message: '请选择时区', trigger: 'change' }]
   }
 
   const accountRules: FormRules = {
@@ -332,6 +416,23 @@
     return points.map((p) => `${p.lng},${p.lat}`).join('; ')
   }
 
+  function openMapPicker(mode: 'coordinate' | 'geofence') {
+    mapPickMode.value = mode
+    mapPickerVisible.value = true
+  }
+
+  async function onMapPickerConfirm(text: string) {
+    if (mapPickMode.value === 'coordinate') {
+      form.storeCoordinateText = text
+      await nextTick()
+      await storeFormRef.value?.clearValidate('storeCoordinateText')
+    } else {
+      form.geofenceText = text
+      await nextTick()
+      await storeFormRef.value?.clearValidate('geofenceText')
+    }
+  }
+
   function resetAccountForm() {
     accountForm.userNickName = ''
     accountForm.loginEmail = ''
@@ -366,7 +467,16 @@
       partnerId: form.partnerId,
       countryCode: form.countryCode
     })
-    const opts = list.records.map((r) => ({ label: r.regionName, value: r.id as number }))
+    let records = list.records
+    if (props.lockedRegionId != null) {
+      records = records.filter((r) => r.id === props.lockedRegionId)
+    }
+    const opts = records.map((r) => ({ label: r.regionName, value: r.id as number }))
+    if (props.lockedRegionId != null) {
+      regionOptions.value = opts
+      form.regionId = props.lockedRegionId
+      return
+    }
     regionOptions.value = [...opts, { label: '无区域', value: 'NONE' }]
     if (form.regionId != null && !regionOptions.value.some((o) => o.value === form.regionId)) {
       form.regionId = 'NONE'
@@ -377,7 +487,7 @@
   }
 
   watch(
-    () => [visible.value, form.countryCode, props.lockedPartnerId] as const,
+    () => [visible.value, form.countryCode, props.lockedPartnerId, props.lockedRegionId] as const,
     async () => {
       if (!visible.value || props.mode === 'detail') return
       await loadPartners()
@@ -411,15 +521,26 @@
         form.phone = ''
         form.countryCode = searchCountryCode
         form.partnerId = props.lockedPartnerId
-        form.regionId = 'NONE'
+        form.regionId = props.lockedRegionId != null ? props.lockedRegionId : 'NONE'
         form.mapProvider = 'TENCENT'
         form.storeCoordinateText = ''
         form.geofenceText = ''
-        form.timezone = ''
+        form.timezone = getBrowserLocalTimeZone() ?? ''
         resetAccountForm()
       }
     },
     { immediate: true }
+  )
+
+  /** 已选国家且时区仍为空时自动填入推荐 IANA（不覆盖用户已选） */
+  watch(
+    () => [visible.value, props.mode, form.countryCode, form.timezone] as const,
+    () => {
+      if (!visible.value || props.mode === 'detail') return
+      if (!form.countryCode || form.timezone) return
+      const s = getSuggestedTimezoneForCountry(form.countryCode)
+      if (s) form.timezone = s
+    }
   )
 
   const handleClosed = () => {

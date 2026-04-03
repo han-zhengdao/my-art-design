@@ -40,16 +40,6 @@ export const templateRoutes: AppRouteRecord = {
       }
     },
     {
-      path: 'map',
-      name: 'Map',
-      component: '/template/map',
-      meta: {
-        title: 'menus.template.map',
-        icon: 'ri:map-pin-line',
-        keepAlive: true
-      }
-    },
-    {
       path: 'chat',
       name: 'Chat',
       component: '/template/chat',

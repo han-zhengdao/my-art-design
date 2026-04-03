@@ -14,6 +14,15 @@
         <template #left>
           <ElSpace wrap>
             <ElButton type="primary" @click="showDialog('add')" v-ripple>新增用户</ElButton>
+            <ElButton
+              v-if="isSuperAdmin"
+              type="danger"
+              plain
+              :disabled="selectedRows.length === 0"
+              @click="handleBatchDelete"
+            >
+              批量删除
+            </ElButton>
           </ElSpace>
         </template>
       </ArtTableHeader>
@@ -49,7 +58,7 @@
   import { ElMessage, ElMessageBox, ElTag } from 'element-plus'
   import { DialogType } from '@/types'
   import { useUserStore } from '@/store/modules/user'
-  import { fetchMockUserList } from '@/api/user-mock'
+  import { deleteMockUsersByIds, fetchMockUserList } from '@/api/user-mock'
 
   defineOptions({ name: 'User' })
 
@@ -115,6 +124,25 @@
     return row.updateTime || '--'
   }
 
+  /** 与单条删除一致：返回 null 表示允许删除，否则为拦截原因 */
+  const getUserDeleteBlockReason = (row: UserListItem): string | null => {
+    if (row.status !== '4') return '仅已注销的用户可删除'
+    const logoutStr = getLogoutDate(row)
+    if (!logoutStr) {
+      return '缺少注销日期，无法删除'
+    }
+    const logoutTime = new Date(logoutStr).getTime()
+    if (Number.isNaN(logoutTime)) {
+      return '注销日期格式不正确，无法删除'
+    }
+    const now = Date.now()
+    const oneYearMs = 365 * 24 * 60 * 60 * 1000
+    if (now - logoutTime < oneYearMs) {
+      return '用户注销未满一年，暂不允许删除'
+    }
+    return null
+  }
+
   const {
     columns,
     columnChecks,
@@ -142,6 +170,7 @@
       //   size: 'pageSize'
       // },
       columnsFactory: () => [
+        { type: 'selection' },
         { type: 'index', width: 60, label: '序号' }, // 序号
         {
           prop: 'id',
@@ -246,7 +275,6 @@
    * 显示用户弹窗
    */
   const showDialog = (type: DialogType, row?: UserListItem): void => {
-    console.log('打开弹窗:', { type, row })
     dialogType.value = type
     currentUserData.value = row || {}
     nextTick(() => {
@@ -262,24 +290,9 @@
       ElMessage.warning('仅平台超级管理员可删除用户')
       return
     }
-    if (row.status !== '4') {
-      ElMessage.warning('仅已注销的用户可删除')
-      return
-    }
-    const logoutStr = getLogoutDate(row)
-    if (!logoutStr) {
-      ElMessage.warning('缺少注销日期，无法删除')
-      return
-    }
-    const logoutTime = new Date(logoutStr).getTime()
-    if (Number.isNaN(logoutTime)) {
-      ElMessage.warning('注销日期格式不正确，无法删除')
-      return
-    }
-    const now = Date.now()
-    const oneYearMs = 365 * 24 * 60 * 60 * 1000
-    if (now - logoutTime < oneYearMs) {
-      ElMessage.warning('用户注销未满一年，暂不允许删除')
+    const reason = getUserDeleteBlockReason(row)
+    if (reason) {
+      ElMessage.warning(reason)
       return
     }
 
@@ -288,8 +301,37 @@
       cancelButtonText: '取消',
       type: 'warning'
     }).then(() => {
-      // 此处预留给真实删除接口
+      deleteMockUsersByIds([row.id])
       ElMessage.success('删除成功')
+      refreshData()
+    })
+  }
+
+  const handleBatchDelete = (): void => {
+    if (!isSuperAdmin.value) {
+      ElMessage.warning('仅平台超级管理员可删除用户')
+      return
+    }
+    if (selectedRows.value.length === 0) {
+      ElMessage.warning('请先选择要删除的用户')
+      return
+    }
+    // 与单条删除规则一致：选中项须全部为「已注销满一年」等可删状态，否则整批不允许删除
+    for (const row of selectedRows.value) {
+      if (getUserDeleteBlockReason(row)) {
+        ElMessage.warning('用户未注销或注销未满一年不允许删除')
+        return
+      }
+    }
+    const ids = selectedRows.value.map((r) => r.id)
+    ElMessageBox.confirm(`确定永久删除选中的 ${ids.length} 个用户吗？`, '批量删除用户', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    }).then(() => {
+      deleteMockUsersByIds(ids)
+      ElMessage.success('删除成功')
+      selectedRows.value = []
       refreshData()
     })
   }
@@ -311,6 +353,5 @@
    */
   const handleSelectionChange = (selection: UserListItem[]): void => {
     selectedRows.value = selection
-    console.log('选中行数据:', selectedRows.value)
   }
 </script>

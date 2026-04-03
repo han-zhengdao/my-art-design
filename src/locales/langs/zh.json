@@ -250,16 +250,8 @@
       "cards": "卡片",
       "banners": "横幅",
       "charts": "图表",
-      "map": "地图",
       "calendar": "日历",
       "pricing": "定价"
-    },
-    "article": {
-      "title": "文章管理",
-      "articleList": "文章列表",
-      "articleDetail": "文章详情",
-      "comment": "留言管理",
-      "articlePublish": "文章发布"
     },
     "result": {
       "title": "结果页面",
@@ -306,6 +298,10 @@
     "store": {
       "title": "门店管理",
       "list": "门店列表"
+    },
+    "beacon": {
+      "title": "信标管理",
+      "list": "信标列表"
     },
     "safeguard": {
       "title": "运维管理",

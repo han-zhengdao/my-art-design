@@ -250,16 +250,8 @@
       "cards": "Cards",
       "banners": "Banners",
       "charts": "Charts",
-      "map": "Map",
       "calendar": "Calendar",
       "pricing": "Pricing"
-    },
-    "article": {
-      "title": "Article",
-      "articleList": "Article List",
-      "articleDetail": "Article Detail",
-      "comment": "Comment",
-      "articlePublish": "Article Publish"
     },
     "result": {
       "title": "Result Page",
@@ -306,6 +298,10 @@
     "store": {
       "title": "Store Management",
       "list": "Store List"
+    },
+    "beacon": {
+      "title": "Beacon Management",
+      "list": "Beacon List"
     },
     "safeguard": {
       "title": "Safeguard",

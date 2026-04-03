@@ -114,12 +114,6 @@ const fastEnterConfig: FastEnterConfig = {
       enabled: true,
       order: 5,
       routeName: 'UserCenter'
-    },
-    {
-      name: '留言管理',
-      enabled: true,
-      order: 6,
-      routeName: 'ArticleComment'
     }
   ]
 }

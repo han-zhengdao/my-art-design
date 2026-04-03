@@ -15,7 +15,7 @@ export const regionRoutes: AppRouteRecord = {
     {
       path: 'list',
       name: 'RegionList',
-      component: '/partner/region/list',
+      component: '/region/list',
       meta: {
         title: 'menus.region.list',
         icon: 'ri:list-check',

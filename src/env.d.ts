@@ -50,19 +50,34 @@ declare global {
       maps: {
         LatLng: new (lat: number, lng: number) => unknown
         Map: new (el: HTMLElement, opts: Record<string, unknown>) => unknown
-        event: { trigger: (map: unknown, evt: string) => void }
+        Marker: new (opts: Record<string, unknown>) => unknown
+        Polyline: new (opts: Record<string, unknown>) => unknown
+        event: {
+          trigger: (map: unknown, evt: string) => void
+          addListener: (
+            map: unknown,
+            evt: string,
+            handler: (e: { latLng: { getLat: () => number; getLng: () => number } }) => void
+          ) => unknown
+          removeListener: (listener: unknown) => void
+        }
       }
     }
     google?: {
       maps: {
         Map: new (el: HTMLElement, opts: Record<string, unknown>) => unknown
+        Marker: new (opts: Record<string, unknown>) => unknown
+        Polyline: new (opts: Record<string, unknown>) => unknown
         event: { trigger: (map: object, evt: string) => void }
       }
     }
-    /** 腾讯地图 JavaScript API GL */
+    /** 腾讯地图 JavaScript API GL（仅声明本项目中用到的类） */
     TMap?: {
       LatLng: new (lat: number, lng: number) => unknown
       Map: new (el: HTMLElement, opts: Record<string, unknown>) => unknown
+      MultiMarker: new (opts: Record<string, unknown>) => unknown
+      MultiPolyline: new (opts: Record<string, unknown>) => unknown
+      PolylineStyle: new (opts: Record<string, unknown>) => unknown
     }
   }
 }

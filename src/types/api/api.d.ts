@@ -84,6 +84,10 @@ declare namespace Api {
       avatar?: string
       /** 合作商管理员绑定的合作商 ID（后端返回时用于数据范围） */
       partnerId?: number
+      /** 区域管理员绑定的区域 ID（后端返回时用于数据范围） */
+      regionId?: number
+      /** 门店管理员绑定的门店 ID（后端返回时用于数据范围；可选） */
+      storeId?: number
     }
   }
 
@@ -268,6 +272,51 @@ declare namespace Api {
         partnerId?: number
         /** NONE 表示查询无区域 */
         regionId?: number | 'NONE'
+      }
+    >
+  }
+
+  /** 信标管理 */
+  namespace Beacon {
+    interface GeoPoint {
+      lng: number
+      lat: number
+    }
+
+    interface BeaconListItem {
+      id: number
+      /** 信标 MAC */
+      beaconMac: string
+      /** 区域编号（门店内位置点标识） */
+      regionCode: string
+      /** GPS 坐标（lng,lat） */
+      gpsCoordinate: GeoPoint
+      /** 所属门店 */
+      storeId: number
+      storeName: string
+      /** 所属区域 */
+      regionId?: number | null
+      regionName: string
+      /** 所属合作商 */
+      partnerId: number
+      partnerName: string
+      /** 所属国家 */
+      countryCode: string
+      country: string
+      createTime: string
+      operatorName: string
+    }
+
+    type BeaconList = Api.Common.PaginatedResponse<BeaconListItem>
+
+    type BeaconSearchParams = Partial<
+      Api.Common.CommonSearchParams & {
+        beaconMac?: string
+        countryCode?: string
+        partnerId?: number
+        /** NONE 表示查询无区域 */
+        regionId?: number | 'NONE'
+        storeId?: number
       }
     >
   }

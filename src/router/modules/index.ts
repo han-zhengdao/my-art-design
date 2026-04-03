@@ -7,7 +7,7 @@ import { systemRoutes } from './system'
 import { partnerRoutes } from './partner'
 import { regionRoutes } from './region'
 import { storeRoutes } from './store'
-import { articleRoutes } from './article'
+import { beaconRoutes } from './beacon'
 import { resultRoutes } from './result'
 import { exceptionRoutes } from './exception'
 import { safeguardRoutes } from './safeguard'
@@ -22,10 +22,10 @@ export const routeModules: AppRouteRecord[] = [
   partnerRoutes,
   regionRoutes,
   storeRoutes,
+  beaconRoutes,
   templateRoutes,
   widgetsRoutes,
   examplesRoutes,
-  articleRoutes,
   resultRoutes,
   exceptionRoutes,
   safeguardRoutes,

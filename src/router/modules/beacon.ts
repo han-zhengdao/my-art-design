@@ -1,23 +1,23 @@
 import { AppRouteRecord } from '@/types/router'
 
-/** 门店管理（顺序在区域管理之后） */
-export const storeRoutes: AppRouteRecord = {
-  path: '/store',
-  name: 'Store',
+/** 信标管理（与门店管理并列，建议顺序在门店管理之后） */
+export const beaconRoutes: AppRouteRecord = {
+  path: '/beacon',
+  name: 'Beacon',
   component: '/index/index',
-  redirect: '/store/list',
+  redirect: '/beacon/list',
   meta: {
-    title: 'menus.store.title',
-    icon: 'ri:store-2-line',
-    roles: ['R_SUPER', 'PARTNER_ADMIN', 'REGION_ADMIN']
+    title: 'menus.beacon.title',
+    icon: 'ri:signal-tower-line',
+    roles: ['R_SUPER', 'STORE_ADMIN']
   },
   children: [
     {
       path: 'list',
-      name: 'StoreList',
-      component: '/store/list',
+      name: 'BeaconList',
+      component: '/beacon/list',
       meta: {
-        title: 'menus.store.list',
+        title: 'menus.beacon.list',
         icon: 'ri:list-check-3',
         keepAlive: true,
         authList: [

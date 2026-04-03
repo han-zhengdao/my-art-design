@@ -3,6 +3,7 @@
     v-model="visible"
     :title="dialogTitle"
     width="600px"
+    align-center
     destroy-on-close
     @closed="handleClosed"
   >

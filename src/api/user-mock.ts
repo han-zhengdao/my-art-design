@@ -265,3 +265,9 @@ export function appendStoreAdminUserFromStore(payload: {
   }
   mockUserRows = [row, ...mockUserRows]
 }
+
+/** 从本地 mock 中移除用户（用户管理删除） */
+export function deleteMockUsersByIds(ids: number[]): void {
+  const set = new Set(ids)
+  mockUserRows = mockUserRows.filter((r) => !set.has(r.id))
+}

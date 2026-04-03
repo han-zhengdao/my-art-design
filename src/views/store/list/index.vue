@@ -39,6 +39,7 @@
       :row="currentRow"
       :country-code="searchForm.countryCode"
       :locked-partner-id="lockedPartnerId"
+      :locked-region-id="lockedRegionId"
       @submit="handleDialogSubmit"
     />
   </div>
@@ -79,28 +80,55 @@
     regionId: undefined
   })
 
-  /** 平台超级管理员或门店管理员（可管理门店） */
+  /**
+   * 可进入门店操作区（新增/批量删除等）：超管、合作商管理员、区域管理员
+   * 行级数据权限见 canManageStoreRow
+   */
   const canOperateStore = computed(() => {
     const roles = userStore.info.roles ?? []
-    return roles.includes('R_SUPER') || roles.includes('STORE_ADMIN')
+    return (
+      roles.includes('R_SUPER') || roles.includes('PARTNER_ADMIN') || roles.includes('REGION_ADMIN')
+    )
   })
 
   const lockedPartnerId = computed(() => {
     const roles = userStore.info.roles ?? []
     if (roles.includes('R_SUPER')) return undefined
-    if (roles.includes('STORE_ADMIN') && userStore.info.partnerId != null) {
+    if (
+      (roles.includes('PARTNER_ADMIN') || roles.includes('REGION_ADMIN')) &&
+      userStore.info.partnerId != null
+    ) {
       return userStore.info.partnerId
     }
     return undefined
   })
 
-  function canManagePartnerRow(partnerId: number): boolean {
+  /** 区域管理员新增门店时锁定所属区域 */
+  const lockedRegionId = computed(() => {
+    const roles = userStore.info.roles ?? []
+    if (roles.includes('R_SUPER')) return undefined
+    if (roles.includes('REGION_ADMIN') && userStore.info.regionId != null) {
+      return userStore.info.regionId
+    }
+    return undefined
+  })
+
+  /**
+   * 有区域：仅超管或该区域管理员可管；
+   * 无区域：仅超管或该合作商管理员可管。
+   */
+  function canManageStoreRow(row: StoreItem): boolean {
     const roles = userStore.info.roles ?? []
     if (roles.includes('R_SUPER')) return true
-    if (!roles.includes('STORE_ADMIN')) return false
+    const hasRegion = row.regionId != null
+    if (hasRegion) {
+      if (!roles.includes('REGION_ADMIN')) return false
+      return userStore.info.regionId === row.regionId
+    }
+    if (!roles.includes('PARTNER_ADMIN')) return false
     const scoped = userStore.info.partnerId
     if (scoped == null) return true
-    return scoped === partnerId
+    return scoped === row.partnerId
   }
 
   const hasStoreAssetData = (row: StoreItem) =>
@@ -192,13 +220,13 @@
                   onClick: () => openDialog('detail', row)
                 }),
                 canOperateStore.value &&
-                  canManagePartnerRow(row.partnerId) &&
+                  canManageStoreRow(row) &&
                   h(ArtButtonTable, {
                     type: 'edit',
                     onClick: () => openDialog('edit', row)
                   }),
                 canOperateStore.value &&
-                  canManagePartnerRow(row.partnerId) &&
+                  canManageStoreRow(row) &&
                   h(ArtButtonTable, {
                     type: 'delete',
                     onClick: () => handleDelete(row)
@@ -231,7 +259,7 @@
   }
 
   const handleDelete = (row: StoreItem) => {
-    if (!canManagePartnerRow(row.partnerId)) {
+    if (!canManageStoreRow(row)) {
       ElMessage.warning('无权限删除该门店')
       return
     }
@@ -252,8 +280,8 @@
 
   const handleBatchDelete = () => {
     if (!canOperateStore.value) return
-    const manageable = selectedRows.value.filter((r) => canManagePartnerRow(r.partnerId))
-    const blocked = selectedRows.value.filter((r) => !canManagePartnerRow(r.partnerId))
+    const manageable = selectedRows.value.filter((r) => canManageStoreRow(r))
+    const blocked = selectedRows.value.filter((r) => !canManageStoreRow(r))
     if (blocked.length) {
       ElMessage.warning(`有 ${blocked.length} 条记录无权限删除，已跳过`)
     }
