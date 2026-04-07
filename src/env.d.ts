@@ -75,6 +75,7 @@ declare global {
     TMap?: {
       LatLng: new (lat: number, lng: number) => unknown
       Map: new (el: HTMLElement, opts: Record<string, unknown>) => unknown
+      MarkerStyle: new (opts: Record<string, unknown>) => unknown
       MultiMarker: new (opts: Record<string, unknown>) => unknown
       MultiPolyline: new (opts: Record<string, unknown>) => unknown
       PolylineStyle: new (opts: Record<string, unknown>) => unknown

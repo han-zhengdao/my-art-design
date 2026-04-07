@@ -1,16 +1,11 @@
 import { AppRouteRecord } from '@/types/router'
 import { dashboardRoutes } from './dashboard'
-import { templateRoutes } from './template'
-import { widgetsRoutes } from './widgets'
-import { examplesRoutes } from './examples'
 import { systemRoutes } from './system'
 import { partnerRoutes } from './partner'
 import { regionRoutes } from './region'
 import { storeRoutes } from './store'
+import { wheelRoutes } from './wheel'
 import { beaconRoutes } from './beacon'
-import { resultRoutes } from './result'
-import { exceptionRoutes } from './exception'
-import { safeguardRoutes } from './safeguard'
 import { helpRoutes } from './help'
 
 /**
@@ -22,12 +17,7 @@ export const routeModules: AppRouteRecord[] = [
   partnerRoutes,
   regionRoutes,
   storeRoutes,
+  wheelRoutes,
   beaconRoutes,
-  templateRoutes,
-  widgetsRoutes,
-  examplesRoutes,
-  resultRoutes,
-  exceptionRoutes,
-  safeguardRoutes,
-  ...helpRoutes
+  helpRoutes
 ]

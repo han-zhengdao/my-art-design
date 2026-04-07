@@ -34,10 +34,21 @@
  * @module utils/sys/upgrade
  * @author Art Design Pro Team
  */
-import { upgradeLogList } from '@/mock/upgrade/changeLog'
 import { ElNotification } from 'element-plus'
 import { useUserStore } from '@/store/modules/user'
 import { StorageConfig } from '@/utils/storage/storage-config'
+import { ref } from 'vue'
+
+type UpgradeLogItem = {
+  version: string
+  title: string
+  requireReLogin?: boolean
+}
+
+/**
+ * 更新日志模块已移除后，升级流程降级为“仅版本迁移/清理旧数据”，不再展示更新日志弹窗。
+ */
+const upgradeLogList = ref<UpgradeLogItem[]>([])
 
 /**
  * 版本管理器

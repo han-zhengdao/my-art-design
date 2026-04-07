@@ -320,4 +320,62 @@ declare namespace Api {
       }
     >
   }
+
+  /** 车轮管理 */
+  namespace Wheel {
+    type DeviceStatus = 'IN_USE' | 'SCRAPPED' | 'LOST'
+    type OnlineStatus = 'ONLINE' | 'OFFLINE'
+    type GpsAccuracy = 'PRECISE' | 'IMPRECISE'
+    type FenceStatus = 'INSIDE' | 'OUTSIDE'
+
+    interface WheelListItem {
+      id: number
+      /** DevEUI，全局唯一 */
+      devEui: string
+      storeId: number
+      storeName: string
+      regionId?: number | null
+      regionName: string
+      partnerId: number
+      partnerName: string
+      countryCode: string
+      country: string
+      deviceStatus: DeviceStatus
+      onlineStatus: OnlineStatus
+      batteryLevel: number
+      gpsAccuracy: GpsAccuracy
+      beaconSignal: number
+      loraSignal: number
+      /** 信标 MAC 对应坐标 */
+      beaconMacCoordinate: Store.GeoPoint
+      currentPosition: Store.GeoPoint
+      fenceStatus: FenceStatus
+      /** 出围栏时长（秒） */
+      outFenceDurationSec: number
+      /** 出围栏距离（米） */
+      outFenceDistanceM: number
+      lastPosition: Store.GeoPoint
+      lastCommTime: string
+      createTime: string
+      operatorName: string
+    }
+
+    type WheelList = Api.Common.PaginatedResponse<WheelListItem>
+
+    type WheelSearchParams = Partial<
+      Api.Common.CommonSearchParams & {
+        devEui?: string
+        countryCode?: string
+        partnerId?: number
+        regionId?: number | 'NONE'
+        storeId?: number
+        deviceStatus?: DeviceStatus
+        gpsAccuracy?: GpsAccuracy
+        fenceStatus?: FenceStatus
+        /** 排序字段：batteryLevel | beaconSignal | loraSignal */
+        sortField?: string
+        sortOrder?: 'ascending' | 'descending'
+      }
+    >
+  }
 }

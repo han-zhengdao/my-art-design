@@ -67,18 +67,6 @@
           </li>
         </ul>
 
-        <!-- 待办 -->
-        <ul v-show="barActiveIndex === 2">
-          <li
-            v-for="(item, index) in pendingList"
-            :key="index"
-            class="box-border px-5 py-3.5 last:border-b-0"
-          >
-            <h4>{{ item.title }}</h4>
-            <p class="text-xs text-g-500">{{ item.time }}</p>
-          </li>
-        </ul>
-
         <!-- 空状态 -->
         <div
           v-show="currentTabIsEmpty"
@@ -106,14 +94,6 @@
   import { computed, ref, watch, type Ref, type ComputedRef } from 'vue'
   import { useI18n } from 'vue-i18n'
 
-  // 导入头像图片
-  import avatar1 from '@/assets/images/avatar/avatar1.webp'
-  import avatar2 from '@/assets/images/avatar/avatar2.webp'
-  import avatar3 from '@/assets/images/avatar/avatar3.webp'
-  import avatar4 from '@/assets/images/avatar/avatar4.webp'
-  import avatar5 from '@/assets/images/avatar/avatar5.webp'
-  import avatar6 from '@/assets/images/avatar/avatar6.webp'
-
   defineOptions({ name: 'ArtNotification' })
 
   interface NoticeItem {
@@ -132,13 +112,6 @@
     time: string
     /** 头像 */
     avatar: string
-  }
-
-  interface PendingItem {
-    /** 标题 */
-    title: string
-    /** 时间 */
-    time: string
   }
 
   interface BarItem {
@@ -173,75 +146,10 @@
 
   const useNotificationData = () => {
     // 通知数据
-    const noticeList = ref<NoticeItem[]>([
-      {
-        title: '新增国际化',
-        time: '2024-6-13 0:10',
-        type: 'notice'
-      },
-      {
-        title: '冷月呆呆给你发了一条消息',
-        time: '2024-4-21 8:05',
-        type: 'message'
-      },
-      {
-        title: '小肥猪关注了你',
-        time: '2020-3-17 21:12',
-        type: 'collection'
-      },
-      {
-        title: '新增使用文档',
-        time: '2024-02-14 0:20',
-        type: 'notice'
-      },
-      {
-        title: '小肥猪给你发了一封邮件',
-        time: '2024-1-20 0:15',
-        type: 'email'
-      },
-      {
-        title: '菜单mock本地真实数据',
-        time: '2024-1-17 22:06',
-        type: 'notice'
-      }
-    ])
+    const noticeList = ref<NoticeItem[]>([])
 
     // 消息数据
-    const msgList = ref<MessageItem[]>([
-      {
-        title: '池不胖 关注了你',
-        time: '2021-2-26 23:50',
-        avatar: avatar1
-      },
-      {
-        title: '唐不苦 关注了你',
-        time: '2021-2-21 8:05',
-        avatar: avatar2
-      },
-      {
-        title: '中小鱼 关注了你',
-        time: '2020-1-17 21:12',
-        avatar: avatar3
-      },
-      {
-        title: '何小荷 关注了你',
-        time: '2021-01-14 0:20',
-        avatar: avatar4
-      },
-      {
-        title: '誶誶淰 关注了你',
-        time: '2020-12-20 0:15',
-        avatar: avatar5
-      },
-      {
-        title: '冷月呆呆 关注了你',
-        time: '2020-12-17 22:06',
-        avatar: avatar6
-      }
-    ])
-
-    // 待办数据
-    const pendingList = ref<PendingItem[]>([])
+    const msgList = ref<MessageItem[]>([])
 
     // 标签栏数据
     const barList = computed<BarItem[]>(() => [
@@ -252,17 +160,12 @@
       {
         name: computed(() => t('notice.bar[1]')),
         num: msgList.value.length
-      },
-      {
-        name: computed(() => t('notice.bar[2]')),
-        num: pendingList.value.length
       }
     ])
 
     return {
       noticeList,
       msgList,
-      pendingList,
       barList
     }
   }
@@ -331,11 +234,9 @@
   const useTabManagement = (
     noticeList: Ref<NoticeItem[]>,
     msgList: Ref<MessageItem[]>,
-    pendingList: Ref<PendingItem[]>,
     businessHandlers: {
       handleNoticeAll: () => void
       handleMsgAll: () => void
-      handlePendingAll: () => void
     }
   ) => {
     const changeBar = (index: number) => {
@@ -344,7 +245,7 @@
 
     // 检查当前标签页是否为空
     const currentTabIsEmpty = computed(() => {
-      const tabDataMap = [noticeList.value, msgList.value, pendingList.value]
+      const tabDataMap = [noticeList.value, msgList.value]
 
       const currentData = tabDataMap[barActiveIndex.value]
       return currentData && currentData.length === 0
@@ -354,8 +255,7 @@
       // 查看全部处理器映射
       const viewAllHandlers: Record<number, () => void> = {
         0: businessHandlers.handleNoticeAll,
-        1: businessHandlers.handleMsgAll,
-        2: businessHandlers.handlePendingAll
+        1: businessHandlers.handleMsgAll
       }
 
       const handler = viewAllHandlers[barActiveIndex.value]
@@ -384,29 +284,21 @@
       console.log('查看全部消息')
     }
 
-    const handlePendingAll = () => {
-      // 处理查看全部待办
-      console.log('查看全部待办')
-    }
-
     return {
       handleNoticeAll,
-      handleMsgAll,
-      handlePendingAll
+      handleMsgAll
     }
   }
 
   // 组合所有逻辑
-  const { noticeList, msgList, pendingList, barList } = useNotificationData()
+  const { noticeList, msgList, barList } = useNotificationData()
   const { getNoticeStyle } = useNotificationStyles()
   const { showNotice } = useNotificationAnimation()
-  const { handleNoticeAll, handleMsgAll, handlePendingAll } = useBusinessLogic()
-  const { changeBar, currentTabIsEmpty, handleViewAll } = useTabManagement(
-    noticeList,
-    msgList,
-    pendingList,
-    { handleNoticeAll, handleMsgAll, handlePendingAll }
-  )
+  const { handleNoticeAll, handleMsgAll } = useBusinessLogic()
+  const { changeBar, currentTabIsEmpty, handleViewAll } = useTabManagement(noticeList, msgList, {
+    handleNoticeAll,
+    handleMsgAll
+  })
 
   // 监听属性变化
   watch(

@@ -22,16 +22,6 @@ export const dashboardRoutes: AppRouteRecord = {
       }
     },
     {
-      path: 'map-view',
-      name: 'DashboardMapView',
-      component: '/dashboard/map-view',
-      meta: {
-        title: 'menus.dashboard.mapView',
-        icon: 'ri:map-pin-line',
-        keepAlive: true
-      }
-    },
-    {
       path: 'analysis',
       name: 'Analysis',
       component: '/dashboard/analysis',
@@ -42,13 +32,13 @@ export const dashboardRoutes: AppRouteRecord = {
       }
     },
     {
-      path: 'ecommerce',
-      name: 'Ecommerce',
-      component: '/dashboard/ecommerce',
+      path: 'map-view',
+      name: 'DashboardMapView',
+      component: '/dashboard/map-view',
       meta: {
-        title: 'menus.dashboard.ecommerce',
-        icon: 'ri:bar-chart-box-line',
-        keepAlive: false
+        title: 'menus.dashboard.mapView',
+        icon: 'ri:map-pin-line',
+        keepAlive: true
       }
     }
   ]

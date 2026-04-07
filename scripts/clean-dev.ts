@@ -156,16 +156,11 @@ const targets = [
   'CHANGELOG.md',
   'CHANGELOG.zh-CN.md',
   'src/views/change',
-  'src/views/safeguard',
-  'src/views/examples',
-  'src/views/widgets',
-  'src/views/template',
   'src/views/dashboard/analysis',
   'src/views/dashboard/ecommerce',
   'src/mock/json',
   'src/mock/temp/commentDetail.ts',
   'src/assets/images/cover',
-  'src/assets/images/safeguard',
   'src/assets/images/3d',
   'src/components/core/charts/art-map-chart',
   'src/components/business/comment-widget'
@@ -236,14 +231,7 @@ async function cleanRouteModules() {
 
   try {
     // 删除演示相关的路由模块
-    const modulesToRemove = [
-      'template.ts',
-      'widgets.ts',
-      'examples.ts',
-      'article.ts',
-      'safeguard.ts',
-      'help.ts'
-    ]
+    const modulesToRemove = ['template.ts', 'article.ts', 'help.ts']
 
     for (const module of modulesToRemove) {
       const modulePath = path.join(modulesPath, module)
@@ -350,17 +338,13 @@ export const systemRoutes: AppRouteRecord = {
     const indexContent = `import { AppRouteRecord } from '@/types/router'
 import { dashboardRoutes } from './dashboard'
 import { systemRoutes } from './system'
-import { resultRoutes } from './result'
-import { exceptionRoutes } from './exception'
 
 /**
  * 导出所有模块化路由
  */
 export const routeModules: AppRouteRecord[] = [
   dashboardRoutes,
-  systemRoutes,
-  resultRoutes,
-  exceptionRoutes
+  systemRoutes
 ]
 `
     await fs.writeFile(path.join(modulesPath, 'index.ts'), indexContent, 'utf-8')
@@ -435,15 +419,7 @@ async function cleanLanguageFiles() {
       const content = await fs.readFile(fullPath, 'utf-8')
       const langData = JSON.parse(content)
 
-      const menusToRemove = [
-        'widgets',
-        'template',
-        'article',
-        'examples',
-        'safeguard',
-        'plan',
-        'help'
-      ]
+      const menusToRemove = ['template', 'article', 'plan', 'help']
 
       if (langData.menus) {
         menusToRemove.forEach((menuKey) => {
@@ -642,13 +618,13 @@ async function showCleanupWarning() {
     {
       icon: icons.file,
       name: '演示页面',
-      desc: 'widgets、template、article、examples、safeguard等页面',
+      desc: 'article 等演示页面',
       color: theme.purple
     },
     {
       icon: icons.code,
       name: '路由模块文件',
-      desc: '删除演示路由模块，只保留核心模块（dashboard、system、result、exception）',
+      desc: '删除演示路由模块，只保留核心模块（dashboard、system）',
       color: theme.primary
     },
     {

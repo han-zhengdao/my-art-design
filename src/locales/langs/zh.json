@@ -1,4 +1,4 @@
-{
+﻿{
   "httpMsg": {
     "unauthorized": "未授权访问，请重新登录",
     "forbidden": "禁止访问该资源",
@@ -20,8 +20,6 @@
     },
     "user": {
       "userCenter": "个人中心",
-      "docs": "使用文档",
-      "github": "Github",
       "lockScreen": "锁定屏幕",
       "logout": "退出登录"
     },
@@ -112,7 +110,7 @@
   "notice": {
     "title": "通知",
     "btnRead": "标为已读",
-    "bar": ["通知", "消息", "代办"],
+    "bar": ["告警通知", "系统通知"],
     "text": ["暂无"],
     "viewAll": "查看全部"
   },
@@ -225,60 +223,7 @@
       "title": "工作台",
       "console": "仪表盘",
       "mapView": "查看地图",
-      "analysis": "分析页",
-      "ecommerce": "电子商务"
-    },
-    "widgets": {
-      "title": "组件中心",
-      "icon": "图标",
-      "imageCrop": "图像裁剪",
-      "excel": "Excel 导入导出",
-      "video": "视频播放器",
-      "countTo": "数字滚动",
-      "wangEditor": "富文本编辑器",
-      "watermark": "水印",
-      "contextMenu": "右键菜单",
-      "qrcode": "二维码",
-      "drag": "拖拽",
-      "textScroll": "文字滚动",
-      "fireworks": "礼花",
-      "elementUI": "组件总览"
-    },
-    "template": {
-      "title": "模板中心",
-      "chat": "聊天",
-      "cards": "卡片",
-      "banners": "横幅",
-      "charts": "图表",
-      "calendar": "日历",
-      "pricing": "定价"
-    },
-    "result": {
-      "title": "结果页面",
-      "success": "成功页",
-      "fail": "失败页"
-    },
-    "exception": {
-      "title": "异常页面",
-      "forbidden": "403",
-      "notFound": "404",
-      "serverError": "500"
-    },
-    "examples": {
-      "title": "功能示例",
-      "tabs": "标签页",
-      "tablesBasic": "基础表格",
-      "tables": "高级表格",
-      "tablesTree": "左右布局表格",
-      "forms": "表单",
-      "searchBar": "搜索表单",
-      "socketChat": "Socket 连接",
-      "permission": {
-        "title": "前端权限",
-        "switchRole": "切换权限",
-        "buttonAuth": "按钮权限演示",
-        "pageVisibility": "超级管理员可见"
-      }
+      "analysis": "分析页"
     },
     "system": {
       "title": "系统管理",
@@ -299,23 +244,17 @@
       "title": "门店管理",
       "list": "门店列表"
     },
+    "wheel": {
+      "title": "车轮管理",
+      "list": "车轮列表"
+    },
     "beacon": {
       "title": "信标管理",
       "list": "信标列表"
     },
-    "safeguard": {
-      "title": "运维管理",
-      "server": "服务器管理"
-    },
-    "plan": {
-      "title": "版本计划",
-      "log": "更新日志"
-    },
     "help": {
       "title": "帮助中心",
-      "document": "官方文档",
-      "liteVersion": "精简版本",
-      "oldVersion": "v2.6.1 版本"
+      "support": "技术支持"
     }
   },
   "table": {
