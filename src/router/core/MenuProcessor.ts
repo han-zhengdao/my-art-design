@@ -11,6 +11,7 @@ import type { AppRouteRecord } from '@/types/router'
 import { useUserStore } from '@/store/modules/user'
 import { useAppMode } from '@/hooks/core/useAppMode'
 import { fetchGetMenuList } from '@/api/system-manage'
+import { fetchGetMyMenusPermission } from '@/api/auth'
 import { asyncRoutes } from '../routes/asyncRoutes'
 import { RoutesAlias } from '../routesAlias'
 import { formatMenuTitle } from '@/utils'
@@ -50,7 +51,61 @@ export class MenuProcessor {
       menuList = this.filterMenuByRoles(menuList, roles)
     }
 
+    menuList = await this.filterMenuByPermission(menuList)
+
     return this.filterEmptyMenus(menuList)
+  }
+
+  /**
+   * 根据后端返回的菜单权限过滤前端菜单
+   * 说明：仅对已建立 menuCode 映射的菜单生效，未映射菜单默认保留，避免误伤。
+   */
+  private async filterMenuByPermission(menuList: AppRouteRecord[]): Promise<AppRouteRecord[]> {
+    try {
+      const permissions = await fetchGetMyMenusPermission()
+      if (!Array.isArray(permissions) || permissions.length === 0) return menuList
+
+      const readableCodes = new Set(
+        permissions.filter((item) => item.canRead === 1).map((item) => item.menuCode)
+      )
+
+      const routeCodeMap: Record<string, string> = {
+        Menus: 'system:menu',
+        Role: 'system:role',
+        User: 'system:user',
+        PartnerList: 'org:partner',
+        RegionList: 'org:region',
+        StoreList: 'org:store',
+        WheelList: 'biz:device',
+        BeaconList: 'biz:device'
+      }
+
+      const applyFilter = (routes: AppRouteRecord[]): AppRouteRecord[] => {
+        return routes
+          .map((route) => {
+            const copied = { ...route }
+            if (copied.children?.length) {
+              copied.children = applyFilter(copied.children)
+            }
+            return copied
+          })
+          .filter((route) => {
+            // 目录节点：保留有子节点的目录；没有子节点则按自身权限判断
+            if (route.children && route.children.length > 0) {
+              return true
+            }
+            const code = routeCodeMap[String(route.name || '')]
+            if (!code) return true
+            return readableCodes.has(code)
+          })
+      }
+
+      return applyFilter(menuList)
+    } catch (error) {
+      // 权限接口异常时，回退到原有角色控制，避免影响页面可用性
+      console.warn('[MenuProcessor] 获取菜单权限失败，回退角色权限模式', error)
+      return menuList
+    }
   }
 
   /**

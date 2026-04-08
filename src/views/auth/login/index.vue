@@ -93,13 +93,6 @@
                 {{ $t('login.btnText') }}
               </ElButton>
             </div>
-
-            <div class="mt-5 text-sm text-gray-600">
-              <span>{{ $t('login.noAccount') }}</span>
-              <RouterLink class="text-theme" :to="{ name: 'Register' }">{{
-                $t('login.register')
-              }}</RouterLink>
-            </div>
           </ElForm>
         </div>
       </div>
@@ -133,7 +126,7 @@
   export interface Account {
     key: AccountKey
     label: string
-    userName: string
+    email: string
     password: string
     roles: string[]
   }
@@ -142,22 +135,22 @@
     {
       key: 'super',
       label: t('login.roles.super'),
-      userName: 'Super',
-      password: '123456',
+      email: 'admin@example.com',
+      password: 'admin123456',
       roles: ['R_SUPER']
     },
     {
       key: 'admin',
       label: t('login.roles.admin'),
-      userName: 'Admin',
-      password: '123456',
+      email: 'admin@example.com',
+      password: 'admin123456',
       roles: ['R_ADMIN']
     },
     {
       key: 'user',
       label: t('login.roles.user'),
-      userName: 'User',
-      password: '123456',
+      email: 'admin@example.com',
+      password: 'admin123456',
       roles: ['R_USER']
     }
   ])
@@ -195,7 +188,7 @@
   const setupAccount = (key: AccountKey) => {
     const selectedAccount = accounts.value.find((account: Account) => account.key === key)
     formData.account = key
-    formData.username = selectedAccount?.userName ?? ''
+    formData.username = selectedAccount?.email ?? ''
     formData.password = selectedAccount?.password ?? ''
   }
 
@@ -218,9 +211,8 @@
 
       // 登录请求
       const { username, password } = formData
-
-      const { token, refreshToken } = await fetchLogin({
-        userName: username,
+      const { token } = await fetchLogin({
+        email: username,
         password
       })
 
@@ -230,7 +222,7 @@
       }
 
       // 存储 token 和登录状态
-      userStore.setToken(token, refreshToken)
+      userStore.setToken(token)
       userStore.setLoginStatus(true)
 
       // 登录成功处理

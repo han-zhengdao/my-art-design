@@ -1,5 +1,7 @@
 import request from '@/utils/http'
 import { AppRouteRecord } from '@/types/router'
+import { fetchGetMyMenusPermission } from './auth'
+import { asyncRoutes } from '@/router/routes/asyncRoutes'
 
 // 获取用户列表
 export function fetchGetUserList(params: Api.SystemManage.UserSearchParams) {
@@ -19,7 +21,44 @@ export function fetchGetRoleList(params: Api.SystemManage.RoleSearchParams) {
 
 // 获取菜单列表
 export function fetchGetMenuList() {
-  return request.get<AppRouteRecord[]>({
-    url: '/api/v3/system/menus'
+  return fetchGetMyMenusPermission().then((permissions) => {
+    const readableCodes = new Set(
+      (permissions || []).filter((item) => item.canRead === 1).map((item) => item.menuCode)
+    )
+
+    // 路由名称 -> 后端 menuCode 映射
+    const routeCodeMap: Record<string, string> = {
+      Menus: 'system:menu',
+      Role: 'system:role',
+      User: 'system:user',
+      PartnerList: 'org:partner',
+      RegionList: 'org:region',
+      StoreList: 'org:store',
+      WheelList: 'biz:device',
+      BeaconList: 'biz:device'
+    }
+
+    const filterByPermission = (routes: AppRouteRecord[]): AppRouteRecord[] => {
+      return routes
+        .map((route) => {
+          const copied = { ...route }
+          if (copied.children?.length) {
+            copied.children = filterByPermission(copied.children)
+          }
+          return copied
+        })
+        .filter((route) => {
+          // 保留有可见子节点的目录
+          if (route.children && route.children.length > 0) {
+            return true
+          }
+          // 仅对已映射节点做权限过滤，未映射默认保留
+          const code = routeCodeMap[String(route.name || '')]
+          if (!code) return true
+          return readableCodes.has(code)
+        })
+    }
+
+    return filterByPermission(asyncRoutes)
   })
 }

@@ -27,6 +27,10 @@ export default ({ mode }: { mode: string }) => {
     server: {
       port: Number(VITE_PORT),
       proxy: {
+        '/auth': {
+          target: VITE_API_PROXY_URL,
+          changeOrigin: true
+        },
         '/api': {
           target: VITE_API_PROXY_URL,
           changeOrigin: true

@@ -147,8 +147,6 @@
     "rememberPwd": "记住密码",
     "forgetPwd": "忘记密码",
     "btnText": "登录",
-    "noAccount": "还没有账号？",
-    "register": "注册",
     "success": {
       "title": "登录成功",
       "message": "欢迎回来"
@@ -160,27 +158,6 @@
     "placeholder": "请输入您的电子邮件",
     "submitBtnText": "提交",
     "backBtnText": "返回"
-  },
-  "register": {
-    "title": "创建账号",
-    "subTitle": "欢迎加入我们，请填写以下信息完成注册",
-    "placeholder": {
-      "username": "请输入账号",
-      "password": "请输入密码",
-      "confirmPassword": "请再次输入密码"
-    },
-    "rule": {
-      "confirmPasswordRequired": "请再次输入密码",
-      "passwordMismatch": "两次输入密码不一致!",
-      "usernameLength": "长度在 3 到 20 个字符",
-      "passwordLength": "密码长度不能小于6位",
-      "agreementRequired": "请同意隐私协议"
-    },
-    "agreeText": "我同意",
-    "privacyPolicy": "《隐私政策》",
-    "submitBtnText": "注册",
-    "hasAccount": "已有账号？",
-    "toLogin": "去登录"
   },
   "lockScreen": {
     "pwdError": "密码错误",
@@ -209,9 +186,6 @@
   "menus": {
     "login": {
       "title": "登录"
-    },
-    "register": {
-      "title": "注册"
     },
     "forgetPassword": {
       "title": "忘记密码"
@@ -251,6 +225,17 @@
     "beacon": {
       "title": "信标管理",
       "list": "信标列表"
+    },
+    "ticket": {
+      "title": "工单管理",
+      "list": "工单列表"
+    },
+    "dc": {
+      "title": "DC管理",
+      "target": "充值对象",
+      "rechargeRecord": "充值记录",
+      "assignRecord": "分配记录",
+      "usageRecord": "使用记录"
     },
     "help": {
       "title": "帮助中心",

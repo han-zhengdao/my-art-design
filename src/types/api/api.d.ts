@@ -64,14 +64,15 @@ declare namespace Api {
   namespace Auth {
     /** 登录参数 */
     interface LoginParams {
-      userName: string
+      email: string
       password: string
     }
 
     /** 登录响应 */
     interface LoginResponse {
       token: string
-      refreshToken: string
+      tokenType?: string
+      expireTime?: number
     }
 
     /** 用户信息 */
@@ -88,6 +89,17 @@ declare namespace Api {
       regionId?: number
       /** 门店管理员绑定的门店 ID（后端返回时用于数据范围；可选） */
       storeId?: number
+    }
+
+    /** 我的菜单权限项 */
+    interface MyMenuPermissionItem {
+      menuId: number
+      parentId: number
+      menuName: string
+      menuCode: string
+      type: number
+      canRead: number
+      canWrite: number
     }
   }
 
@@ -375,6 +387,168 @@ declare namespace Api {
         /** 排序字段：batteryLevel | beaconSignal | loraSignal */
         sortField?: string
         sortOrder?: 'ascending' | 'descending'
+      }
+    >
+  }
+
+  /** 工单管理 */
+  namespace Ticket {
+    type TicketStatus = 'PENDING' | 'COMPLETED'
+    type ProcessResult = 'RECYCLE' | 'LOST' | 'SCRAPPED'
+    type AlertType = 'DEVICE_OUT_OF_BOUNDS'
+
+    interface TicketListItem {
+      id: number
+      devEui: string
+      storeId: number
+      storeName: string
+      regionId?: number | null
+      regionName: string
+      partnerId: number
+      partnerName: string
+      countryCode: string
+      country: string
+      alertType: AlertType
+      /** 告警类型展示文案 */
+      alertTypeLabel: string
+      alertTime: string
+      alertCoordinate: Store.GeoPoint
+      ticketStatus: TicketStatus
+      processResult?: ProcessResult | null
+      processTime?: string | null
+      processorName?: string | null
+    }
+
+    type TicketList = Api.Common.PaginatedResponse<TicketListItem>
+
+    type TicketSearchParams = Partial<
+      Api.Common.CommonSearchParams & {
+        devEui?: string
+        countryCode?: string
+        partnerId?: number
+        regionId?: number | 'NONE'
+        storeId?: number
+        processResult?: ProcessResult
+        /** 告警时间范围（与 ArtSearchBar daterange 一致） */
+        alertTimeRange?: string[]
+        /** 列表 Tab：全部 | 待处理 | 已处理 */
+        ticketTab?: 'all' | 'pending' | 'done'
+      }
+    >
+  }
+
+  /** DC 管理 */
+  namespace Dc {
+    /** 充值对象 */
+    interface RechargeTargetItem {
+      partnerId: number
+      partnerName: string
+      country: string
+      countryCode: string
+      contactName: string
+      phone: string
+      email: string
+      dcBalance: number
+      allocatableBalance: number
+    }
+
+    type RechargeTargetList = Api.Common.PaginatedResponse<RechargeTargetItem>
+
+    type RechargeTargetSearchParams = Partial<
+      Api.Common.CommonSearchParams & {
+        partnerName?: string
+        countryCode?: string
+      }
+    >
+
+    /** 充值记录 */
+    interface RechargeRecordItem {
+      id: number
+      partnerName: string
+      country: string
+      countryCode: string
+      contactName: string
+      phone: string
+      email: string
+      amount: number
+      rechargeTime: string
+      operatorName: string
+      serialNo: string
+    }
+
+    type RechargeRecordList = Api.Common.PaginatedResponse<RechargeRecordItem>
+
+    type RechargeRecordSearchParams = Partial<
+      Api.Common.CommonSearchParams & {
+        partnerName?: string
+        countryCode?: string
+        timeRange?: string[]
+        /** 排序字段，目前支持 rechargeTime */
+        sortField?: string
+        sortOrder?: 'ascending' | 'descending'
+      }
+    >
+
+    /** 分配记录 */
+    type AssignSource = 'PARTNER' | 'REGION'
+    type AssignTargetType = 'REGION' | 'STORE'
+
+    interface AssignRecordItem {
+      id: number
+      assignSource: AssignSource
+      assignSourceLabel: string
+      assignType: AssignTargetType
+      assignTypeLabel: string
+      targetName: string
+      amount: number
+      assignTime: string
+      operatorName: string
+    }
+
+    type AssignRecordList = Api.Common.PaginatedResponse<AssignRecordItem>
+
+    type AssignRecordSearchParams = Partial<
+      Api.Common.CommonSearchParams & {
+        targetKeyword?: string
+        assignSource?: AssignSource | ''
+        assignType?: AssignTargetType | ''
+        timeRange?: string[]
+      }
+    >
+
+    /** 使用记录 */
+    type UsageKind = 'WHEEL' | 'BEACON'
+
+    interface UsageRecordItem {
+      id: number
+      usageType: UsageKind
+      usageTypeLabel: string
+      deviceId: string
+      partnerId: number
+      /** 无区域时为 null */
+      regionId?: number | null
+      storeId: number
+      storeName: string
+      regionName: string
+      partnerName: string
+      country: string
+      countryCode: string
+      amount: number
+      usageTime: string
+    }
+
+    type UsageRecordList = Api.Common.PaginatedResponse<UsageRecordItem>
+
+    type UsageRecordSearchParams = Partial<
+      Api.Common.CommonSearchParams & {
+        deviceKeyword?: string
+        usageType?: UsageKind | ''
+        countryCode?: string
+        partnerId?: number
+        /** NONE 表示查询无区域 */
+        regionId?: number | 'NONE'
+        storeId?: number
+        timeRange?: string[]
       }
     >
   }

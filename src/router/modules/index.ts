@@ -6,6 +6,8 @@ import { regionRoutes } from './region'
 import { storeRoutes } from './store'
 import { wheelRoutes } from './wheel'
 import { beaconRoutes } from './beacon'
+import { ticketRoutes } from './ticket'
+import { dcRoutes } from './dc'
 import { helpRoutes } from './help'
 
 /**
@@ -19,5 +21,7 @@ export const routeModules: AppRouteRecord[] = [
   storeRoutes,
   wheelRoutes,
   beaconRoutes,
+  ticketRoutes,
+  dcRoutes,
   helpRoutes
 ]

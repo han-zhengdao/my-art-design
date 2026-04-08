@@ -51,6 +51,7 @@
 
 <script setup lang="ts">
   import ArtButtonTable from '@/components/core/forms/art-button-table/index.vue'
+  import ArtIconButton from '@/components/core/widget/art-icon-button/index.vue'
   import { useTable } from '@/hooks/core/useTable'
   import WheelSearch from './modules/wheel-search.vue'
   import WheelDialog from './modules/wheel-dialog.vue'
@@ -64,8 +65,7 @@
     batchCreateWheels
   } from '@/api/wheel'
   import { useUserStore } from '@/store/modules/user'
-  import { ElButton, ElDropdown, ElDropdownItem, ElDropdownMenu, ElIcon } from 'element-plus'
-  import { MoreFilled } from '@element-plus/icons-vue'
+  import { ElButton, ElDropdown, ElDropdownItem, ElDropdownMenu } from 'element-plus'
   import { ElMessage, ElMessageBox } from 'element-plus'
   import { formatSecondsAsHours } from '@/utils/duration'
   import { formatSignalStrength } from '@/utils/signal-strength'
@@ -315,15 +315,11 @@
                   { trigger: 'click' },
                   {
                     default: () =>
-                      h(
-                        ElButton,
-                        {
-                          type: 'primary',
-                          link: true,
-                          class: '!px-1'
-                        },
-                        () => h(ElIcon, { size: 18 }, () => h(MoreFilled))
-                      ),
+                      h(ArtIconButton, {
+                        icon: 'ri:more-2-fill',
+                        class:
+                          '!size-8 rounded-md bg-theme/12 text-theme hover:bg-theme/22 hover:text-theme/90 active:bg-theme/18 active:text-theme text-sm'
+                      }),
                     dropdown: () =>
                       h(ElDropdownMenu, null, () => [
                         h(

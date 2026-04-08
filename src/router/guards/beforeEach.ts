@@ -350,8 +350,10 @@ async function handleDynamicRoutes(
       return
     }
 
-    // 标记初始化失败，防止死循环
-    routeInitFailed = true
+    // 非 401 场景（如后端 500）也回到登录页，避免用户被困在 500 页面无法恢复。
+    useUserStore().logOut()
+    // 清理失败标记，允许重新登录后再次初始化
+    routeInitFailed = false
     routeInitInProgress = false
 
     // 输出详细错误信息，便于排查
@@ -359,8 +361,8 @@ async function handleDynamicRoutes(
       console.error(`[RouteGuard] 错误码: ${error.code}, 消息: ${error.message}`)
     }
 
-    // 跳转到 500 页面，使用 replace 避免产生历史记录
-    next({ name: 'Exception500', replace: true })
+    // 回登录页重新登录
+    next({ name: 'Login', replace: true })
   }
 }
 
