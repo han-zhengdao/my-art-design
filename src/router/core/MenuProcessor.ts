@@ -10,7 +10,8 @@
 import type { AppRouteRecord } from '@/types/router'
 import { useUserStore } from '@/store/modules/user'
 import { useAppMode } from '@/hooks/core/useAppMode'
-import { fetchGetMyMenusPermission } from '@/api/auth'
+import { fetchGetCurrentUserRoleMenuList, fetchGetMyMenus } from '@/api/auth'
+import { convertMyMenusToAppRoutes } from '@/router/utils/myMenusToRoutes'
 import { asyncRoutes } from '../routes/asyncRoutes'
 import { RoutesAlias } from '../routesAlias'
 import { formatMenuTitle } from '@/utils'
@@ -61,7 +62,7 @@ export class MenuProcessor {
    */
   private async filterMenuByPermission(menuList: AppRouteRecord[]): Promise<AppRouteRecord[]> {
     try {
-      const permissions = await fetchGetMyMenusPermission()
+      const permissions = await fetchGetCurrentUserRoleMenuList()
       if (!Array.isArray(permissions) || permissions.length === 0) return menuList
 
       const readableCodes = new Set(
@@ -108,9 +109,20 @@ export class MenuProcessor {
   }
 
   /**
-   * 处理后端控制模式的菜单（按菜单权限接口过滤 asyncRoutes）
+   * 处理后端控制模式的菜单：优先使用 /auth/getMyMenus；失败或空数据时回退 asyncRoutes + 权限过滤
    */
   private async processBackendMenu(): Promise<AppRouteRecord[]> {
+    try {
+      const remote = await fetchGetMyMenus()
+      if (Array.isArray(remote) && remote.length > 0) {
+        const fromApi = convertMyMenusToAppRoutes(remote)
+        return this.filterEmptyMenus(fromApi)
+      }
+      console.warn('[MenuProcessor] /auth/getMyMenus 返回空列表，回退本地 asyncRoutes')
+    } catch (error) {
+      console.warn('[MenuProcessor] /auth/getMyMenus 请求失败，回退本地 asyncRoutes', error)
+    }
+
     const list = await this.filterMenuByPermission([...asyncRoutes])
     return this.filterEmptyMenus(list)
   }

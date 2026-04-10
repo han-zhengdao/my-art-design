@@ -58,7 +58,8 @@
   import { ElMessage, ElMessageBox, ElTag } from 'element-plus'
   import { DialogType } from '@/types'
   import { useUserStore } from '@/store/modules/user'
-  import { deleteMockUsersByIds, fetchMockUserList } from '@/api/user-mock'
+  import { fetchGetUserPageList } from '@/api/system-manage'
+  import { deleteMockUsersByIds } from '@/api/user-mock'
 
   defineOptions({ name: 'User' })
 
@@ -76,11 +77,12 @@
   const isSuperAdmin = computed(() => userStore.info.roles?.includes('R_SUPER') ?? false)
 
   // 搜索表单
-  const searchForm = ref({
-    keyword: undefined as string | undefined,
-    role: undefined as string | undefined,
-    status: undefined as string | undefined,
-    logoutTimeRange: undefined as [string, string] | undefined
+  const searchForm = ref<Api.SystemManage.UserSearchParams>({
+    nickName: undefined,
+    email: undefined,
+    phone: undefined,
+    userType: undefined,
+    roleId: undefined
   })
 
   // 用户状态配置（仅展示 正常 / 注销）
@@ -92,7 +94,7 @@
   /**
    * 获取用户状态配置
    */
-  const getUserStatusConfig = (status: string) => {
+  const getUserStatusConfig = (status?: string) => {
     const key = status === '4' ? 'disabled' : 'normal'
     return USER_STATUS_CONFIG[key]
   }
@@ -158,10 +160,11 @@
   } = useTable({
     // 核心配置
     core: {
-      apiFn: fetchMockUserList,
+      apiFn: fetchGetUserPageList,
+      paginationKey: { current: 'pageNum', size: 'pageSize' },
       apiParams: {
-        current: 1,
-        size: 20,
+        pageNum: 1,
+        pageSize: 20,
         ...searchForm.value
       },
       // 自定义分页字段映射，未设置时将使用全局配置 tableConfig.ts 中的 paginationKey
@@ -197,7 +200,7 @@
           prop: 'userRoles',
           label: '对应角色',
           width: 200,
-          formatter: (row: UserListItem) => getUserRoleLabel(row.userRoles)
+          formatter: (row: UserListItem) => row.roleName || getUserRoleLabel(row.userRoles)
         },
         {
           prop: 'assetName',
@@ -259,6 +262,16 @@
             )
         }
       ]
+    },
+    transform: {
+      dataTransformer: (records) =>
+        records.map((row) => ({
+          ...row,
+          userEmail: row.userEmail || row.email,
+          userPhone: row.userPhone || row.phone,
+          userRoles: row.userRoles || (row.roleCode ? [row.roleCode] : []),
+          userName: row.userName || row.email
+        }))
     }
   })
 

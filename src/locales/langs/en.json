@@ -131,15 +131,17 @@
       "subTitle": "Track Every Cart, Protect Every Asset."
     },
     "title": "Welcome back",
-    "subTitle": "Please enter your account and password to login",
-    "roles": {
-      "super": "Super Admin",
-      "admin": "Admin",
-      "user": "User"
-    },
+    "subTitle": "Sign in to your account",
+    "tabPassword": "Password",
+    "tabCode": "Email code",
+    "sendCode": "Send code",
+    "sendCodeMock": "Code sent (mock until API is ready)",
+    "emailInvalid": "Please enter a valid email",
+    "codeLoginPending": "Email code login is not available yet. Please use password login.",
     "placeholder": {
-      "username": "Please enter your account",
+      "email": "Enter your email",
       "password": "Please enter your password",
+      "verifyCode": "Enter verification code",
       "slider": "Please slide to verify"
     },
     "sliderText": "Please slide to verify",
@@ -239,7 +241,7 @@
     },
     "help": {
       "title": "Help Center",
-      "support": "Support"
+      "support": "Help Docs"
     }
   },
   "table": {

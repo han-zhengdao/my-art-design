@@ -240,10 +240,10 @@
     return '100%'
   })
 
-  // 表头背景颜色样式
+  // 表头背景：未勾选与内容区一致；勾选后用全局变量 --art-table-header-bg-checked（在 tailwind.css 里改色）
   const headerCellStyle = computed(() => ({
     background: isHeaderBackground.value
-      ? 'var(--el-fill-color-lighter)'
+      ? 'var(--art-table-header-bg-checked)'
       : 'var(--default-box-color)',
     ...(props.headerCellStyle || {}) // 合并用户传入的样式
   }))

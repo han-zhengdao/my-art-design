@@ -517,3 +517,24 @@ html.dark .el-card {
     height: calc((var(--el-component-size) / 2)) !important;
   }
 }
+
+// 表格行 hover（全局）：与侧栏菜单 hover 一致（见 art-sidebar-menu/theme.scss $hover-bg-color / el-menu-dark）
+.el-table__body tr:hover > td.el-table__cell {
+  background-color: var(--art-gray-200) !important;
+}
+
+html.dark .el-table__body tr:hover > td.el-table__cell {
+  background-color: #2a2b34 !important;
+}
+
+// 表格表体文字色（全局，颜色在 tailwind.css 的 --art-table-text-color）
+.el-table .el-table__body td.el-table__cell {
+  color: var(--art-table-text-color);
+}
+
+// 表头文字（全局，--art-table-header-text-color）
+.el-table thead th.el-table__cell > .cell {
+  font-weight: 600;
+  color: var(--art-table-header-text-color);
+  font-size: 13px;
+}

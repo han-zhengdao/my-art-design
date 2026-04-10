@@ -1,17 +1,64 @@
 import request from '@/utils/http'
 
-// 获取用户列表
-export function fetchGetUserList(params: Api.SystemManage.UserSearchParams) {
+// 用户分页列表 GET /system/user/getUserPageList
+export function fetchGetUserPageList(params: Api.SystemManage.UserSearchParams) {
   return request.get<Api.SystemManage.UserList>({
-    url: '/api/user/list',
+    url: '/system/user/getUserPageList',
     params
   })
 }
 
-// 获取角色列表（真实接口；当前页面已改用 @/api/role-mock）
-export function fetchGetRoleList(params: Api.SystemManage.RoleSearchParams) {
+/** 角色分页列表 GET /system/role/getRolePageList */
+export function fetchGetRolePageList(params: Api.SystemManage.RolePageListParams) {
   return request.get<Api.SystemManage.RoleList>({
-    url: '/api/role/list',
+    url: '/system/role/getRolePageList',
+    params
+  })
+}
+
+/** 新增角色 POST /system/role/createRole，返回新建角色 id */
+export function fetchCreateRole(params: Api.SystemManage.CreateRolePayload) {
+  return request.post<number>({
+    url: '/system/role/createRole',
+    params
+  })
+}
+
+/** 删除角色 POST /system/role/deleteRole?id= */
+export function fetchDeleteRole(id: number) {
+  return request.post<void>({
+    url: `/system/role/deleteRole?id=${encodeURIComponent(String(id))}`
+  })
+}
+
+/** 角色详情 GET /system/role/getRoleDetail?id= */
+export function fetchGetRoleDetail(id: number) {
+  return request.get<Api.SystemManage.RoleDetail>({
+    url: '/system/role/getRoleDetail',
+    params: { id }
+  })
+}
+
+/** 修改角色 POST /system/role/updateRole */
+export function fetchUpdateRole(params: Api.SystemManage.UpdateRolePayload) {
+  return request.post<void>({
+    url: '/system/role/updateRole',
+    params
+  })
+}
+
+/** 查询角色已分配菜单权限 GET /system/role/getRoleMenuByRoleIdList?roleId= */
+export function fetchGetRoleMenuByRoleIdList(roleId: number) {
+  return request.get<Api.SystemManage.RoleMenuByRoleItem[]>({
+    url: '/system/role/getRoleMenuByRoleIdList',
+    params: { roleId }
+  })
+}
+
+/** 给角色分配菜单权限 POST /system/role/assignRoleMenus */
+export function fetchAssignRoleMenus(params: Api.SystemManage.AssignRoleMenusPayload) {
+  return request.post<void>({
+    url: '/system/role/assignRoleMenus',
     params
   })
 }
@@ -47,10 +94,18 @@ export function fetchCreateMenu(params: Api.SystemManage.CreateMenuPayload) {
   })
 }
 
-/** 菜单管理：目录下拉列表 */
+/** 菜单管理：顶级目录下拉列表 */
 export function fetchListDirectoryMenus() {
   return request.get<Api.SystemManage.DirectoryMenuItem[]>({
-    url: '/system/menu/listDirectoryMenus'
+    url: '/system/menu/getDirectoryMenuList'
+  })
+}
+
+/** 按字典编码拉取字典项（如 menu_type） */
+export function fetchGetDictDataByDictCodeList(dictCode: string) {
+  return request.get<Api.SystemManage.DictDataItem[]>({
+    url: '/system/dict/getDictDataByDictCodeList',
+    params: { dictCode }
   })
 }
 

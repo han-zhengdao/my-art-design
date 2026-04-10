@@ -1,24 +1,12 @@
 <!-- 角色管理页面 -->
 <template>
   <div class="art-full-height">
-    <RoleSearch
-      v-show="showSearchBar"
-      v-model="searchForm"
-      @search="handleSearch"
-      @reset="resetSearchParams"
-    ></RoleSearch>
+    <RoleSearch v-model="searchForm" @search="handleSearch" @reset="resetSearchParams" />
 
-    <ElCard class="art-table-card" :style="{ 'margin-top': showSearchBar ? '12px' : '0' }">
-      <ArtTableHeader
-        v-model:columns="columnChecks"
-        v-model:showSearchBar="showSearchBar"
-        :loading="loading"
-        @refresh="refreshData"
-      >
+    <ElCard class="art-table-card mt-3">
+      <ArtTableHeader v-model:columns="columnChecks" :loading="loading" @refresh="refreshData">
         <template #left>
-          <ElSpace wrap>
-            <ElButton @click="showDialog('add')" v-ripple>新增角色</ElButton>
-          </ElSpace>
+          <ElButton type="primary" @click="showDialog('add')" v-ripple>新增角色</ElButton>
         </template>
       </ArtTableHeader>
 
@@ -52,33 +40,57 @@
 </template>
 
 <script setup lang="ts">
-  import { ButtonMoreItem } from '@/components/core/forms/art-button-more/index.vue'
   import { useTable } from '@/hooks/core/useTable'
-  import { fetchMockRoleList, deleteRoleById } from '@/api/role-mock'
-  import { isRoleCodeUsedByAnyUser } from '@/api/user-mock'
-  import ArtButtonMore from '@/components/core/forms/art-button-more/index.vue'
+  import { fetchDeleteRole, fetchGetRolePageList } from '@/api/system-manage'
   import RoleSearch from './modules/role-search.vue'
   import RoleEditDialog from './modules/role-edit-dialog.vue'
   import RolePermissionDialog from './modules/role-permission-dialog.vue'
-  import { ElTag, ElMessage, ElMessageBox } from 'element-plus'
+  import ArtSvgIcon from '@/components/core/base/art-svg-icon/index.vue'
+  import { ElButton, ElMessage, ElMessageBox, ElTag } from 'element-plus'
+  import { LanguageEnum } from '@/enums/appEnum'
+  import { useUserStore } from '@/store/modules/user'
 
   defineOptions({ name: 'Role' })
 
   type RoleListItem = Api.SystemManage.RoleListItem
-  type RoleSearchFormParams = Api.SystemManage.RoleSearchParams & {
-    daterange?: string[]
+  type RoleSearchFormParams = Api.SystemManage.RoleSearchParams
+
+  const userStore = useUserStore()
+
+  /** 角色类型：1 系统 2 用户（与字典 role_type 一致） */
+  function normalizeRoleType(raw: unknown): number | undefined {
+    if (raw == null || raw === '') return undefined
+    const n = Number(raw)
+    return Number.isFinite(n) ? n : undefined
+  }
+
+  function normalizeNumericId(raw: unknown): number | undefined {
+    if (raw == null) return undefined
+    if (typeof raw === 'string' && raw.trim() === '') return undefined
+    const n = Number(raw)
+    return Number.isFinite(n) ? n : undefined
+  }
+
+  function roleTypeShortLabel(roleType: number | undefined): string {
+    if (roleType === 1) return userStore.language === LanguageEnum.EN ? 'System' : '系统'
+    if (roleType === 2) return userStore.language === LanguageEnum.EN ? 'User' : '用户'
+    return '—'
+  }
+
+  function roleTypeTagType(
+    roleType: number | undefined
+  ): 'primary' | 'success' | 'warning' | 'info' {
+    if (roleType === 1) return 'primary'
+    if (roleType === 2) return 'success'
+    return 'info'
   }
 
   // 搜索表单
   const searchForm = ref<RoleSearchFormParams>({
     roleName: undefined,
     roleCode: undefined,
-    description: undefined,
-    enabled: undefined,
-    daterange: undefined
+    roleType: undefined
   })
-
-  const showSearchBar = ref(false)
 
   const dialogVisible = ref(false)
   const permissionDialog = ref(false)
@@ -99,92 +111,111 @@
   } = useTable({
     // 核心配置
     core: {
-      apiFn: fetchMockRoleList,
+      apiFn: fetchGetRolePageList,
+      paginationKey: { current: 'pageNum', size: 'pageSize' },
       apiParams: {
-        current: 1,
-        size: 20
+        pageNum: 1,
+        pageSize: 20
       },
-      // 排除 apiParams 中的属性
-      excludeParams: ['daterange'],
       columnsFactory: () => [
         {
           prop: 'roleId',
           label: '角色ID',
-          width: 100
+          width: 180
         },
         {
           prop: 'roleName',
           label: '角色名称',
-          minWidth: 100
+          minWidth: 300
         },
         {
           prop: 'roleCode',
           label: '角色编码',
-          minWidth: 120
+          minWidth: 300
         },
         {
-          prop: 'description',
-          label: '角色描述',
-          minWidth: 150,
-          showOverflowTooltip: true
-        },
-        {
-          prop: 'enabled',
-          label: '角色状态',
-          width: 100,
+          prop: 'roleType',
+          label: '角色类型',
+          minWidth: 200,
           formatter: (row) => {
-            const statusConfig = row.enabled
-              ? { type: 'success', text: '启用' }
-              : { type: 'warning', text: '禁用' }
-            return h(
-              ElTag,
-              { type: statusConfig.type as 'success' | 'warning' },
-              () => statusConfig.text
+            const t = normalizeRoleType(row.roleType)
+            return h(ElTag, { type: roleTypeTagType(t), size: 'small' }, () =>
+              roleTypeShortLabel(t)
             )
           }
         },
         {
-          prop: 'createTime',
-          label: '创建日期',
-          width: 180,
-          sortable: true
-        },
-        {
-          prop: 'operatorName',
-          label: '操作人',
-          minWidth: 80
-        },
-        {
           prop: 'operation',
           label: '操作',
-          width: 80,
+          minWidth: 280,
           fixed: 'right',
+          align: 'left',
+          headerAlign: 'left',
           formatter: (row) =>
-            h('div', [
-              h(ArtButtonMore, {
-                list: [
-                  {
-                    key: 'permission',
-                    label: '菜单权限',
-                    icon: 'ri:user-3-line'
-                  },
-                  {
-                    key: 'edit',
-                    label: '编辑角色',
-                    icon: 'ri:edit-2-line'
-                  },
-                  {
-                    key: 'delete',
-                    label: '删除角色',
-                    icon: 'ri:delete-bin-4-line',
-                    color: '#f56c6c'
-                  }
-                ],
-                onClick: (item: ButtonMoreItem) => buttonMoreClick(item, row)
-              })
+            h('div', { class: 'flex w-full min-w-0 flex-wrap items-center justify-start gap-2' }, [
+              h(
+                ElButton,
+                {
+                  link: true,
+                  type: 'primary',
+                  class: 'role-table-op-link',
+                  onClick: () => showPermissionDialog(row)
+                },
+                () =>
+                  h('span', { class: 'inline-flex items-center gap-1' }, [
+                    h(ArtSvgIcon, { icon: 'ri:shield-keyhole-line', class: 'shrink-0 text-base' }),
+                    '分配权限'
+                  ])
+              ),
+              h(
+                ElButton,
+                {
+                  link: true,
+                  type: 'primary',
+                  class: 'role-table-op-link',
+                  onClick: () => showDialog('edit', row)
+                },
+                () =>
+                  h('span', { class: 'inline-flex items-center gap-1' }, [
+                    h(ArtSvgIcon, { icon: 'ri:pencil-line', class: 'shrink-0 text-base' }),
+                    '编辑角色'
+                  ])
+              ),
+              h(
+                ElButton,
+                {
+                  link: true,
+                  type: 'danger',
+                  class: 'role-table-op-link',
+                  onClick: () => deleteRole(row)
+                },
+                () =>
+                  h('span', { class: 'inline-flex items-center gap-1' }, [
+                    h(ArtSvgIcon, { icon: 'ri:delete-bin-line', class: 'shrink-0 text-base' }),
+                    '删除角色'
+                  ])
+              )
             ])
         }
       ]
+    },
+    transform: {
+      dataTransformer: (records) =>
+        records.map((row) => {
+          const r = row as RoleListItem & {
+            id?: number
+            role_id?: number
+            roleType?: number
+            role_type?: number
+          }
+          const rid = normalizeNumericId(r.roleId ?? r.id ?? r.role_id)
+          const rt = normalizeRoleType(r.roleType ?? r.role_type)
+          return {
+            ...r,
+            ...(rid != null && !Number.isNaN(rid) ? { roleId: rid } : {}),
+            ...(rt != null ? { roleType: rt } : {})
+          } as RoleListItem
+        })
     }
   })
 
@@ -201,26 +232,8 @@
    * @param params 搜索参数
    */
   const handleSearch = (params: RoleSearchFormParams) => {
-    // 处理日期区间参数，把 daterange 转换为 startTime 和 endTime
-    const { daterange, ...filtersParams } = params
-    const [startTime, endTime] = Array.isArray(daterange) ? daterange : [null, null]
-
-    replaceSearchParams({ ...filtersParams, startTime, endTime })
+    replaceSearchParams({ ...params })
     getData()
-  }
-
-  const buttonMoreClick = (item: ButtonMoreItem, row: RoleListItem) => {
-    switch (item.key) {
-      case 'permission':
-        showPermissionDialog(row)
-        break
-      case 'edit':
-        showDialog('edit', row)
-        break
-      case 'delete':
-        deleteRole(row)
-        break
-    }
   }
 
   const showPermissionDialog = (row?: RoleListItem) => {
@@ -229,17 +242,13 @@
   }
 
   const deleteRole = (row: RoleListItem) => {
-    if (isRoleCodeUsedByAnyUser(row.roleCode)) {
-      ElMessage.warning('该角色已被账户使用，不允许删除。')
-      return
-    }
     ElMessageBox.confirm(`确定删除角色「${row.roleName}」吗？此操作不可恢复。`, '删除确认', {
       confirmButtonText: '确定',
       cancelButtonText: '取消',
       type: 'warning'
     })
       .then(async () => {
-        await deleteRoleById(row.roleId)
+        await fetchDeleteRole(row.roleId)
         ElMessage.success('删除成功')
         refreshData()
       })
@@ -248,3 +257,18 @@
       })
   }
 </script>
+
+<style scoped lang="scss">
+  /* 表格内操作链接：hover 时略加深主色/危险色（与 EP 色阶一致） */
+  .art-table-card :deep(.role-table-op-link.is-link) {
+    transition: color 0.15s ease;
+  }
+
+  .art-table-card :deep(.role-table-op-link.is-link.el-button--primary:hover) {
+    color: var(--el-color-primary-dark-2);
+  }
+
+  .art-table-card :deep(.role-table-op-link.is-link.el-button--danger:hover) {
+    color: var(--el-color-danger-dark-2);
+  }
+</style>

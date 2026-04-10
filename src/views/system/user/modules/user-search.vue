@@ -36,65 +36,50 @@
     // userName: [{ required: true, message: '请输入用户名', trigger: 'blur' }]
   }
 
-  const statusOptions = [
+  const userTypeOptions = [
     { label: '全部', value: '' },
-    { label: '正常', value: 'normal' },
-    { label: '注销', value: 'disabled' }
-  ]
-
-  const roleOptions = [
-    { label: '全部', value: '' },
-    { label: '系统管理员', value: 'R_ADMIN' },
-    { label: '合作商管理员', value: 'PARTNER_ADMIN' },
-    { label: '区域管理员', value: 'REGION_ADMIN' },
-    { label: '门店管理员', value: 'STORE_ADMIN' },
-    { label: '门店员工', value: 'STORE_STAFF' }
+    { label: '平台超管', value: 'SUPER' },
+    { label: '合作商', value: 'PARTNER' },
+    { label: '区域', value: 'REGION' },
+    { label: '门店', value: 'STORE' }
   ]
 
   // 表单配置
   const formItems = computed(() => [
     {
-      label: '用户名/邮箱',
-      key: 'keyword',
+      label: '昵称',
+      key: 'nickName',
       type: 'input',
       labelWidth: 'auto',
-      placeholder: '支持模糊搜索',
+      placeholder: '请输入昵称',
       clearable: true
     },
     {
-      label: '角色',
-      key: 'role',
+      label: '邮箱',
+      key: 'email',
+      type: 'input',
+      labelWidth: 'auto',
+      placeholder: '请输入登录邮箱',
+      clearable: true
+    },
+    {
+      label: '手机号',
+      key: 'phone',
+      type: 'input',
+      labelWidth: 'auto',
+      placeholder: '请输入手机号',
+      clearable: true
+    },
+    {
+      label: '用户类型',
+      key: 'userType',
       type: 'select',
       labelWidth: 'auto',
       span: 4,
       props: {
         placeholder: '全部',
         clearable: true,
-        options: roleOptions
-      }
-    },
-    {
-      label: '状态',
-      key: 'status',
-      type: 'select',
-      labelWidth: 'auto',
-      span: 4,
-      props: {
-        placeholder: '全部',
-        clearable: true,
-        options: statusOptions
-      }
-    },
-    {
-      label: '注销时间',
-      key: 'logoutTimeRange',
-      type: 'daterange',
-      labelWidth: 'auto',
-      props: {
-        type: 'daterange',
-        startPlaceholder: '开始日期',
-        endPlaceholder: '结束日期',
-        valueFormat: 'YYYY-MM-DD HH:mm:ss'
+        options: userTypeOptions
       }
     }
   ])

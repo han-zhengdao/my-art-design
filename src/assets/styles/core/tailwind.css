@@ -45,6 +45,19 @@
 
   /* Element Component Active Color */
   --art-el-active-color: #f2f4f5;
+
+  /* 表格工具栏勾选「表头背景」时，表头单元格背景（ArtTable headerCellStyle） */
+  --art-table-header-bg-checked: var(--art-gray-200);
+
+  /* 全表格文字色：表体（修改此处即可统一改所有列表单元格字色） */
+  --art-table-text-color: var(--art-gray-800);
+  /* 表头字色（可与表体分开调） */
+  --art-table-header-text-color: var(--art-gray-800);
+
+  /* 菜单管理页「菜单类型」列：type=菜单 的 ElTag 浅绿样式（亮色主题） */
+  --art-menu-mgmt-type-menu-color: #64c8a6;
+  --art-menu-mgmt-type-menu-bg: #edfff9;
+  --art-menu-mgmt-type-menu-border: #afe9d5;
 }
 
 /* ==================== Dark Mode Variables ==================== */
@@ -81,6 +94,17 @@
 
   /* Element Component Active Color */
   --art-el-active-color: #2e2e38;
+
+  /* 暗黑：勾选表头背景时的表头底色 */
+  --art-table-header-bg-checked: var(--art-gray-300);
+
+  --art-table-text-color: var(--art-gray-800);
+  --art-table-header-text-color: var(--art-gray-900);
+
+  /* 菜单管理「菜单」类型 Tag（暗黑：浅绿字 + 半透明底，避免浅色块刺眼） */
+  --art-menu-mgmt-type-menu-color: #7dd4b4;
+  --art-menu-mgmt-type-menu-bg: rgba(100, 200, 166, 0.14);
+  --art-menu-mgmt-type-menu-border: rgba(125, 212, 180, 0.42);
 }
 
 /* ==================== Tailwind Theme Configuration ==================== */

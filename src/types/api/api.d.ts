@@ -75,6 +75,19 @@ declare namespace Api {
       expireTime?: number
     }
 
+    /** GET /auth/getLoginUserInfo 返回的 data */
+    interface LoginUserInfoResponse {
+      userId: number
+      nickName: string
+      email: string
+      roleId: number
+      roleName: string
+      roleCode: string
+      userType: string
+      /** 1 中文 2 英文 */
+      language: number
+    }
+
     /** 用户信息 */
     interface UserInfo {
       buttons: string[]
@@ -83,6 +96,8 @@ declare namespace Api {
       userName: string
       email: string
       avatar?: string
+      /** 与 LoginUserInfoResponse.language 一致：1 中文 2 英文 */
+      language?: number
       /** 合作商管理员绑定的合作商 ID（后端返回时用于数据范围） */
       partnerId?: number
       /** 区域管理员绑定的区域 ID（后端返回时用于数据范围） */
@@ -91,8 +106,8 @@ declare namespace Api {
       storeId?: number
     }
 
-    /** 我的菜单权限项 */
-    interface MyMenuPermissionItem {
+    /** GET /auth/getCurrentUserRoleMenuList 返回项 */
+    interface CurrentUserRoleMenuItem {
       menuId: number
       parentId: number
       menuName: string
@@ -105,65 +120,136 @@ declare namespace Api {
 
   /** 系统管理类型 */
   namespace SystemManage {
-    /** 用户列表 */
-    type UserList = Api.Common.PaginatedResponse<UserListItem>
+    /** 用户分页列表 GET /system/user/getUserPageList */
+    type UserList = Api.Common.PaginatedResponse<UserListItem> &
+      Partial<{
+        pageNum: number
+        pageSize: number
+      }>
 
-    /** 用户列表项 */
+    /** 用户列表项（兼容新接口字段，保留旧字段可选） */
     interface UserListItem {
       id: number
-      avatar: string
-      status: string
-      userName: string
-      userGender: string
       nickName: string
-      userPhone: string
-      userEmail: string
-      userRoles: string[]
-      /** 对应资产名称（公司/企业名等） */
+      headPic?: string
+      email: string
+      phone: string
+      roleId?: number
+      roleName?: string
+      roleCode?: string
+      /** SUPER / PARTNER / REGION / STORE（字典 user_type） */
+      userType?: string
+      partnerId?: number
+      regionId?: number
+      storeId?: number
+      language?: number
+      avatar?: string
+      status?: string
+      userName?: string
+      userGender?: string
+      userPhone?: string
+      userEmail?: string
+      userRoles?: string[]
       assetName?: string
-      createBy: string
-      createTime: string
-      updateBy: string
-      updateTime: string
+      createBy?: string
+      createTime?: string
+      updateBy?: string
+      updateTime?: string
     }
 
-    /** 用户搜索参数 */
-    type UserSearchParams = Partial<
-      Api.Common.CommonSearchParams & {
-        /** 用户名或邮箱模糊搜索 */
-        keyword?: string
-        /** 对应角色 */
-        role?: string
-        /** 状态（正常/注销） */
-        status?: string
-        /** 注销时间范围：开始、结束 */
-        logoutTimeRange?: [string, string]
-      }
-    >
+    /** 用户分页查询参数 GET /system/user/getUserPageList */
+    type UserSearchParams = Partial<{
+      pageNum: number
+      pageSize: number
+      dataScopeSql: string
+      nickName: string
+      email: string
+      phone: string
+      userType: string
+      roleId: number
+    }>
 
     /** 角色列表 */
     type RoleList = Api.Common.PaginatedResponse<RoleListItem>
 
-    /** 角色列表项 */
+    /** 角色列表项（与 GET /system/role/getRolePageList 记录字段对齐） */
     interface RoleListItem {
       roleId: number
       roleName: string
       roleCode: string
-      description: string
-      enabled: boolean
-      createTime: string
-      /** 操作人（创建人/维护人） */
+      /** 1 系统 2 用户，字典 role_type */
+      roleType: number
+      /** 表单 / 旧 mock 可能仍带以下字段 */
+      description?: string
+      enabled?: boolean
+      createTime?: string
       operatorName?: string
     }
 
-    /** 角色搜索参数 */
+    /** 角色列表搜索（与分页列表查询一致） */
     type RoleSearchParams = Partial<
-      Pick<RoleListItem, 'roleId' | 'roleName' | 'roleCode' | 'description' | 'enabled'> &
-        Api.Common.CommonSearchParams & {
-          startTime: string | null
-          endTime: string | null
-        }
+      Pick<RoleListItem, 'roleId' | 'roleName' | 'roleCode' | 'roleType'>
     >
+
+    /**
+     * GET /system/role/getRolePageList
+     * 分页：pageNum、pageSize；筛选：dataScopeSql、roleName、roleType（1 系统 2 用户）
+     */
+    type RolePageListParams = Partial<{
+      pageNum: number
+      pageSize: number
+      dataScopeSql: string
+      roleName: string
+      roleType: number
+    }> &
+      Partial<Pick<RoleListItem, 'roleId' | 'roleCode'>>
+
+    /** POST /system/role/createRole，成功时 data 为新角色 id */
+    interface CreateRolePayload {
+      roleName: string
+      roleCode: string
+      /** 1 系统 2 用户，字典 role_type */
+      roleType: number
+    }
+
+    /** GET /system/role/getRoleDetail 返回 data（id 与列表项 roleId 对应） */
+    interface RoleDetail {
+      id: number
+      roleName: string
+      roleCode: string
+      /** 1 系统 2 用户 */
+      roleType: number
+    }
+
+    /** POST /system/role/updateRole body */
+    interface UpdateRolePayload {
+      id: number
+      roleName: string
+      roleCode: string
+      roleType: number
+    }
+
+    /** GET /system/role/getRoleMenuByRoleIdList 返回项 */
+    interface RoleMenuByRoleItem {
+      menuId: number
+      parentId: number
+      menuName: string
+      menuCode: string
+      /** 1 目录 2 菜单 */
+      type: number
+      canRead: number
+      canWrite: number
+    }
+
+    /** POST /system/role/assignRoleMenus body */
+    interface AssignRoleMenusPayload {
+      roleId: number
+      menuPermissions: Array<{
+        menuId: number
+        canRead: number
+        canWrite: number
+      }>
+    }
 
     /** 菜单树节点 GET /system/menu/getMenuTree（与后端字段一致） */
     interface MenuTreeItem {
@@ -215,6 +301,16 @@ declare namespace Api {
 
     interface DeleteMenuPayload {
       id: number
+    }
+
+    /** GET /system/dict/getDictDataByDictCodeList?dictCode=xxx */
+    interface DictDataItem {
+      dictCode: string
+      /** 与业务含义对应，如 menu_type：1 目录 2 菜单 */
+      dictKey: string
+      dictValue: string
+      dictValueEn?: string
+      sortOrder: number
     }
   }
 

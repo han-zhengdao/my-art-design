@@ -2,36 +2,44 @@
   <ElDialog
     v-model="visible"
     :title="dialogType === 'add' ? '新增角色' : '编辑角色'"
-    width="30%"
+    width="480px"
     align-center
     @close="handleClose"
   >
-    <ElForm ref="formRef" :model="form" :rules="rules" label-width="120px">
-      <ElFormItem label="角色名称" prop="roleName">
-        <ElInput v-model="form.roleName" placeholder="请输入角色名称" />
-      </ElFormItem>
-      <ElFormItem label="角色编码" prop="roleCode">
-        <ElSelect v-model="form.roleCode" placeholder="请选择角色编码" class="w-full">
-          <ElOption
-            v-for="opt in systemRoleCodeOptions"
-            :key="opt.value"
-            :label="opt.label"
-            :value="opt.value"
-          />
-        </ElSelect>
-      </ElFormItem>
-      <ElFormItem label="描述" prop="description">
-        <ElInput
-          v-model="form.description"
-          type="textarea"
-          :rows="3"
-          placeholder="请输入角色描述"
-        />
-      </ElFormItem>
-      <ElFormItem label="启用">
-        <ElSwitch v-model="form.enabled" />
-      </ElFormItem>
-    </ElForm>
+    <div v-loading="detailLoading" class="role-edit-dialog-body w-full text-left">
+      <ElForm
+        ref="formRef"
+        class="role-edit-dialog-form w-full"
+        :model="form"
+        :rules="rules"
+        label-position="left"
+        label-width="100px"
+      >
+        <ElFormItem label="角色名称" prop="roleName">
+          <ElInput v-model="form.roleName" placeholder="请输入角色名称" />
+        </ElFormItem>
+        <ElFormItem label="角色编码" prop="roleCode">
+          <ElSelect v-model="form.roleCode" placeholder="请选择角色编码" class="w-full">
+            <ElOption
+              v-for="opt in systemRoleCodeOptions"
+              :key="opt.value"
+              :label="opt.label"
+              :value="opt.value"
+            />
+          </ElSelect>
+        </ElFormItem>
+        <ElFormItem label="角色类型" prop="roleType">
+          <ElSelect v-model="form.roleType" placeholder="请选择角色类型" class="w-full">
+            <ElOption
+              v-for="opt in roleTypeOptions"
+              :key="opt.value"
+              :label="opt.label"
+              :value="opt.value"
+            />
+          </ElSelect>
+        </ElFormItem>
+      </ElForm>
+    </div>
     <template #footer>
       <ElButton @click="handleClose">取消</ElButton>
       <ElButton type="primary" @click="handleSubmit">提交</ElButton>
@@ -41,10 +49,16 @@
 
 <script setup lang="ts">
   import type { FormInstance, FormRules } from 'element-plus'
-  import { createRole, updateRole } from '@/api/role-mock'
-  import { useUserStore } from '@/store/modules/user'
+  import { ElMessage } from 'element-plus'
+  import {
+    fetchCreateRole,
+    fetchGetDictDataByDictCodeList,
+    fetchGetRoleDetail,
+    fetchUpdateRole
+  } from '@/api/system-manage'
 
   type RoleListItem = Api.SystemManage.RoleListItem
+  type RoleForm = Pick<RoleListItem, 'roleId' | 'roleName' | 'roleCode' | 'roleType'>
 
   interface Props {
     modelValue: boolean
@@ -65,10 +79,8 @@
 
   const emit = defineEmits<Emits>()
 
-  const userStore = useUserStore()
-  const getOperatorName = () => userStore.info.userName ?? '系统'
-
   const formRef = ref<FormInstance>()
+  const detailLoading = ref(false)
 
   /**
    * 弹窗显示状态双向绑定
@@ -87,6 +99,27 @@
     { label: '门店员工', value: 'STORE_STAFF' }
   ]
 
+  const roleTypeOptions = ref<{ label: string; value: number }[]>([])
+
+  function roleTypeSelectLabel(dictKey: string, dictValue: string): string {
+    const k = Number(dictKey)
+    if (k === 1) return '系统'
+    if (k === 2) return '用户'
+    return dictValue
+  }
+
+  onMounted(async () => {
+    try {
+      const list = await fetchGetDictDataByDictCodeList('role_type')
+      roleTypeOptions.value = list.map((d) => ({
+        label: roleTypeSelectLabel(d.dictKey, d.dictValue),
+        value: Number(d.dictKey)
+      }))
+    } catch {
+      roleTypeOptions.value = []
+    }
+  })
+
   /**
    * 表单验证规则
    */
@@ -96,60 +129,66 @@
       { min: 2, max: 20, message: '长度在 2 到 20 个字符', trigger: 'blur' }
     ],
     roleCode: [{ required: true, message: '请选择角色编码', trigger: 'change' }],
-    description: [{ required: true, message: '请输入角色描述', trigger: 'blur' }]
+    roleType: [{ required: true, message: '请选择角色类型', trigger: 'change' }]
   })
 
   /**
    * 表单数据
    */
-  const form = reactive<RoleListItem>({
+  const form = reactive<RoleForm>({
     roleId: 0,
     roleName: '',
     roleCode: '',
-    description: '',
-    createTime: '',
-    enabled: true
+    roleType: 1
   })
 
-  /**
-   * 监听弹窗打开，初始化表单数据
-   */
-  watch(
-    () => props.modelValue,
-    (newVal) => {
-      if (newVal) initForm()
-    }
-  )
+  function applyDetail(d: Api.SystemManage.RoleDetail) {
+    form.roleId = d.id
+    form.roleName = d.roleName
+    form.roleCode = d.roleCode
+    form.roleType = Number(d.roleType)
+  }
 
   /**
-   * 监听角色数据变化，更新表单
+   * 初始化表单：新增重置；编辑拉取 GET /system/role/getRoleDetail
    */
-  watch(
-    () => props.roleData,
-    (newData) => {
-      if (newData && props.modelValue) initForm()
-    },
-    { deep: true }
-  )
-
-  /**
-   * 初始化表单数据
-   * 根据弹窗类型填充表单或重置表单
-   */
-  const initForm = () => {
-    if (props.dialogType === 'edit' && props.roleData) {
-      Object.assign(form, props.roleData)
-    } else {
+  const initForm = async () => {
+    if (props.dialogType === 'add') {
       Object.assign(form, {
         roleId: 0,
         roleName: '',
         roleCode: '',
-        description: '',
-        createTime: '',
-        enabled: true
+        roleType: 1
       })
+      return
+    }
+    const rid = props.roleData?.roleId
+    if (rid == null) return
+    detailLoading.value = true
+    try {
+      const d = await fetchGetRoleDetail(rid)
+      applyDetail(d)
+    } catch {
+      ElMessage.error('加载角色详情失败')
+    } finally {
+      detailLoading.value = false
     }
   }
+
+  watch(
+    () => props.modelValue,
+    async (open) => {
+      if (open) await initForm()
+    }
+  )
+
+  watch(
+    () => props.roleData,
+    async () => {
+      if (props.modelValue && props.dialogType === 'edit') await initForm()
+    },
+    { deep: true }
+  )
 
   /**
    * 关闭弹窗并重置表单
@@ -168,22 +207,18 @@
 
     try {
       await formRef.value.validate()
-      const op = getOperatorName()
       if (props.dialogType === 'add') {
-        await createRole({
-          roleName: form.roleName,
-          roleCode: form.roleCode,
-          description: form.description,
-          enabled: form.enabled,
-          operatorName: op
+        await fetchCreateRole({
+          roleName: form.roleName.trim(),
+          roleCode: form.roleCode.trim(),
+          roleType: form.roleType
         })
-      } else if (props.roleData?.roleId != null) {
-        await updateRole(props.roleData.roleId, {
-          roleName: form.roleName,
-          roleCode: form.roleCode,
-          description: form.description,
-          enabled: form.enabled,
-          operatorName: op
+      } else {
+        await fetchUpdateRole({
+          id: form.roleId,
+          roleName: form.roleName.trim(),
+          roleCode: form.roleCode.trim(),
+          roleType: form.roleType
         })
       }
       const message = props.dialogType === 'add' ? '新增成功' : '修改成功'
@@ -196,3 +231,13 @@
     }
   }
 </script>
+
+<style scoped lang="scss">
+  .role-edit-dialog-body {
+    box-sizing: border-box;
+  }
+
+  .role-edit-dialog-form :deep(.el-form-item__label) {
+    justify-content: flex-start;
+  }
+</style>

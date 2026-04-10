@@ -131,15 +131,17 @@
       "subTitle": "追踪每一辆购物车，守护每一份商超资产。"
     },
     "title": "欢迎回来",
-    "subTitle": "输入您的账号和密码登录",
-    "roles": {
-      "super": "超级管理员",
-      "admin": "管理员",
-      "user": "普通用户"
-    },
+    "subTitle": "请登录您的账户",
+    "tabPassword": "密码登录",
+    "tabCode": "验证码登录",
+    "sendCode": "获取验证码",
+    "sendCodeMock": "验证码已发送（接口未接入时为模拟）",
+    "emailInvalid": "请输入正确的邮箱格式",
+    "codeLoginPending": "验证码登录接口开发中，请暂时使用密码登录",
     "placeholder": {
-      "username": "请输入账号",
+      "email": "请输入邮箱",
       "password": "请输入密码",
+      "verifyCode": "请输入验证码",
       "slider": "请拖动滑块完成验证"
     },
     "sliderText": "按住滑块拖动",
@@ -239,7 +241,7 @@
     },
     "help": {
       "title": "帮助中心",
-      "support": "技术支持"
+      "support": "帮助文档"
     }
   },
   "table": {

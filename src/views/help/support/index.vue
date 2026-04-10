@@ -6,7 +6,7 @@
       class="w-64 flex-shrink-0 border-r border-[var(--el-border-color)] bg-[var(--el-fill-color-lighter)]"
     >
       <div class="border-b border-[var(--el-border-color)] px-4 py-3 text-sm font-semibold"
-        >技术支持目录</div
+        >帮助文档目录</div
       >
       <ElMenu :default-active="activeKey" class="border-none bg-transparent" @select="onSelect">
         <ElMenuItem index="contact">联系方式</ElMenuItem>
@@ -22,7 +22,7 @@
         :closable="false"
         show-icon
         class="mb-4"
-        title="这里是技术支持模板页（左侧目录 + 右侧内容）。后续可按业务接入真实说明文档、FAQ 与工单系统。"
+        title="这里是帮助文档模板页（左侧目录 + 右侧内容）。后续可按业务接入真实说明文档、FAQ 与工单系统。"
       />
 
       <div

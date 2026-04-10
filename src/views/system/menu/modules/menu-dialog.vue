@@ -20,9 +20,14 @@
       :show-submit="false"
     >
       <template #menuType>
-        <ElRadioGroup v-model="form.menuType" :disabled="disableMenuType">
-          <ElRadioButton value="directory" label="directory">目录</ElRadioButton>
-          <ElRadioButton value="menu" label="menu">菜单</ElRadioButton>
+        <ElRadioGroup
+          v-model="form.menuType"
+          :disabled="disableMenuType"
+          class="menu-type-radio-group flex flex-wrap items-center gap-y-8"
+        >
+          <ElRadio v-for="opt in menuTypeOptions" :key="opt.value" :label="opt.value">
+            {{ opt.label }}
+          </ElRadio>
         </ElRadioGroup>
       </template>
     </ArtForm>
@@ -45,8 +50,45 @@
   import type { FormItem } from '@/components/core/forms/art-form/index.vue'
   import ArtForm from '@/components/core/forms/art-form/index.vue'
   import { useWindowSize } from '@vueuse/core'
+  import { useI18n } from 'vue-i18n'
+  import { fetchGetDictDataByDictCodeList } from '@/api/system-manage'
 
   const { width } = useWindowSize()
+  const { locale } = useI18n()
+
+  /** 后端 dictKey → 表单 menuType */
+  const dictKeyToMenuType = (dictKey: string): 'directory' | 'menu' => {
+    return String(dictKey) === '2' ? 'menu' : 'directory'
+  }
+
+  const defaultMenuTypeOptions: { label: string; value: 'directory' | 'menu' }[] = [
+    { label: '目录', value: 'directory' },
+    { label: '菜单', value: 'menu' }
+  ]
+
+  const menuTypeOptions = ref<{ label: string; value: 'directory' | 'menu' }[]>([
+    ...defaultMenuTypeOptions
+  ])
+
+  const loadMenuTypeDict = async (): Promise<void> => {
+    try {
+      const list = await fetchGetDictDataByDictCodeList('menu_type')
+      if (!Array.isArray(list) || list.length === 0) return
+      const sorted = [...list].sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0))
+      const mapped = sorted
+        .map((item) => {
+          const value = dictKeyToMenuType(String(item.dictKey))
+          const isEn = locale.value?.toLowerCase().startsWith('en')
+          const label = (isEn && item.dictValueEn?.trim()) || item.dictValue || ''
+          if (!label) return null
+          return { label, value }
+        })
+        .filter((x): x is { label: string; value: 'directory' | 'menu' } => x !== null)
+      if (mapped.length > 0) menuTypeOptions.value = mapped
+    } catch {
+      menuTypeOptions.value = [...defaultMenuTypeOptions]
+    }
+  }
 
   /**
    * 创建带 tooltip 的表单标签
@@ -73,9 +115,10 @@
     id: number
     parentId: number
     name: string
+    /** 权限标识，对应后端 menuCode；留空时由列表页用路由地址推导 */
+    menuCode: string
     path: string
     label: string
-    component: string
     icon: string
     isEnable: boolean
     sort: number
@@ -83,16 +126,10 @@
     keepAlive: boolean
     isHide: boolean
     isHideTab: boolean
-    link: string
-    isIframe: boolean
-    showBadge: boolean
-    showTextBadge: string
     fixedTab: boolean
     activePath: string
     roles: string[]
     isFullPage: boolean
-    authName: string
-    authLabel: string
     authIcon: string
     authSort: number
   }
@@ -131,9 +168,9 @@
     id: 0,
     parentId: 0,
     name: '',
+    menuCode: '',
     path: '',
     label: '',
-    component: '',
     icon: '',
     isEnable: true,
     sort: 1,
@@ -141,16 +178,10 @@
     keepAlive: true,
     isHide: false,
     isHideTab: false,
-    link: '',
-    isIframe: false,
-    showBadge: false,
-    showTextBadge: '',
     fixedTab: false,
     activePath: '',
     roles: [],
     isFullPage: false,
-    authName: '',
-    authLabel: '',
     authIcon: '',
     authSort: 1
   })
@@ -160,16 +191,15 @@
       { required: true, message: '请输入菜单名称', trigger: 'blur' },
       { min: 2, max: 20, message: '长度在 2 到 20 个字符', trigger: 'blur' }
     ],
-    path: [{ required: true, message: '请输入路由地址', trigger: 'blur' }],
-    authName: [{ required: true, message: '请输入权限名称', trigger: 'blur' }],
-    authLabel: [{ required: true, message: '请输入权限标识', trigger: 'blur' }]
+    path: [{ required: true, message: '请输入路由地址', trigger: 'blur' }]
   })
 
   /**
    * 表单项配置
    */
   const formItems = computed<FormItem[]>(() => {
-    const baseItems: FormItem[] = [{ label: '菜单类型', key: 'menuType', span: 24 }]
+    /** 放在输入项之后、开关之前 */
+    const menuTypeItem: FormItem = { label: '菜单类型', key: 'menuType', span: 24 }
 
     // Switch 组件的 span：小屏幕 12，大屏幕 6
     const switchSpan = width.value < 640 ? 12 : 6
@@ -188,7 +218,6 @@
         parentOptions.push({ label: fallbackName, value: form.parentId })
       }
       return [
-        ...baseItems,
         {
           label: '父级菜单',
           key: 'parentId',
@@ -207,12 +236,12 @@
         },
         {
           label: createLabelTooltip(
-            '组件路径',
-            '一级父级菜单：填写 /index/index\n具体页面：填写组件路径（如 /system/user）\n目录菜单：留空'
+            '权限标识',
+            '对应后端 menuCode，需全局唯一。留空则默认与「路由地址」相同。\n若删除后再次新增报 500，可改为不同标识（如 console2）再试。'
           ),
-          key: 'component',
+          key: 'menuCode',
           type: 'input',
-          props: { placeholder: '如：/system/user 或留空' }
+          props: { placeholder: '留空则与路由地址相同' }
         },
         { label: '图标', key: 'icon', type: 'input', props: { placeholder: '如：ri:user-line' } },
         {
@@ -231,18 +260,6 @@
           props: { min: 1, controlsPosition: 'right', style: { width: '100%' } }
         },
         {
-          label: '外部链接',
-          key: 'link',
-          type: 'input',
-          props: { placeholder: '如：https://www.example.com' }
-        },
-        {
-          label: '文本徽章',
-          key: 'showTextBadge',
-          type: 'input',
-          props: { placeholder: '如：New、Hot' }
-        },
-        {
           label: createLabelTooltip(
             '激活路径',
             '用于详情页等隐藏菜单，指定高亮显示的父级菜单路径\n例如：用户详情页高亮显示"用户管理"菜单'
@@ -251,11 +268,10 @@
           type: 'input',
           props: { placeholder: '如：/system/user' }
         },
+        menuTypeItem,
         { label: '是否启用', key: 'isEnable', type: 'switch', span: switchSpan },
         { label: '页面缓存', key: 'keepAlive', type: 'switch', span: switchSpan },
         { label: '隐藏菜单', key: 'isHide', type: 'switch', span: switchSpan },
-        { label: '是否内嵌', key: 'isIframe', type: 'switch', span: switchSpan },
-        { label: '显示徽章', key: 'showBadge', type: 'switch', span: switchSpan },
         { label: '固定标签', key: 'fixedTab', type: 'switch', span: switchSpan },
         { label: '标签隐藏', key: 'isHideTab', type: 'switch', span: switchSpan },
         { label: '全屏页面', key: 'isFullPage', type: 'switch', span: switchSpan }
@@ -265,17 +281,17 @@
   })
 
   const dialogTitle = computed(() => {
-    const type = form.menuType === 'menu' ? '菜单' : '目录'
-    return isEdit.value ? `编辑${type}` : `新建${type}`
+    const opt = menuTypeOptions.value.find((o) => o.value === form.menuType)
+    const typeLabel = opt?.label ?? (form.menuType === 'menu' ? '菜单' : '目录')
+    return isEdit.value ? `编辑${typeLabel}` : `新建${typeLabel}`
   })
 
   /**
    * 是否禁用菜单类型切换
    */
+  /** 编辑时允许改类型（避免建错只能删重建）；仅「新增下级」且锁定子类型时禁止切换 */
   const disableMenuType = computed(() => {
-    if (isEdit.value) return true
-    if (!isEdit.value && form.menuType === 'menu' && props.lockType) return true
-    return false
+    return !isEdit.value && form.menuType === 'menu' && props.lockType
   })
 
   /**
@@ -299,9 +315,9 @@
     form.parentId = Number(row.parentId ?? 0)
     form.menuType = Number(row.type) === 2 ? 'menu' : 'directory'
     form.name = formatMenuTitle(row.meta?.title || '')
+    form.menuCode = row.name || ''
     form.path = row.path || ''
     form.label = row.name || ''
-    form.component = row.component || ''
     form.icon = row.meta?.icon || ''
     form.sort = row.meta?.sort || 1
     form.isMenu = row.meta?.isMenu ?? true
@@ -309,10 +325,6 @@
     form.isHide = row.meta?.isHide ?? false
     form.isHideTab = row.meta?.isHideTab ?? false
     form.isEnable = row.meta?.isEnable ?? true
-    form.link = row.meta?.link || ''
-    form.isIframe = row.meta?.isIframe ?? false
-    form.showBadge = row.meta?.showBadge ?? false
-    form.showTextBadge = row.meta?.showTextBadge || ''
     form.fixedTab = row.meta?.fixedTab ?? false
     form.activePath = row.meta?.activePath || ''
     form.roles = row.meta?.roles || []
@@ -355,6 +367,7 @@
     () => props.visible,
     (newVal) => {
       if (newVal) {
+        void loadMenuTypeDict()
         form.menuType = props.type
         nextTick(() => {
           if (props.editData) {

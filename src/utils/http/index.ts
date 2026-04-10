@@ -40,9 +40,10 @@ interface ExtendedAxiosRequestConfig extends AxiosRequestConfig {
 
 const { VITE_API_URL, VITE_WITH_CREDENTIALS } = import.meta.env
 
-/** 业务成功码（兼容 number / string，如 200 与 "200"） */
+/** 业务成功码（兼容 200 与部分后端使用的 0） */
 function isBizSuccessCode(code: unknown): boolean {
-  return Number(code) === ApiStatus.success
+  const n = Number(code)
+  return n === ApiStatus.success || n === 0
 }
 
 function toBizErrorCode(code: unknown): number {

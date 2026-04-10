@@ -6,7 +6,7 @@ export const helpRoutes: AppRouteRecord = {
   component: '/index/index',
   meta: {
     title: 'menus.help.title',
-    icon: 'ri:question-line'
+    icon: 'ri:lightbulb-line'
   },
   children: [
     {
@@ -15,7 +15,7 @@ export const helpRoutes: AppRouteRecord = {
       component: '/help/support',
       meta: {
         title: 'menus.help.support',
-        icon: 'ri:customer-service-2-line',
+        icon: 'ri:book-open-line',
         keepAlive: true
       }
     }

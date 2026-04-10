@@ -30,6 +30,7 @@
 
       <ArtTable
         ref="tableRef"
+        class="menu-manage-tree-table"
         row-key="id"
         :loading="loading"
         :columns="columns"
@@ -56,6 +57,7 @@
 
 <script setup lang="ts">
   import { formatMenuTitle } from '@/utils/router'
+  import ArtSvgIcon from '@/components/core/base/art-svg-icon/index.vue'
   import ArtButtonTable from '@/components/core/forms/art-button-table/index.vue'
   import { useTableColumns } from '@/hooks/core/useTableColumns'
   import type { AppRouteRecord } from '@/types/router'
@@ -172,9 +174,9 @@
   const getMenuTypeStyle = (row: MenuTreeItem) => {
     if (row.type !== 2 || row.children?.length) return undefined
     return {
-      color: '#64c8a6',
-      backgroundColor: '#edfff9',
-      borderColor: '#afe9d5'
+      color: 'var(--art-menu-mgmt-type-menu-color)',
+      backgroundColor: 'var(--art-menu-mgmt-type-menu-bg)',
+      borderColor: 'var(--art-menu-mgmt-type-menu-border)'
     }
   }
 
@@ -191,8 +193,20 @@
     {
       prop: 'menuName',
       label: '菜单名称',
-      minWidth: 120,
+      minWidth: 100,
+      width: 280,
       formatter: (row: MenuTreeItem) => formatMenuTitle(row.menuName || '')
+    },
+    {
+      prop: 'icon',
+      label: '图标',
+      width: 200,
+      align: 'center',
+      formatter: (row: MenuTreeItem) => {
+        const icon = (row.icon || '').trim()
+        if (!icon) return h('span', { class: 'text-g-400' }, '—')
+        return h(ArtSvgIcon, { icon, class: 'text-xl text-g-700' })
+      }
     },
     {
       prop: 'type',
@@ -222,7 +236,7 @@
     {
       prop: 'sort',
       label: '排序',
-      width: 80,
+      width: 100,
       formatter: (row: MenuTreeItem) => row.sort ?? '—'
     },
     {
@@ -404,6 +418,8 @@
     parentId?: number
     menuType?: 'directory' | 'menu'
     name: string
+    /** 权限标识 menuCode，可覆盖默认（与路由一致） */
+    menuCode?: string
     label?: string
     path: string
     component?: string
@@ -421,6 +437,7 @@
   const handleSubmit = async (formData: MenuFormData): Promise<void> => {
     const base = editingMenuDetail.value
     const fallbackMenuCode = (formData.path || formData.name || '').trim().replace(/\s+/g, '')
+    const resolvedMenuCode = (formData.menuCode || '').trim() || base?.menuCode || fallbackMenuCode
 
     try {
       if (base && (formData.id ?? base.id)) {
@@ -428,7 +445,7 @@
           id: formData.id ?? base.id,
           parentId: Number(formData.parentId ?? base.parentId ?? 0),
           menuName: formData.name?.trim() || base.menuName,
-          menuCode: base.menuCode || fallbackMenuCode,
+          menuCode: resolvedMenuCode,
           icon: formData.icon ?? '',
           path: formData.path?.trim() || base.path,
           type: formData.menuType === 'menu' ? 2 : 1,
@@ -442,7 +459,7 @@
         const payload: Api.SystemManage.CreateMenuPayload = {
           parentId: Number(formData.parentId ?? 0),
           menuName: (formData.name || '').trim(),
-          menuCode: fallbackMenuCode,
+          menuCode: resolvedMenuCode,
           icon: formData.icon ?? '',
           path: (formData.path || '').trim(),
           type: formData.menuType === 'menu' ? 2 : 1,
@@ -513,3 +530,31 @@
     })
   }
 </script>
+
+<style scoped lang="scss">
+  /* 树表展开箭头：加大点击区域（Element Plus 默认箭头偏小） */
+  .menu-manage-tree-table {
+    :deep(.el-table__expand-icon) {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      min-width: 32px;
+      height: 32px;
+      min-height: 32px;
+      margin-right: 2px;
+      border-radius: 6px;
+      transition: background-color 0.15s ease;
+    }
+
+    :deep(.el-table__expand-icon:hover) {
+      background-color: var(--art-hover-color);
+    }
+
+    /* 无子节点时的占位，与展开按钮同宽避免列错位 */
+    :deep(.el-table__placeholder) {
+      width: 32px;
+      min-width: 32px;
+    }
+  }
+</style>

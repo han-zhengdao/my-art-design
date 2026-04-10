@@ -10,45 +10,87 @@
         <div class="form">
           <h3 class="title">{{ $t('login.title') }}</h3>
           <p class="sub-title">{{ $t('login.subTitle') }}</p>
+
+          <div
+            class="login-mode-tabs mt-10 flex w-full border-b border-[var(--default-border)]"
+            role="tablist"
+          >
+            <button
+              type="button"
+              role="tab"
+              :aria-selected="loginMode === 'password'"
+              class="login-mode-tabs__item flex-1"
+              :class="{ 'login-mode-tabs__item--active': loginMode === 'password' }"
+              @click="loginMode = 'password'"
+            >
+              {{ $t('login.tabPassword') }}
+            </button>
+            <button
+              type="button"
+              role="tab"
+              :aria-selected="loginMode === 'code'"
+              class="login-mode-tabs__item flex-1"
+              :class="{ 'login-mode-tabs__item--active': loginMode === 'code' }"
+              @click="loginMode = 'code'"
+            >
+              {{ $t('login.tabCode') }}
+            </button>
+          </div>
+
           <ElForm
             ref="formRef"
             :model="formData"
             :rules="rules"
             :key="formKey"
             @keyup.enter="handleSubmit"
-            style="margin-top: 25px"
+            style="margin-top: 20px"
           >
-            <ElFormItem prop="account">
-              <ElSelect v-model="formData.account" @change="setupAccount">
-                <ElOption
-                  v-for="account in accounts"
-                  :key="account.key"
-                  :label="account.label"
-                  :value="account.key"
-                >
-                  <span>{{ account.label }}</span>
-                </ElOption>
-              </ElSelect>
-            </ElFormItem>
-            <ElFormItem prop="username">
+            <ElFormItem prop="email">
               <ElInput
                 class="custom-height"
-                :placeholder="$t('login.placeholder.username')"
-                v-model.trim="formData.username"
-              />
-            </ElFormItem>
-            <ElFormItem prop="password">
-              <ElInput
-                class="custom-height"
-                :placeholder="$t('login.placeholder.password')"
-                v-model.trim="formData.password"
-                type="password"
-                autocomplete="off"
-                show-password
+                :placeholder="$t('login.placeholder.email')"
+                v-model.trim="formData.email"
+                type="email"
+                autocomplete="username"
               />
             </ElFormItem>
 
-            <!-- 推拽验证 -->
+            <template v-if="loginMode === 'password'">
+              <ElFormItem prop="password">
+                <ElInput
+                  class="custom-height"
+                  :placeholder="$t('login.placeholder.password')"
+                  v-model.trim="formData.password"
+                  type="password"
+                  autocomplete="current-password"
+                  show-password
+                />
+              </ElFormItem>
+            </template>
+
+            <template v-else>
+              <ElFormItem prop="verifyCode">
+                <div class="flex gap-2">
+                  <ElInput
+                    class="custom-height flex-1 min-w-0"
+                    :placeholder="$t('login.placeholder.verifyCode')"
+                    v-model.trim="formData.verifyCode"
+                    maxlength="8"
+                    inputmode="numeric"
+                    autocomplete="one-time-code"
+                  />
+                  <ElButton
+                    class="custom-height shrink-0 !px-3"
+                    :disabled="codeCountdown > 0"
+                    @click="handleSendCode"
+                  >
+                    {{ codeCountdown > 0 ? `${codeCountdown}s` : $t('login.sendCode') }}
+                  </ElButton>
+                </div>
+              </ElFormItem>
+            </template>
+
+            <!-- 拖拽验证 -->
             <div class="relative pb-5 mt-6">
               <div
                 class="relative z-[2] overflow-hidden select-none rounded-lg border border-transparent tad-300"
@@ -73,10 +115,15 @@
               </p>
             </div>
 
-            <div class="flex-cb mt-2 text-sm">
+            <div v-if="loginMode === 'password'" class="flex-cb mt-2 text-sm">
               <ElCheckbox v-model="formData.rememberPassword">{{
                 $t('login.rememberPwd')
               }}</ElCheckbox>
+              <RouterLink class="text-theme" :to="{ name: 'ForgetPassword' }">{{
+                $t('login.forgetPwd')
+              }}</RouterLink>
+            </div>
+            <div v-else class="mt-2 text-right text-sm">
               <RouterLink class="text-theme" :to="{ name: 'ForgetPassword' }">{{
                 $t('login.forgetPwd')
               }}</RouterLink>
@@ -106,54 +153,21 @@
   import { useI18n } from 'vue-i18n'
   import { HttpError } from '@/utils/http/error'
   import { fetchLogin } from '@/api/auth'
-  import { ElNotification, type FormInstance, type FormRules } from 'element-plus'
+  import { ElMessage, ElNotification, type FormInstance, type FormRules } from 'element-plus'
   import { useSettingStore } from '@/store/modules/setting'
 
   defineOptions({ name: 'Login' })
+
+  const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
   const settingStore = useSettingStore()
   const { isDark } = storeToRefs(settingStore)
   const { t, locale } = useI18n()
   const formKey = ref(0)
 
-  // 监听语言切换，重置表单
   watch(locale, () => {
     formKey.value++
   })
-
-  type AccountKey = 'super' | 'admin' | 'user'
-
-  export interface Account {
-    key: AccountKey
-    label: string
-    email: string
-    password: string
-    roles: string[]
-  }
-
-  const accounts = computed<Account[]>(() => [
-    {
-      key: 'super',
-      label: t('login.roles.super'),
-      email: 'admin@example.com',
-      password: 'admin123456',
-      roles: ['R_SUPER']
-    },
-    {
-      key: 'admin',
-      label: t('login.roles.admin'),
-      email: 'admin@example.com',
-      password: 'admin123456',
-      roles: ['R_ADMIN']
-    },
-    {
-      key: 'user',
-      label: t('login.roles.user'),
-      email: 'admin@example.com',
-      password: 'admin123456',
-      roles: ['R_USER']
-    }
-  ])
 
   const dragVerify = ref()
 
@@ -163,95 +177,161 @@
   const isPassing = ref(false)
   const isClickPass = ref(false)
 
+  /** 密码登录 | 邮箱验证码登录（验证码接口未接） */
+  const loginMode = ref<'password' | 'code'>('password')
+
   const systemName = AppConfig.systemInfo.name
   const formRef = ref<FormInstance>()
 
   const formData = reactive({
-    account: '',
-    username: '',
+    email: '',
     password: '',
+    verifyCode: '',
     rememberPassword: true
   })
 
-  const rules = computed<FormRules>(() => ({
-    username: [{ required: true, message: t('login.placeholder.username'), trigger: 'blur' }],
-    password: [{ required: true, message: t('login.placeholder.password'), trigger: 'blur' }]
-  }))
+  const rules = computed<FormRules>(() => {
+    const emailRules = [
+      { required: true, message: t('login.placeholder.email'), trigger: 'blur' },
+      {
+        validator: (_: unknown, v: string, cb: (e?: Error) => void) => {
+          if (!v?.trim()) {
+            cb(new Error(t('login.placeholder.email')))
+            return
+          }
+          if (!EMAIL_RE.test(v.trim())) {
+            cb(new Error(t('login.emailInvalid')))
+            return
+          }
+          cb()
+        },
+        trigger: 'blur'
+      }
+    ]
+
+    if (loginMode.value === 'password') {
+      return {
+        email: emailRules,
+        password: [{ required: true, message: t('login.placeholder.password'), trigger: 'blur' }]
+      }
+    }
+
+    return {
+      email: emailRules,
+      verifyCode: [
+        { required: true, message: t('login.placeholder.verifyCode'), trigger: 'blur' },
+        { min: 4, max: 8, message: t('login.placeholder.verifyCode'), trigger: 'blur' }
+      ]
+    }
+  })
 
   const loading = ref(false)
 
-  onMounted(() => {
-    setupAccount('super')
+  const codeCountdown = ref(0)
+  let codeTimer: ReturnType<typeof setInterval> | null = null
+
+  onBeforeUnmount(() => {
+    if (codeTimer) {
+      clearInterval(codeTimer)
+      codeTimer = null
+    }
   })
 
-  // 设置账号
-  const setupAccount = (key: AccountKey) => {
-    const selectedAccount = accounts.value.find((account: Account) => account.key === key)
-    formData.account = key
-    formData.username = selectedAccount?.email ?? ''
-    formData.password = selectedAccount?.password ?? ''
+  const resetDragState = () => {
+    isClickPass.value = false
+    isPassing.value = false
+    dragVerify.value?.reset?.()
   }
 
-  // 登录
+  const onLoginModeChange = () => {
+    nextTick(() => {
+      formRef.value?.clearValidate()
+      resetDragState()
+    })
+  }
+
+  watch(loginMode, () => {
+    onLoginModeChange()
+  })
+
+  /** 发送验证码：暂无后端，仅倒计时 + 提示 */
+  const handleSendCode = () => {
+    const email = formData.email?.trim()
+    if (!email) {
+      ElMessage.warning(t('login.placeholder.email'))
+      return
+    }
+    if (!EMAIL_RE.test(email)) {
+      ElMessage.warning(t('login.emailInvalid'))
+      return
+    }
+    if (codeCountdown.value > 0) return
+
+    if (codeTimer) {
+      clearInterval(codeTimer)
+      codeTimer = null
+    }
+    codeCountdown.value = 60
+    codeTimer = setInterval(() => {
+      codeCountdown.value -= 1
+      if (codeCountdown.value <= 0 && codeTimer) {
+        clearInterval(codeTimer)
+        codeTimer = null
+      }
+    }, 1000)
+
+    ElMessage.success(t('login.sendCodeMock'))
+  }
+
   const handleSubmit = async () => {
     if (!formRef.value) return
 
     try {
-      // 表单验证
       const valid = await formRef.value.validate()
       if (!valid) return
 
-      // 拖拽验证
       if (!isPassing.value) {
         isClickPass.value = true
         return
       }
 
+      if (loginMode.value === 'code') {
+        ElMessage.info(t('login.codeLoginPending'))
+        resetDragState()
+        return
+      }
+
       loading.value = true
 
-      // 登录请求
-      const { username, password } = formData
+      const { email, password } = formData
       const { token } = await fetchLogin({
-        email: username,
+        email,
         password
       })
 
-      // 验证token
       if (!token) {
         throw new Error('Login failed - no token received')
       }
 
-      // 存储 token 和登录状态
       userStore.setToken(token)
       userStore.setLoginStatus(true)
 
-      // 登录成功处理
       showLoginSuccessNotice()
 
-      // 获取 redirect 参数，如果存在则跳转到指定页面，否则跳转到首页
       const redirect = route.query.redirect as string
       router.push(redirect || '/')
     } catch (error) {
-      // 处理 HttpError
       if (error instanceof HttpError) {
-        // console.log(error.code)
+        // handled by http layer
       } else {
-        // 处理非 HttpError
-        // ElMessage.error('登录失败，请稍后重试')
         console.error('[Login] Unexpected error:', error)
       }
     } finally {
       loading.value = false
-      resetDragVerify()
+      resetDragState()
     }
   }
 
-  // 重置拖拽验证
-  const resetDragVerify = () => {
-    dragVerify.value.reset()
-  }
-
-  // 登录成功提示
   const showLoginSuccessNotice = () => {
     setTimeout(() => {
       ElNotification({
@@ -269,8 +349,47 @@
   @import './style.css';
 </style>
 
-<style lang="scss" scoped>
-  :deep(.el-select__wrapper) {
-    height: 40px !important;
+<style scoped lang="scss">
+  .login-mode-tabs__item {
+    position: relative;
+    padding: 10px 8px 16px;
+    margin: 0;
+    font-size: 15px;
+    line-height: 1.25;
+    color: var(--art-gray-700);
+    text-align: center;
+    cursor: pointer;
+    background: transparent;
+    border: none;
+    transition:
+      color 0.2s ease,
+      font-weight 0.2s ease;
+
+    &:hover {
+      color: var(--theme-color);
+    }
+
+    &--active {
+      font-weight: 500;
+      color: var(--theme-color);
+
+      &::after {
+        position: absolute;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        height: 2px;
+        content: '';
+        background: var(--theme-color);
+      }
+    }
+  }
+
+  html.dark .login-mode-tabs__item {
+    color: var(--art-gray-500);
+
+    &:hover {
+      color: var(--art-gray-700);
+    }
   }
 </style>

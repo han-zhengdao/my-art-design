@@ -1,5 +1,5 @@
 /**
- * 角色管理本地 mock（对接 /api/role/list 前使用）
+ * 角色管理本地 mock（新增/编辑/删除等尚未对接真实接口时使用）
  */
 
 const INITIAL_ROWS: Api.SystemManage.RoleListItem[] = [
@@ -7,6 +7,7 @@ const INITIAL_ROWS: Api.SystemManage.RoleListItem[] = [
     roleId: 1,
     roleName: '系统管理员',
     roleCode: 'R_ADMIN',
+    roleType: 1,
     description: '平台系统管理权限',
     enabled: true,
     createTime: '2025-01-01 10:00:00',
@@ -16,6 +17,7 @@ const INITIAL_ROWS: Api.SystemManage.RoleListItem[] = [
     roleId: 2,
     roleName: '合作商管理员',
     roleCode: 'PARTNER_ADMIN',
+    roleType: 1,
     description: '合作商侧管理与配置',
     enabled: true,
     createTime: '2025-02-10 09:30:00',
@@ -25,6 +27,7 @@ const INITIAL_ROWS: Api.SystemManage.RoleListItem[] = [
     roleId: 3,
     roleName: '区域管理员',
     roleCode: 'REGION_ADMIN',
+    roleType: 1,
     description: '区域内门店与资产运维',
     enabled: true,
     createTime: '2025-03-15 14:20:00',
@@ -34,6 +37,7 @@ const INITIAL_ROWS: Api.SystemManage.RoleListItem[] = [
     roleId: 4,
     roleName: '门店管理员',
     roleCode: 'STORE_ADMIN',
+    roleType: 1,
     description: '单店运营与员工管理',
     enabled: true,
     createTime: '2025-04-01 08:00:00',
@@ -43,6 +47,7 @@ const INITIAL_ROWS: Api.SystemManage.RoleListItem[] = [
     roleId: 5,
     roleName: '门店员工',
     roleCode: 'STORE_STAFF',
+    roleType: 2,
     description: '门店日常操作权限',
     enabled: false,
     createTime: '2025-05-20 11:15:00',
@@ -51,11 +56,6 @@ const INITIAL_ROWS: Api.SystemManage.RoleListItem[] = [
 ]
 
 let mockRoleRows: Api.SystemManage.RoleListItem[] = [...INITIAL_ROWS]
-
-function parseTime(s: string): number {
-  const t = new Date(s.replace(/-/g, '/')).getTime()
-  return Number.isNaN(t) ? NaN : t
-}
 
 function filterMockRows(
   params: Api.SystemManage.RoleSearchParams
@@ -73,34 +73,17 @@ function filterMockRows(
   if (code) {
     list = list.filter((r) => r.roleCode.includes(code))
   }
-  const desc = params.description?.trim()
-  if (desc) {
-    list = list.filter((r) => r.description.includes(desc))
-  }
-  if (params.enabled !== undefined && params.enabled !== null) {
-    list = list.filter((r) => r.enabled === params.enabled)
-  }
-
-  const start = params.startTime
-  const end = params.endTime
-  if (start && end) {
-    const startTs = parseTime(start)
-    const endTs = parseTime(end)
-    if (!Number.isNaN(startTs) && !Number.isNaN(endTs)) {
-      const dayEnd = endTs + 86400000 - 1
-      list = list.filter((r) => {
-        const t = parseTime(r.createTime)
-        if (Number.isNaN(t)) return false
-        return t >= startTs && t <= dayEnd
-      })
-    }
+  if (params.roleType !== undefined && params.roleType !== null) {
+    list = list.filter((r) => r.roleType === params.roleType)
   }
 
   return list
 }
 
+/** 本地分页列表（当前列表页已走真实接口，保留便于联调） */
 export function fetchMockRoleList(
-  params: Api.SystemManage.RoleSearchParams
+  params: Api.SystemManage.RoleSearchParams &
+    Partial<Pick<Api.Common.PaginationParams, 'current' | 'size'>>
 ): Promise<Api.SystemManage.RoleList> {
   return new Promise((resolve) => {
     setTimeout(() => {
@@ -122,7 +105,7 @@ export function fetchMockRoleList(
 export function createRole(
   payload: Pick<
     Api.SystemManage.RoleListItem,
-    'roleName' | 'roleCode' | 'description' | 'enabled'
+    'roleName' | 'roleCode' | 'roleType' | 'description' | 'enabled'
   > & { operatorName: string }
 ): Promise<Api.SystemManage.RoleListItem> {
   return new Promise((resolve) => {
@@ -135,6 +118,7 @@ export function createRole(
         roleId: nextId,
         roleName: payload.roleName,
         roleCode: payload.roleCode,
+        roleType: payload.roleType,
         description: payload.description,
         enabled: payload.enabled,
         createTime,
@@ -151,7 +135,7 @@ export function updateRole(
   payload: Partial<
     Pick<
       Api.SystemManage.RoleListItem,
-      'roleName' | 'roleCode' | 'description' | 'enabled' | 'operatorName'
+      'roleName' | 'roleCode' | 'roleType' | 'description' | 'enabled' | 'operatorName'
     >
   >
 ): Promise<void> {
