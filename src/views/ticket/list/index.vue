@@ -22,7 +22,7 @@
       />
     </ElCard>
 
-    <ElDialog v-model="detailVisible" title="工单详情" width="560px" destroy-on-close>
+    <ElDialog v-model="detailVisible" title="工单详情" width="680px" destroy-on-close>
       <ElDescriptions v-if="detailRow" :column="1" border>
         <ElDescriptionsItem label="ID">{{ detailRow.id }}</ElDescriptionsItem>
         <ElDescriptionsItem label="设备编号（DevEUI）">{{ detailRow.devEui }}</ElDescriptionsItem>
@@ -35,9 +35,11 @@
         <ElDescriptionsItem label="告警坐标">
           {{ detailRow.alertCoordinate.lng }}, {{ detailRow.alertCoordinate.lat }}
         </ElDescriptionsItem>
-        <ElDescriptionsItem label="工单状态">{{
-          statusLabel(detailRow.ticketStatus)
-        }}</ElDescriptionsItem>
+        <ElDescriptionsItem label="工单状态">
+          <ElTag :type="ticketStatusTagType(detailRow.ticketStatus)">
+            {{ statusLabel(detailRow.ticketStatus) }}
+          </ElTag>
+        </ElDescriptionsItem>
         <ElDescriptionsItem label="处理结果">
           {{ detailRow.processResult ? processLabel(detailRow.processResult) : '—' }}
         </ElDescriptionsItem>
@@ -81,7 +83,7 @@
   import { useTable } from '@/hooks/core/useTable'
   import { fetchTicketList, processTicket } from '@/api/ticket'
   import { useUserStore } from '@/store/modules/user'
-  import { ElButton, ElMessage } from 'element-plus'
+  import { ElButton, ElMessage, ElTag } from 'element-plus'
   import { h, ref } from 'vue'
   import TicketSearch from './modules/ticket-search.vue'
 
@@ -110,6 +112,11 @@
 
   function statusLabel(s: Api.Ticket.TicketStatus) {
     return s === 'PENDING' ? '待处理' : '已完成'
+  }
+
+  /** 与系统内其它列表状态一致：危险色=待处理，成功色=已完成 */
+  function ticketStatusTagType(s: Api.Ticket.TicketStatus): 'danger' | 'success' {
+    return s === 'PENDING' ? 'danger' : 'success'
   }
 
   function processLabel(p: Api.Ticket.ProcessResult) {
@@ -218,7 +225,10 @@
           label: '工单状态',
           width: 'auto',
           minWidth: 100,
-          formatter: (row: TicketRow) => statusLabel(row.ticketStatus)
+          formatter: (row: TicketRow) =>
+            h(ElTag, { type: ticketStatusTagType(row.ticketStatus) }, () =>
+              statusLabel(row.ticketStatus)
+            )
         },
         {
           prop: 'processResult',

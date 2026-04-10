@@ -11,10 +11,10 @@
   >
     <template v-if="mode === 'location' && row">
       <p class="mb-2 text-sm text-[var(--el-text-color-secondary)]">
-        DevEUI：{{ row.devEui }} · 当前位置（经纬度）
+        DevEUI：{{ row.devEui }} · 最新定位（经纬度）
       </p>
       <div class="mb-3 font-mono text-lg">
-        {{ row.currentPosition.lng }}, {{ row.currentPosition.lat }}
+        {{ row.lastPosition.lng }}, {{ row.lastPosition.lat }}
       </div>
 
       <div class="mb-3 flex flex-wrap items-center gap-3">
@@ -34,7 +34,7 @@
         <div ref="locationMapContainerRef" class="absolute inset-0 min-h-0 min-w-0" />
       </div>
       <p class="mt-2 text-xs text-[var(--el-text-color-secondary)]">
-        打开弹窗后自动展示设备当前坐标；中国境内默认腾讯地图，中国境外默认谷歌地图，可随时切换。
+        打开弹窗后自动展示设备最新定位；中国境内默认腾讯地图，中国境外默认谷歌地图，可随时切换。
       </p>
     </template>
 
@@ -107,7 +107,7 @@
 
     <template v-else-if="mode === 'nav' && row">
       <p class="mb-3 text-sm text-[var(--el-text-color-secondary)]">
-        将尝试获取您当前位置作为起点，车轮设备位置作为终点并打开驾车路线。
+        将尝试获取您当前位置作为起点，以车轮最新定位为终点并打开驾车路线。
       </p>
       <ElButton type="primary" :loading="navLoading" @click="openNavigation">开始导航</ElButton>
     </template>
@@ -165,7 +165,7 @@
   })
 
   const dialogTitle = computed(() => {
-    if (props.mode === 'location') return '当前定位'
+    if (props.mode === 'location') return '最新定位'
     if (props.mode === 'track') return '轨迹回放'
     return '地图导航'
   })
@@ -178,7 +178,7 @@
   const locationMapLoading = ref(false)
   const locationMapError = ref('')
 
-  /** 当前定位弹窗专用，与轨迹地图实例分离 */
+  /** 最新定位弹窗专用，与轨迹地图实例分离 */
   let locationTencentMapGl: { destroy?: () => void; resize?: () => void } | null = null
   let locationQqMap: unknown = null
   let locationQqMarker: unknown = null
@@ -336,8 +336,8 @@
       }
       if (open && props.mode === 'location' && props.row) {
         locationMapProvider.value = isLikelyChinaTerritory(
-          props.row.currentPosition.lat,
-          props.row.currentPosition.lng
+          props.row.lastPosition.lat,
+          props.row.lastPosition.lng
         )
           ? 'tencent'
           : 'google'
@@ -411,7 +411,7 @@
     locationMapError.value = ''
     try {
       destroyLocationMap()
-      const p = props.row.currentPosition
+      const p = props.row.lastPosition
       if (locationMapProvider.value === 'google') {
         await ensureGoogleMapSdk()
         initLocationGoogle(el, p)
@@ -440,8 +440,8 @@
       [
         props.modelValue,
         props.mode,
-        props.row?.currentPosition.lat,
-        props.row?.currentPosition.lng
+        props.row?.lastPosition.lat,
+        props.row?.lastPosition.lng
       ] as const,
     async ([open, mode]) => {
       if (!open || mode !== 'location' || !props.row) {
@@ -525,7 +525,7 @@
     trackMapLoading.value = true
     trackMapError.value = ''
 
-    const pathPts = buildDemoTrackPath(row.lastPosition, row.currentPosition)
+    const pathPts = buildDemoTrackPath(row.lastPosition, row.lastPosition)
     if (pathPts.length < 2) {
       trackMapError.value = '轨迹点不足，无法绘制'
       trackMapLoading.value = false
@@ -866,7 +866,7 @@
           id: 'device',
           styleId: 'pos',
           position: pos,
-          properties: { title: '设备位置' }
+          properties: { title: '最新定位' }
         }
       ]
     })
@@ -886,7 +886,7 @@
     locationQqMarker = new qq.maps.Marker({
       map,
       position,
-      title: '设备位置'
+      title: '最新定位'
     })
   }
 
@@ -911,14 +911,14 @@
       map,
       position,
       zIndex: 5,
-      title: '设备位置'
+      title: '最新定位'
     }) as { setMap: (m: unknown) => void }
   }
 
   function openNavigation() {
     if (!props.row) return
     navLoading.value = true
-    const dest = props.row.currentPosition
+    const dest = props.row.lastPosition
     const destOverseas = !isLikelyChinaTerritory(dest.lat, dest.lng)
 
     const finish = (url: string) => {

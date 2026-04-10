@@ -24,7 +24,7 @@
       />
     </ElCard>
 
-    <ElDialog v-model="detailVisible" title="合作商详情" width="560px" destroy-on-close>
+    <ElDialog v-model="detailVisible" title="合作商详情" width="680px" destroy-on-close>
       <ElDescriptions v-if="detailRow" :column="1" border>
         <ElDescriptionsItem label="合作商ID">{{ detailRow.partnerId }}</ElDescriptionsItem>
         <ElDescriptionsItem label="合作商名称">{{ detailRow.partnerName }}</ElDescriptionsItem>

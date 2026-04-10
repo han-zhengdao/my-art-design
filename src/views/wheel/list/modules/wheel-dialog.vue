@@ -2,12 +2,13 @@
   <ElDialog
     v-model="visible"
     :title="dialogTitle"
-    width="680px"
+    :width="680"
     align-center
     destroy-on-close
     @closed="handleClosed"
   >
-    <ElDescriptions v-if="mode === 'detail'" :column="1" class="border-g-200">
+    <!-- 详情（与信标列表「信标详情」弹窗一致：带边框 Descriptions、无底部栏） -->
+    <ElDescriptions v-if="mode === 'detail'" :column="1" border>
       <ElDescriptionsItem label="ID">{{ detailRow?.id }}</ElDescriptionsItem>
       <ElDescriptionsItem label="DevEUI">{{ detailRow?.devEui }}</ElDescriptionsItem>
       <ElDescriptionsItem label="所属门店">{{ detailRow?.storeName }}</ElDescriptionsItem>
@@ -32,12 +33,6 @@
       <ElDescriptionsItem label="LoRa信号">{{
         detailRow != null ? formatSignalStrength(detailRow.loraSignal) : '--'
       }}</ElDescriptionsItem>
-      <ElDescriptionsItem label="信标MAC坐标">{{
-        coordText(detailRow?.beaconMacCoordinate)
-      }}</ElDescriptionsItem>
-      <ElDescriptionsItem label="当前位置">{{
-        coordText(detailRow?.currentPosition)
-      }}</ElDescriptionsItem>
       <ElDescriptionsItem label="围栏内外">{{
         fenceLabel(detailRow?.fenceStatus)
       }}</ElDescriptionsItem>
@@ -47,7 +42,7 @@
       <ElDescriptionsItem label="出围栏距离">{{
         detailRow != null ? `${detailRow.outFenceDistanceM} m` : '--'
       }}</ElDescriptionsItem>
-      <ElDescriptionsItem label="最后定位">{{
+      <ElDescriptionsItem label="最新定位">{{
         coordText(detailRow?.lastPosition)
       }}</ElDescriptionsItem>
       <ElDescriptionsItem label="最后通信时间">{{ detailRow?.lastCommTime }}</ElDescriptionsItem>
@@ -319,11 +314,8 @@
       </ElTabs>
     </div>
 
-    <template #footer>
-      <template v-if="mode === 'detail'">
-        <ElButton @click="visible = false">关闭</ElButton>
-      </template>
-      <template v-else-if="mode === 'edit'">
+    <template #footer v-if="mode !== 'detail'">
+      <template v-if="mode === 'edit'">
         <ElButton @click="visible = false">取消</ElButton>
         <ElButton type="primary" @click="handleSubmit">确定</ElButton>
       </template>
@@ -449,7 +441,7 @@
   }
   function coordText(p?: Api.Store.GeoPoint) {
     if (!p) return '--'
-    return `${p.lng},${p.lat}`
+    return `${p.lng}, ${p.lat}`
   }
 
   const formRules = computed<FormRules>(() => ({

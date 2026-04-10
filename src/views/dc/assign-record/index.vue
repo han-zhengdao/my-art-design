@@ -22,7 +22,7 @@
         @pagination:current-change="handleCurrentChange"
       />
     </ElCard>
-    <ElDialog v-model="detailVisible" title="分配记录详情" width="520px" destroy-on-close>
+    <ElDialog v-model="detailVisible" title="分配记录详情" width="680px" destroy-on-close>
       <ElDescriptions v-if="detailRow" :column="1" border>
         <ElDescriptionsItem label="ID">{{ detailRow.id }}</ElDescriptionsItem>
         <ElDescriptionsItem label="分配来源">{{ detailRow.assignSourceLabel }}</ElDescriptionsItem>

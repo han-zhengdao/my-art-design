@@ -1,13 +1,14 @@
 @use '@styles/core/mixin.scss' as *;
 
 // 菜单样式变量
-$menu-height: 42px;
-$menu-icon-size: 20px;
+$menu-height: 46px;
+$menu-icon-size: 18px;
 $menu-font-size: 14px;
+$menu-font-weight: 500;
 $hover-bg-color: var(--art-gray-200);
-$popup-menu-height: 40px;
+$popup-menu-height: 46px;
 $popup-menu-padding: 8px;
-$popup-menu-margin: 5px;
+$popup-menu-margin: 6px;
 $popup-menu-radius: 6px;
 
 // 通用菜单项样式
@@ -71,6 +72,11 @@ $popup-menu-radius: 6px;
   .el-menu--popup {
     padding: $popup-menu-padding;
 
+    .el-sub-menu__title,
+    .el-menu-item {
+      font-weight: $menu-font-weight;
+    }
+
     .el-sub-menu__title:hover,
     .el-menu-item:hover {
       background-color: $hover-bg !important;
@@ -113,7 +119,7 @@ $popup-menu-radius: 6px;
 
   // 菜单图标
   .menu-icon {
-    margin-right: 8px;
+    margin-right: 10px;
     font-size: $menu-icon-size;
   }
 
@@ -122,10 +128,12 @@ $popup-menu-radius: 6px;
   .el-menu-item {
     height: $menu-height !important;
     margin-bottom: 4px;
+    font-weight: $menu-font-weight;
     line-height: $menu-height !important;
 
     span {
       font-size: $menu-font-size !important;
+      font-weight: inherit;
 
       @include ellipsis();
     }
@@ -239,7 +247,7 @@ $popup-menu-radius: 6px;
     // 图标颜色、文字颜色
     .menu-icon .art-svg-icon,
     .menu-name {
-      color: var(--art-gray-800) !important;
+      color: var(--art-gray-900) !important;
     }
 
     // 选中的文字颜色跟图标颜色

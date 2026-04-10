@@ -164,6 +164,58 @@ declare namespace Api {
           endTime: string | null
         }
     >
+
+    /** 菜单树节点 GET /system/menu/getMenuTree（与后端字段一致） */
+    interface MenuTreeItem {
+      id: number
+      parentId: number
+      menuName: string
+      menuCode: string
+      /** 可为空字符串 */
+      icon?: string
+      path: string
+      /** 1 目录 2 菜单 */
+      type: number
+      status: number
+      sort: number
+      children?: MenuTreeItem[]
+    }
+
+    type MenuDetail = MenuTreeItem
+
+    interface UpdateMenuPayload {
+      id: number
+      parentId: number
+      menuName: string
+      menuCode: string
+      icon?: string
+      path: string
+      type: number
+      status: number
+      sort: number
+      children?: MenuTreeItem[]
+    }
+
+    interface CreateMenuPayload {
+      parentId: number
+      menuName: string
+      menuCode: string
+      icon?: string
+      path: string
+      /** 1 目录 2 菜单 */
+      type: number
+      status: number
+      sort: number
+    }
+
+    interface DirectoryMenuItem {
+      id: number
+      menuName: string
+    }
+
+    interface DeleteMenuPayload {
+      id: number
+    }
   }
 
   /** 合作商管理 */
@@ -358,14 +410,12 @@ declare namespace Api {
       gpsAccuracy: GpsAccuracy
       beaconSignal: number
       loraSignal: number
-      /** 信标 MAC 对应坐标 */
-      beaconMacCoordinate: Store.GeoPoint
-      currentPosition: Store.GeoPoint
       fenceStatus: FenceStatus
       /** 出围栏时长（秒） */
       outFenceDurationSec: number
       /** 出围栏距离（米） */
       outFenceDistanceM: number
+      /** 最新定位（经纬度） */
       lastPosition: Store.GeoPoint
       lastCommTime: string
       createTime: string

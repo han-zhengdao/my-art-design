@@ -2,19 +2,19 @@
   <ElDialog
     v-model="visible"
     :title="dialogTitle"
-    width="680px"
+    :width="680"
     align-center
     destroy-on-close
     @closed="handleClosed"
   >
-    <!-- 详情 -->
-    <ElDescriptions v-if="mode === 'detail'" :column="1" class="border-g-200">
+    <!-- 详情（与工单列表「工单详情」弹窗一致：带边框 Descriptions、无底部栏） -->
+    <ElDescriptions v-if="mode === 'detail'" :column="1" border>
       <ElDescriptionsItem label="ID">{{ detailRow?.id }}</ElDescriptionsItem>
       <ElDescriptionsItem label="信标 MAC">{{ detailRow?.beaconMac }}</ElDescriptionsItem>
       <ElDescriptionsItem label="区域编号">{{ detailRow?.regionCode }}</ElDescriptionsItem>
-      <ElDescriptionsItem label="GPS 坐标">{{
-        `${detailRow?.gpsCoordinate.lng},${detailRow?.gpsCoordinate.lat}`
-      }}</ElDescriptionsItem>
+      <ElDescriptionsItem label="GPS 坐标">
+        {{ detailRow?.gpsCoordinate.lng }}, {{ detailRow?.gpsCoordinate.lat }}
+      </ElDescriptionsItem>
       <ElDescriptionsItem label="所属门店">{{ detailRow?.storeName }}</ElDescriptionsItem>
       <ElDescriptionsItem label="所属区域">{{
         detailRow?.regionName ?? '无区域'
@@ -326,11 +326,8 @@
       </ElTabs>
     </div>
 
-    <template #footer>
-      <template v-if="mode === 'detail'">
-        <ElButton @click="visible = false">关闭</ElButton>
-      </template>
-      <template v-else-if="mode === 'edit'">
+    <template #footer v-if="mode !== 'detail'">
+      <template v-if="mode === 'edit'">
         <ElButton @click="visible = false">取消</ElButton>
         <ElButton type="primary" @click="handleSubmit">确定</ElButton>
       </template>

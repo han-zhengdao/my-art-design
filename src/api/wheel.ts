@@ -20,8 +20,6 @@ const MOCK_ROWS: Api.Wheel.WheelListItem[] = [
     gpsAccuracy: 'PRECISE',
     beaconSignal: -62,
     loraSignal: -70,
-    beaconMacCoordinate: { lng: 121.5031, lat: 31.2362 },
-    currentPosition: { lng: 121.5035, lat: 31.2364 },
     fenceStatus: 'INSIDE',
     outFenceDurationSec: 0,
     outFenceDistanceM: 0,
@@ -47,8 +45,6 @@ const MOCK_ROWS: Api.Wheel.WheelListItem[] = [
     gpsAccuracy: 'IMPRECISE',
     beaconSignal: -78,
     loraSignal: -85,
-    beaconMacCoordinate: { lng: 121.5028, lat: 31.236 },
-    currentPosition: { lng: 121.504, lat: 31.237 },
     fenceStatus: 'OUTSIDE',
     outFenceDurationSec: 3600,
     outFenceDistanceM: 120,
@@ -74,8 +70,6 @@ const MOCK_ROWS: Api.Wheel.WheelListItem[] = [
     gpsAccuracy: 'PRECISE',
     beaconSignal: -90,
     loraSignal: -92,
-    beaconMacCoordinate: { lng: 104.072, lat: 30.572 },
-    currentPosition: { lng: 104.072, lat: 30.572 },
     fenceStatus: 'INSIDE',
     outFenceDurationSec: 0,
     outFenceDistanceM: 0,
@@ -101,8 +95,6 @@ const MOCK_ROWS: Api.Wheel.WheelListItem[] = [
     gpsAccuracy: 'PRECISE',
     beaconSignal: -55,
     loraSignal: -60,
-    beaconMacCoordinate: { lng: 10.7522, lat: 59.9139 },
-    currentPosition: { lng: 10.7525, lat: 59.914 },
     fenceStatus: 'INSIDE',
     outFenceDurationSec: 0,
     outFenceDistanceM: 0,
@@ -128,8 +120,6 @@ const MOCK_ROWS: Api.Wheel.WheelListItem[] = [
     gpsAccuracy: 'IMPRECISE',
     beaconSignal: -95,
     loraSignal: -95,
-    beaconMacCoordinate: { lng: 10.75, lat: 59.91 },
-    currentPosition: { lng: 10.7522, lat: 59.9139 },
     fenceStatus: 'OUTSIDE',
     outFenceDurationSec: 86400,
     outFenceDistanceM: 500,
@@ -233,7 +223,7 @@ function buildNewWheelRow(
   createTime: string
 ): Api.Wheel.WheelListItem {
   const store = mockRows.find((s) => s.storeId === payload.storeId)
-  const pt = store?.currentPosition ?? { lng: 116.4074, lat: 39.9042 }
+  const pt = store?.lastPosition ?? { lng: 116.4074, lat: 39.9042 }
   return {
     id,
     devEui: payload.devEui.trim(),
@@ -251,8 +241,6 @@ function buildNewWheelRow(
     gpsAccuracy: 'PRECISE',
     beaconSignal: -65,
     loraSignal: -72,
-    beaconMacCoordinate: store?.beaconMacCoordinate ?? { ...pt },
-    currentPosition: { ...pt },
     fenceStatus: 'INSIDE',
     outFenceDurationSec: 0,
     outFenceDistanceM: 0,

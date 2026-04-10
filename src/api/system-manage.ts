@@ -1,7 +1,4 @@
 import request from '@/utils/http'
-import { AppRouteRecord } from '@/types/router'
-import { fetchGetMyMenusPermission } from './auth'
-import { asyncRoutes } from '@/router/routes/asyncRoutes'
 
 // 获取用户列表
 export function fetchGetUserList(params: Api.SystemManage.UserSearchParams) {
@@ -19,46 +16,49 @@ export function fetchGetRoleList(params: Api.SystemManage.RoleSearchParams) {
   })
 }
 
-// 获取菜单列表
-export function fetchGetMenuList() {
-  return fetchGetMyMenusPermission().then((permissions) => {
-    const readableCodes = new Set(
-      (permissions || []).filter((item) => item.canRead === 1).map((item) => item.menuCode)
-    )
+/** 菜单管理页：后端菜单树 GET /system/menu/getMenuTree（Authorization 由 http 拦截器注入） */
+export function fetchGetMenuTree() {
+  return request.get<Api.SystemManage.MenuTreeItem[]>({
+    url: '/system/menu/getMenuTree'
+  })
+}
 
-    // 路由名称 -> 后端 menuCode 映射
-    const routeCodeMap: Record<string, string> = {
-      Menus: 'system:menu',
-      Role: 'system:role',
-      User: 'system:user',
-      PartnerList: 'org:partner',
-      RegionList: 'org:region',
-      StoreList: 'org:store',
-      WheelList: 'biz:device',
-      BeaconList: 'biz:device'
-    }
+/** 菜单管理：按 id 查询菜单详情 */
+export function fetchGetMenuDetail(id: number) {
+  return request.get<Api.SystemManage.MenuDetail>({
+    url: '/system/menu/getMenuDetail',
+    params: { id }
+  })
+}
 
-    const filterByPermission = (routes: AppRouteRecord[]): AppRouteRecord[] => {
-      return routes
-        .map((route) => {
-          const copied = { ...route }
-          if (copied.children?.length) {
-            copied.children = filterByPermission(copied.children)
-          }
-          return copied
-        })
-        .filter((route) => {
-          // 保留有可见子节点的目录
-          if (route.children && route.children.length > 0) {
-            return true
-          }
-          // 仅对已映射节点做权限过滤，未映射默认保留
-          const code = routeCodeMap[String(route.name || '')]
-          if (!code) return true
-          return readableCodes.has(code)
-        })
-    }
+/** 菜单管理：提交菜单更新 */
+export function fetchUpdateMenu(params: Api.SystemManage.UpdateMenuPayload) {
+  return request.post<void>({
+    url: '/system/menu/updateMenu',
+    params
+  })
+}
 
-    return filterByPermission(asyncRoutes)
+/** 菜单管理：新增菜单，返回新建菜单 id */
+export function fetchCreateMenu(params: Api.SystemManage.CreateMenuPayload) {
+  return request.post<number>({
+    url: '/system/menu/createMenu',
+    params
+  })
+}
+
+/** 菜单管理：目录下拉列表 */
+export function fetchListDirectoryMenus() {
+  return request.get<Api.SystemManage.DirectoryMenuItem[]>({
+    url: '/system/menu/listDirectoryMenus'
+  })
+}
+
+/** 菜单管理：删除菜单 */
+export function fetchDeleteMenu(id: number) {
+  const params: Api.SystemManage.DeleteMenuPayload = { id }
+  return request.post<void>({
+    // 注意：当前 http 封装会把 POST 的 params 挪到 body，这个接口要求 query 参数，需显式拼到 URL
+    url: `/system/menu/deleteMenu?id=${encodeURIComponent(String(params.id))}`
   })
 }

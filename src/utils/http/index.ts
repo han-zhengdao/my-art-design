@@ -40,6 +40,17 @@ interface ExtendedAxiosRequestConfig extends AxiosRequestConfig {
 
 const { VITE_API_URL, VITE_WITH_CREDENTIALS } = import.meta.env
 
+/** 业务成功码（兼容 number / string，如 200 与 "200"） */
+function isBizSuccessCode(code: unknown): boolean {
+  return Number(code) === ApiStatus.success
+}
+
+function toBizErrorCode(code: unknown): number {
+  if (typeof code === 'number' && Number.isFinite(code)) return code
+  const n = Number(code)
+  return Number.isFinite(n) ? n : ApiStatus.error
+}
+
 /** Axios实例 */
 const axiosInstance = axios.create({
   timeout: REQUEST_TIMEOUT,
@@ -65,7 +76,11 @@ const axiosInstance = axios.create({
 axiosInstance.interceptors.request.use(
   (request: InternalAxiosRequestConfig) => {
     const { accessToken } = useUserStore()
-    if (accessToken) request.headers.set('Authorization', accessToken)
+    if (accessToken) {
+      // 兼容后端常见鉴权格式：Bearer <token>
+      const token = accessToken.startsWith('Bearer ') ? accessToken : `Bearer ${accessToken}`
+      request.headers.set('Authorization', token)
+    }
 
     if (request.data && !(request.data instanceof FormData) && !request.headers['Content-Type']) {
       request.headers.set('Content-Type', 'application/json')
@@ -83,11 +98,15 @@ axiosInstance.interceptors.request.use(
 /** 响应拦截器 */
 axiosInstance.interceptors.response.use(
   (response: AxiosResponse<BaseResponse>) => {
-    const { code, msg, message } = response.data
+    const body = response.data
+    if (body == null || typeof body !== 'object') {
+      throw createHttpError($t('httpMsg.requestFailed'), ApiStatus.error)
+    }
+    const { code, msg, message } = body
     const resolvedMessage = msg || message
-    if (code === ApiStatus.success) return response
-    if (code === ApiStatus.unauthorized) handleUnauthorizedError(resolvedMessage)
-    throw createHttpError(resolvedMessage || $t('httpMsg.requestFailed'), code)
+    if (isBizSuccessCode(code)) return response
+    if (Number(code) === ApiStatus.unauthorized) handleUnauthorizedError(resolvedMessage)
+    throw createHttpError(resolvedMessage || $t('httpMsg.requestFailed'), toBizErrorCode(code))
   },
   (error) => {
     if (error.response?.status === ApiStatus.unauthorized) handleUnauthorizedError()

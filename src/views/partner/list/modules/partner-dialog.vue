@@ -2,7 +2,7 @@
   <ElDialog
     v-model="visible"
     :title="dialogTitle"
-    width="600px"
+    :width="680"
     align-center
     destroy-on-close
     @closed="handleClosed"
@@ -87,7 +87,7 @@
       </ElFormItem>
     </ElForm>
 
-    <ElDescriptions v-else-if="mode === 'detail'" :column="1" class="border-g-200">
+    <ElDescriptions v-else-if="mode === 'detail'" :column="1" border>
       <ElDescriptionsItem label="ID">{{ detailRow?.id }}</ElDescriptionsItem>
       <ElDescriptionsItem label="用户昵称">
         {{ detailRow?.userNickName || '--' }}

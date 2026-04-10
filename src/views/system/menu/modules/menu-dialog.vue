@@ -21,8 +21,8 @@
     >
       <template #menuType>
         <ElRadioGroup v-model="form.menuType" :disabled="disableMenuType">
+          <ElRadioButton value="directory" label="directory">目录</ElRadioButton>
           <ElRadioButton value="menu" label="menu">菜单</ElRadioButton>
-          <ElRadioButton value="button" label="button">按钮</ElRadioButton>
         </ElRadioGroup>
       </template>
     </ArtForm>
@@ -71,6 +71,7 @@
 
   interface MenuFormData {
     id: number
+    parentId: number
     name: string
     path: string
     label: string
@@ -99,8 +100,11 @@
   interface Props {
     visible: boolean
     editData?: AppRouteRecord | any
-    type?: 'menu' | 'button'
+    type?: 'directory' | 'menu'
     lockType?: boolean
+    defaultParentId?: number
+    directoryOptions?: Api.SystemManage.DirectoryMenuItem[]
+    menuNameMap?: Record<number, string>
   }
 
   interface Emits {
@@ -110,8 +114,11 @@
 
   const props = withDefaults(defineProps<Props>(), {
     visible: false,
-    type: 'menu',
-    lockType: false
+    type: 'directory',
+    lockType: false,
+    defaultParentId: 0,
+    directoryOptions: () => [],
+    menuNameMap: () => ({})
   })
 
   const emit = defineEmits<Emits>()
@@ -119,9 +126,10 @@
   const formRef = ref()
   const isEdit = ref(false)
 
-  const form = reactive<MenuFormData & { menuType: 'menu' | 'button' }>({
-    menuType: 'menu',
+  const form = reactive<MenuFormData & { menuType: 'directory' | 'menu' }>({
+    menuType: 'directory',
     id: 0,
+    parentId: 0,
     name: '',
     path: '',
     label: '',
@@ -153,7 +161,6 @@
       { min: 2, max: 20, message: '长度在 2 到 20 个字符', trigger: 'blur' }
     ],
     path: [{ required: true, message: '请输入路由地址', trigger: 'blur' }],
-    label: [{ required: true, message: '输入权限标识', trigger: 'blur' }],
     authName: [{ required: true, message: '请输入权限名称', trigger: 'blur' }],
     authLabel: [{ required: true, message: '请输入权限标识', trigger: 'blur' }]
   })
@@ -167,9 +174,27 @@
     // Switch 组件的 span：小屏幕 12，大屏幕 6
     const switchSpan = width.value < 640 ? 12 : 6
 
-    if (form.menuType === 'menu') {
+    if (form.menuType === 'directory' || form.menuType === 'menu') {
+      const parentOptions = [
+        { label: '顶级目录', value: 0 },
+        ...props.directoryOptions.map((d) => ({ label: d.menuName, value: d.id }))
+      ]
+      // 编辑场景下若当前 parentId 不在目录列表里（例如后端仅返回部分目录），补一条兜底选项避免显示纯数字 id
+      if (
+        form.parentId !== 0 &&
+        !parentOptions.some((opt) => Number(opt.value) === Number(form.parentId))
+      ) {
+        const fallbackName = props.menuNameMap[Number(form.parentId)] || `ID:${form.parentId}`
+        parentOptions.push({ label: fallbackName, value: form.parentId })
+      }
       return [
         ...baseItems,
+        {
+          label: '父级菜单',
+          key: 'parentId',
+          type: 'select',
+          props: { placeholder: '请选择父级菜单', options: parentOptions, clearable: false }
+        },
         { label: '菜单名称', key: 'name', type: 'input', props: { placeholder: '菜单名称' } },
         {
           label: createLabelTooltip(
@@ -180,7 +205,6 @@
           type: 'input',
           props: { placeholder: '如：/dashboard 或 console' }
         },
-        { label: '权限标识', key: 'label', type: 'input', props: { placeholder: '如：User' } },
         {
           label: createLabelTooltip(
             '组件路径',
@@ -236,33 +260,12 @@
         { label: '标签隐藏', key: 'isHideTab', type: 'switch', span: switchSpan },
         { label: '全屏页面', key: 'isFullPage', type: 'switch', span: switchSpan }
       ]
-    } else {
-      return [
-        ...baseItems,
-        {
-          label: '权限名称',
-          key: 'authName',
-          type: 'input',
-          props: { placeholder: '如：新增、编辑、删除' }
-        },
-        {
-          label: '权限标识',
-          key: 'authLabel',
-          type: 'input',
-          props: { placeholder: '如：add、edit、delete' }
-        },
-        {
-          label: '权限排序',
-          key: 'authSort',
-          type: 'number',
-          props: { min: 1, controlsPosition: 'right', style: { width: '100%' } }
-        }
-      ]
     }
+    return []
   })
 
   const dialogTitle = computed(() => {
-    const type = form.menuType === 'menu' ? '菜单' : '按钮'
+    const type = form.menuType === 'menu' ? '菜单' : '目录'
     return isEdit.value ? `编辑${type}` : `新建${type}`
   })
 
@@ -280,7 +283,7 @@
    */
   const resetForm = (): void => {
     formRef.value?.reset()
-    form.menuType = 'menu'
+    form.menuType = 'directory'
   }
 
   /**
@@ -291,35 +294,29 @@
 
     isEdit.value = true
 
-    if (form.menuType === 'menu') {
-      const row = props.editData
-      form.id = row.id || 0
-      form.name = formatMenuTitle(row.meta?.title || '')
-      form.path = row.path || ''
-      form.label = row.name || ''
-      form.component = row.component || ''
-      form.icon = row.meta?.icon || ''
-      form.sort = row.meta?.sort || 1
-      form.isMenu = row.meta?.isMenu ?? true
-      form.keepAlive = row.meta?.keepAlive ?? false
-      form.isHide = row.meta?.isHide ?? false
-      form.isHideTab = row.meta?.isHideTab ?? false
-      form.isEnable = row.meta?.isEnable ?? true
-      form.link = row.meta?.link || ''
-      form.isIframe = row.meta?.isIframe ?? false
-      form.showBadge = row.meta?.showBadge ?? false
-      form.showTextBadge = row.meta?.showTextBadge || ''
-      form.fixedTab = row.meta?.fixedTab ?? false
-      form.activePath = row.meta?.activePath || ''
-      form.roles = row.meta?.roles || []
-      form.isFullPage = row.meta?.isFullPage ?? false
-    } else {
-      const row = props.editData
-      form.authName = row.title || ''
-      form.authLabel = row.authMark || ''
-      form.authIcon = row.icon || ''
-      form.authSort = row.sort || 1
-    }
+    const row = props.editData
+    form.id = row.id || 0
+    form.parentId = Number(row.parentId ?? 0)
+    form.menuType = Number(row.type) === 2 ? 'menu' : 'directory'
+    form.name = formatMenuTitle(row.meta?.title || '')
+    form.path = row.path || ''
+    form.label = row.name || ''
+    form.component = row.component || ''
+    form.icon = row.meta?.icon || ''
+    form.sort = row.meta?.sort || 1
+    form.isMenu = row.meta?.isMenu ?? true
+    form.keepAlive = row.meta?.keepAlive ?? false
+    form.isHide = row.meta?.isHide ?? false
+    form.isHideTab = row.meta?.isHideTab ?? false
+    form.isEnable = row.meta?.isEnable ?? true
+    form.link = row.meta?.link || ''
+    form.isIframe = row.meta?.isIframe ?? false
+    form.showBadge = row.meta?.showBadge ?? false
+    form.showTextBadge = row.meta?.showTextBadge || ''
+    form.fixedTab = row.meta?.fixedTab ?? false
+    form.activePath = row.meta?.activePath || ''
+    form.roles = row.meta?.roles || []
+    form.isFullPage = row.meta?.isFullPage ?? false
   }
 
   /**
@@ -331,8 +328,6 @@
     try {
       await formRef.value.validate()
       emit('submit', { ...form })
-      ElMessage.success(`${isEdit.value ? '编辑' : '新增'}成功`)
-      handleCancel()
     } catch {
       ElMessage.error('表单校验失败，请检查输入')
     }
@@ -364,6 +359,8 @@
         nextTick(() => {
           if (props.editData) {
             loadFormData()
+          } else if (form.menuType === 'directory' || form.menuType === 'menu') {
+            form.parentId = Number(props.defaultParentId ?? 0)
           }
         })
       }

@@ -27,13 +27,34 @@ export default ({ mode }: { mode: string }) => {
     server: {
       port: Number(VITE_PORT),
       proxy: {
-        '/auth': {
+        /**
+         * 兜底代理：后端接口按业务前缀分散（/system、/org、/biz...）时不再逐个配置。
+         * - 放行 Vite 自身资源与 HMR 请求
+         * - 其余请求一律转发到后端
+         */
+        '/': {
           target: VITE_API_PROXY_URL,
-          changeOrigin: true
-        },
-        '/api': {
-          target: VITE_API_PROXY_URL,
-          changeOrigin: true
+          changeOrigin: true,
+          bypass(req) {
+            const url = req.url || ''
+            const accept = req.headers?.accept || ''
+            // Vite/HMR/前端静态资源：不要代理
+            if (
+              url === '/' ||
+              accept.includes('text/html') ||
+              url.startsWith('/@vite') ||
+              url.startsWith('/@id') ||
+              url.startsWith('/@fs') ||
+              url.startsWith('/src') ||
+              url.startsWith('/node_modules') ||
+              url.startsWith('/__vite_ping') ||
+              url.startsWith('/vite.svg') ||
+              url.startsWith('/favicon.ico')
+            ) {
+              return url
+            }
+            return undefined
+          }
         }
       },
       host: true

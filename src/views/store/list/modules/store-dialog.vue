@@ -2,7 +2,7 @@
   <ElDialog
     v-model="visible"
     :title="dialogTitle"
-    width="680px"
+    :width="680"
     align-center
     destroy-on-close
     @closed="handleClosed"
@@ -174,7 +174,8 @@
       </ElFormItem>
     </ElForm>
 
-    <ElDescriptions v-else-if="mode === 'detail'" :column="1" class="border-g-200">
+    <!-- 详情（与车轮列表「车轮详情」弹窗一致：带边框 Descriptions、无底部栏） -->
+    <ElDescriptions v-else-if="mode === 'detail'" :column="1" border class="store-detail-desc">
       <ElDescriptionsItem label="ID">{{ detailRow?.id }}</ElDescriptionsItem>
       <ElDescriptionsItem label="用户昵称">{{
         detailRow?.userNickName || '--'
@@ -195,9 +196,11 @@
       <ElDescriptionsItem label="门店坐标">{{
         pointToText(detailRow?.storeCoordinate)
       }}</ElDescriptionsItem>
-      <ElDescriptionsItem label="电子围栏">{{
-        geofenceToText(detailRow?.geofence)
-      }}</ElDescriptionsItem>
+      <ElDescriptionsItem label="电子围栏">
+        <div class="store-detail-geofence-scroll">
+          {{ geofenceToText(detailRow?.geofence) }}
+        </div>
+      </ElDescriptionsItem>
       <ElDescriptionsItem label="时区">{{
         formatTimezoneLabel(detailRow?.timezone)
       }}</ElDescriptionsItem>
@@ -408,12 +411,12 @@
 
   function pointToText(point?: Api.Store.GeoPoint): string {
     if (!point) return '--'
-    return `${point.lng},${point.lat}`
+    return `${point.lng}, ${point.lat}`
   }
 
   function geofenceToText(points?: Api.Store.GeoPoint[]): string {
     if (!points || points.length === 0) return '--'
-    return points.map((p) => `${p.lng},${p.lat}`).join('; ')
+    return points.map((p) => `${p.lng}, ${p.lat}`).join('; ')
   }
 
   function openMapPicker(mode: 'coordinate' | 'geofence') {
@@ -622,5 +625,29 @@
 <style scoped>
   .store-dialog-steps {
     margin-bottom: 20px;
+  }
+
+  /** 详情表格固定布局，避免单格超长撑开整行；电子围栏单行展示 + 横向滚动查看 */
+  .store-detail-desc :deep(.el-descriptions__table) {
+    width: 100%;
+    table-layout: fixed;
+  }
+
+  .store-detail-desc :deep(.el-descriptions__label) {
+    width: 140px;
+    vertical-align: top;
+  }
+
+  .store-detail-desc :deep(.el-descriptions__content) {
+    min-width: 0;
+  }
+
+  .store-detail-geofence-scroll {
+    display: block;
+    max-width: 100%;
+    padding-bottom: 2px;
+    overflow: auto hidden;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
   }
 </style>

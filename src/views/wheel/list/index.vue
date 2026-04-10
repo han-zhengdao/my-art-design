@@ -240,20 +240,6 @@
           formatter: (row: WheelItem) => formatSignalStrength(row.loraSignal)
         },
         {
-          prop: 'beaconMacCoordinate',
-          label: '信标MAC（坐标）',
-          width: 'auto',
-          minWidth: 180,
-          formatter: (row: WheelItem) => coordText(row.beaconMacCoordinate)
-        },
-        {
-          prop: 'currentPosition',
-          label: '当前位置（坐标）',
-          width: 'auto',
-          minWidth: 180,
-          formatter: (row: WheelItem) => coordText(row.currentPosition)
-        },
-        {
           prop: 'fenceStatus',
           label: '围栏内外',
           width: 'auto',
@@ -276,7 +262,7 @@
         },
         {
           prop: 'lastPosition',
-          label: '最后定位（坐标）',
+          label: '最新定位（坐标）',
           width: 'auto',
           minWidth: 180,
           formatter: (row: WheelItem) => coordText(row.lastPosition)
@@ -325,7 +311,7 @@
                         h(
                           ElDropdownItem,
                           { onClick: () => openExtra('location', row) },
-                          () => '当前定位'
+                          () => '最新定位'
                         ),
                         h(
                           ElDropdownItem,
