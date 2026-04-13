@@ -1,5 +1,8 @@
 /**
  * 将 GET /auth/getMyMenus 返回的菜单树转为 AppRouteRecord（与 ComponentLoader 路径约定一致）
+ *
+ * - `menuName` 作为 meta.title：若后端已按用户语言返回文案，侧栏应直接展示（见 formatMenuTitle，非 menus. 前缀则原样显示）。
+ * - 若仍使用前端 i18n 键（如 menus.xxx），formatMenuTitle 会走 vue-i18n。
  */
 import type { AppRouteRecord, RouteMeta } from '@/types/router'
 

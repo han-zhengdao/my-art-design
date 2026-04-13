@@ -58,8 +58,7 @@
   import { ElMessage, ElMessageBox, ElTag } from 'element-plus'
   import { DialogType } from '@/types'
   import { useUserStore } from '@/store/modules/user'
-  import { fetchGetUserPageList } from '@/api/system-manage'
-  import { deleteMockUsersByIds } from '@/api/user-mock'
+  import { fetchDeleteUser, fetchGetUserPageList } from '@/api/system-manage'
 
   defineOptions({ name: 'User' })
 
@@ -85,18 +84,10 @@
     roleId: undefined
   })
 
-  // 用户状态配置（仅展示 正常 / 注销）
-  const USER_STATUS_CONFIG = {
-    normal: { type: 'success' as const, text: '正常' },
-    disabled: { type: 'danger' as const, text: '注销' }
-  } as const
-
-  /**
-   * 获取用户状态配置
-   */
-  const getUserStatusConfig = (status?: string) => {
-    const key = status === '4' ? 'disabled' : 'normal'
-    return USER_STATUS_CONFIG[key]
+  /** 是否启用：0/4 为禁用，其余视为启用（接口未定时可按后端约定再改） */
+  const isUserEnabled = (status?: string): boolean => {
+    const s = String(status ?? '1').trim()
+    return s !== '0' && s !== '4'
   }
 
   const getUserRoleLabel = (roles?: string[]): string => {
@@ -120,29 +111,23 @@
     return matched || '-'
   }
 
+  /** 用户类型（字典 user_type），与搜索栏「用户类型」选项一致 */
+  const getUserTypeLabel = (userType?: string): string => {
+    if (!userType) return '--'
+    const map: Record<string, string> = {
+      SUPER: '平台超管',
+      PARTNER: '合作商',
+      REGION: '区域',
+      STORE: '门店'
+    }
+    const key = userType.trim().toUpperCase()
+    return map[key] || userType
+  }
+
   const getLogoutDate = (row: UserListItem) => {
     // 仅对已注销用户展示注销日期（暂用 updateTime 占位），否则显示 --
     if (row.status !== '4') return '--'
     return row.updateTime || '--'
-  }
-
-  /** 与单条删除一致：返回 null 表示允许删除，否则为拦截原因 */
-  const getUserDeleteBlockReason = (row: UserListItem): string | null => {
-    if (row.status !== '4') return '仅已注销的用户可删除'
-    const logoutStr = getLogoutDate(row)
-    if (!logoutStr) {
-      return '缺少注销日期，无法删除'
-    }
-    const logoutTime = new Date(logoutStr).getTime()
-    if (Number.isNaN(logoutTime)) {
-      return '注销日期格式不正确，无法删除'
-    }
-    const now = Date.now()
-    const oneYearMs = 365 * 24 * 60 * 60 * 1000
-    if (now - logoutTime < oneYearMs) {
-      return '用户注销未满一年，暂不允许删除'
-    }
-    return null
   }
 
   const {
@@ -188,45 +173,68 @@
         {
           prop: 'userEmail',
           label: '登录邮箱',
-          width: 220
+          minWidth: 200
         },
         {
-          prop: 'password',
-          label: '登录密码',
-          width: 140,
-          formatter: () => '******'
+          prop: 'userType',
+          label: '用户类型',
+          width: 120,
+          formatter: (row: UserListItem) => getUserTypeLabel(row.userType)
         },
         {
           prop: 'userRoles',
           label: '对应角色',
-          width: 200,
+          minWidth: 160,
           formatter: (row: UserListItem) => row.roleName || getUserRoleLabel(row.userRoles)
+        },
+        {
+          prop: 'partnerName',
+          label: '所属合作商',
+          minWidth: 140,
+          formatter: (row: UserListItem) => row.partnerName || '--'
+        },
+        {
+          prop: 'regionName',
+          label: '所属区域',
+          minWidth: 140,
+          formatter: (row: UserListItem) => row.regionName || '--'
+        },
+        {
+          prop: 'storeName',
+          label: '所属门店',
+          minWidth: 140,
+          formatter: (row: UserListItem) => row.storeName || '--'
         },
         {
           prop: 'assetName',
           label: '对应资产',
-          width: 220,
+          minWidth: 200,
           formatter: (row: UserListItem) => row.assetName || '--'
         },
         {
           prop: 'status',
           label: '状态',
-          width: 100,
-          formatter: (row) => {
-            const statusConfig = getUserStatusConfig(row.status)
-            return h(ElTag, { type: statusConfig.type }, () => statusConfig.text)
+          width: 110,
+          formatter: (row: UserListItem) => {
+            const enabled = isUserEnabled(row.status)
+            if (!isSuperAdmin.value) {
+              return h(ElTag, { type: enabled ? 'success' : 'info' }, () =>
+                enabled ? '启用' : '禁用'
+              )
+            }
+            return h(
+              ElTag,
+              {
+                type: enabled ? 'success' : 'info',
+                class: 'cursor-pointer select-none',
+                onClick: (e: MouseEvent) => {
+                  e.stopPropagation()
+                  handleToggleUserStatus(row)
+                }
+              },
+              () => (enabled ? '启用' : '禁用')
+            )
           }
-        },
-        {
-          prop: 'createTime',
-          label: '创建时间',
-          sortable: true,
-          width: 180
-        },
-        {
-          prop: 'createBy',
-          label: '操作人',
-          width: 120
         },
         {
           prop: 'logoutTime',
@@ -265,15 +273,46 @@
     },
     transform: {
       dataTransformer: (records) =>
-        records.map((row) => ({
-          ...row,
-          userEmail: row.userEmail || row.email,
-          userPhone: row.userPhone || row.phone,
-          userRoles: row.userRoles || (row.roleCode ? [row.roleCode] : []),
-          userName: row.userName || row.email
-        }))
+        records.map((row) => {
+          const r = row as UserListItem & {
+            partner_name?: string
+            region_name?: string
+            store_name?: string
+          }
+          return {
+            ...r,
+            userEmail: r.userEmail || r.email,
+            userPhone: r.userPhone || r.phone,
+            userRoles: r.userRoles || (r.roleCode ? [r.roleCode] : []),
+            userName: r.userName || r.email,
+            partnerName: r.partnerName ?? r.partner_name,
+            regionName: r.regionName ?? r.region_name,
+            storeName: r.storeName ?? r.store_name
+          }
+        })
     }
   })
+
+  /** 切换启用/禁用（暂无接口：仅更新当前列表行数据） */
+  const handleToggleUserStatus = (row: UserListItem) => {
+    if (!isSuperAdmin.value) {
+      ElMessage.warning('仅平台超级管理员可修改用户状态')
+      return
+    }
+    const enabled = isUserEnabled(row.status)
+    const nextText = enabled ? '禁用' : '启用'
+    const nextStatus = enabled ? '0' : '1'
+    ElMessageBox.confirm(`确认将该用户状态改为「${nextText}」吗？`, '修改状态', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    })
+      .then(() => {
+        row.status = nextStatus
+        ElMessage.success(`已切换为「${nextText}」（本地生效，待接口对接）`)
+      })
+      .catch(() => {})
+  }
 
   /**
    * 搜索处理
@@ -303,18 +342,13 @@
       ElMessage.warning('仅平台超级管理员可删除用户')
       return
     }
-    const reason = getUserDeleteBlockReason(row)
-    if (reason) {
-      ElMessage.warning(reason)
-      return
-    }
 
     ElMessageBox.confirm(`确定要永久删除该用户吗？`, '删除用户', {
       confirmButtonText: '确定',
       cancelButtonText: '取消',
       type: 'warning'
-    }).then(() => {
-      deleteMockUsersByIds([row.id])
+    }).then(async () => {
+      await fetchDeleteUser(row.id)
       ElMessage.success('删除成功')
       refreshData()
     })
@@ -329,20 +363,13 @@
       ElMessage.warning('请先选择要删除的用户')
       return
     }
-    // 与单条删除规则一致：选中项须全部为「已注销满一年」等可删状态，否则整批不允许删除
-    for (const row of selectedRows.value) {
-      if (getUserDeleteBlockReason(row)) {
-        ElMessage.warning('用户未注销或注销未满一年不允许删除')
-        return
-      }
-    }
     const ids = selectedRows.value.map((r) => r.id)
     ElMessageBox.confirm(`确定永久删除选中的 ${ids.length} 个用户吗？`, '批量删除用户', {
       confirmButtonText: '确定',
       cancelButtonText: '取消',
       type: 'warning'
-    }).then(() => {
-      deleteMockUsersByIds(ids)
+    }).then(async () => {
+      await Promise.all(ids.map((id) => fetchDeleteUser(id)))
       ElMessage.success('删除成功')
       selectedRows.value = []
       refreshData()
@@ -356,6 +383,7 @@
     try {
       dialogVisible.value = false
       currentUserData.value = {}
+      refreshData()
     } catch (error) {
       console.error('提交失败:', error)
     }
@@ -368,3 +396,12 @@
     selectedRows.value = selection
   }
 </script>
+
+<style scoped lang="scss">
+  /* 列总宽小于容器时仍铺满宽度，避免右侧留白、操作列与卡片右缘出现空隙 */
+  .user-page {
+    :deep(.art-table .el-table) {
+      width: 100% !important;
+    }
+  }
+</style>

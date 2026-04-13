@@ -16,6 +16,7 @@
 
 import axios, { AxiosRequestConfig, AxiosResponse, InternalAxiosRequestConfig } from 'axios'
 import { useUserStore } from '@/store/modules/user'
+import { LanguageEnum } from '@/enums/appEnum'
 import { ApiStatus } from './status'
 import { HttpError, handleError, showError, showSuccess } from './error'
 import { $t } from '@/locales'
@@ -74,6 +75,11 @@ const axiosInstance = axios.create({
 })
 
 /** 请求拦截器 */
+function acceptLanguageHeader(): string {
+  const lang = useUserStore().language
+  return lang === LanguageEnum.EN ? 'en-US' : 'zh-CN'
+}
+
 axiosInstance.interceptors.request.use(
   (request: InternalAxiosRequestConfig) => {
     const { accessToken } = useUserStore()
@@ -81,6 +87,11 @@ axiosInstance.interceptors.request.use(
       // 兼容后端常见鉴权格式：Bearer <token>
       const token = accessToken.startsWith('Bearer ') ? accessToken : `Bearer ${accessToken}`
       request.headers.set('Authorization', token)
+    }
+
+    // 便于后端按语言返回文案（如 getMyMenus 菜单名）
+    if (!request.headers.has('Accept-Language')) {
+      request.headers.set('Accept-Language', acceptLanguageHeader())
     }
 
     if (request.data && !(request.data instanceof FormData) && !request.headers['Content-Type']) {

@@ -36,7 +36,11 @@ export function fetchGetUserInfo() {
         email: res.email,
         roles: [role],
         buttons: [],
-        language: res.language
+        language: res.language,
+        userType: res.userType,
+        partnerId: res.partnerId,
+        regionId: res.regionId,
+        storeId: res.storeId
       } as Api.Auth.UserInfo
     })
 }

@@ -8,6 +8,44 @@ export function fetchGetUserPageList(params: Api.SystemManage.UserSearchParams) 
   })
 }
 
+/** 新增用户 POST /system/user/createUser，成功时 data 为新用户 id */
+export function fetchCreateUser(params: Api.SystemManage.CreateUserPayload) {
+  return request.post<number>({
+    url: '/system/user/createUser',
+    params
+  })
+}
+
+/** 用户详情 GET /system/user/getUserDetail?id= */
+export function fetchGetUserDetail(id: number) {
+  return request.get<Api.SystemManage.UserDetail>({
+    url: '/system/user/getUserDetail',
+    params: { id }
+  })
+}
+
+/** 修改用户 POST /system/user/updateUser */
+export function fetchUpdateUser(params: Api.SystemManage.UpdateUserPayload) {
+  return request.post<null>({
+    url: '/system/user/updateUser',
+    params
+  })
+}
+
+/** 删除用户 POST /system/user/deleteUser?id= */
+export function fetchDeleteUser(id: number) {
+  return request.post<null>({
+    url: `/system/user/deleteUser?id=${encodeURIComponent(String(id))}`
+  })
+}
+
+/** 创建用户时可选角色列表 GET /system/role/getRoleByUserTypeList（Authorization 由拦截器注入） */
+export function fetchGetRoleByUserTypeList() {
+  return request.get<Api.SystemManage.RoleByUserTypeItem[]>({
+    url: '/system/role/getRoleByUserTypeList'
+  })
+}
+
 /** 角色分页列表 GET /system/role/getRolePageList */
 export function fetchGetRolePageList(params: Api.SystemManage.RolePageListParams) {
   return request.get<Api.SystemManage.RoleList>({

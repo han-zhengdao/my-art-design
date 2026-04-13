@@ -83,9 +83,14 @@ declare namespace Api {
       roleId: number
       roleName: string
       roleCode: string
+      /** SUPER / PARTNER / REGION / STORE（字典 user_type） */
       userType: string
       /** 1 中文 2 英文 */
       language: number
+      /** 数据范围：合作商 / 区域 / 门店管理员绑定的组织 id（后端可选返回） */
+      partnerId?: number
+      regionId?: number
+      storeId?: number
     }
 
     /** 用户信息 */
@@ -96,6 +101,8 @@ declare namespace Api {
       userName: string
       email: string
       avatar?: string
+      /** SUPER / PARTNER / REGION / STORE，与 LoginUserInfoResponse.userType 一致 */
+      userType?: string
       /** 与 LoginUserInfoResponse.language 一致：1 中文 2 英文 */
       language?: number
       /** 合作商管理员绑定的合作商 ID（后端返回时用于数据范围） */
@@ -142,6 +149,12 @@ declare namespace Api {
       partnerId?: number
       regionId?: number
       storeId?: number
+      /** 列表：所属合作商名称 */
+      partnerName?: string
+      /** 列表：所属区域名称 */
+      regionName?: string
+      /** 列表：所属门店名称 */
+      storeName?: string
       language?: number
       avatar?: string
       status?: string
@@ -168,6 +181,54 @@ declare namespace Api {
       userType: string
       roleId: number
     }>
+
+    /** POST /system/user/createUser，成功时 data 为新用户 id */
+    interface CreateUserPayload {
+      nickName: string
+      headPic: string
+      email: string
+      password: string
+      phone: string
+      roleId: number
+      partnerId: number
+      regionId: number
+      storeId: number
+    }
+
+    /** GET /system/user/getUserDetail 返回 data */
+    interface UserDetail {
+      id: number
+      nickName: string
+      headPic?: string
+      email: string
+      phone?: string
+      roleId: number
+      roleName?: string
+      roleCode?: string
+      userType?: string
+      partnerId?: number
+      regionId?: number
+      storeId?: number
+      language?: number
+    }
+
+    /** POST /system/user/updateUser */
+    interface UpdateUserPayload {
+      id: number
+      email: string
+      nickName: string
+      headPic: string
+      phone: string
+      roleId: number
+    }
+
+    /** GET /system/role/getRoleByUserTypeList 单条（data 为 id，创建用户时 roleId 传该 id） */
+    interface RoleByUserTypeItem {
+      id: number
+      roleName: string
+      roleCode: string
+      roleType: number
+    }
 
     /** 角色列表 */
     type RoleList = Api.Common.PaginatedResponse<RoleListItem>
@@ -697,5 +758,20 @@ declare namespace Api {
         timeRange?: string[]
       }
     >
+  }
+
+  /** 组织维度：合作商 / 区域 / 门店下拉（联动筛选） */
+  namespace Org {
+    /** 下拉项 */
+    interface OptionItem {
+      id: number
+      name: string
+    }
+
+    /** GET /org/store/listStoreOptions */
+    interface StoreOptionsQuery {
+      partnerId: number
+      regionId: number
+    }
   }
 }

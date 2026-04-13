@@ -12,6 +12,7 @@ import { useUserStore } from '@/store/modules/user'
 import { useAppMode } from '@/hooks/core/useAppMode'
 import { fetchGetCurrentUserRoleMenuList, fetchGetMyMenus } from '@/api/auth'
 import { convertMyMenusToAppRoutes } from '@/router/utils/myMenusToRoutes'
+import { userCenterChildRoute } from '@/router/modules/system'
 import { asyncRoutes } from '../routes/asyncRoutes'
 import { RoutesAlias } from '../routesAlias'
 import { formatMenuTitle } from '@/utils'
@@ -109,6 +110,52 @@ export class MenuProcessor {
   }
 
   /**
+   * 后端菜单树一般不含「个人中心」隐藏路由，手动并入 /system 子路由，否则 /system/user-center 无法匹配
+   */
+  private mergeUserCenterIntoSystem(routes: AppRouteRecord[]): void {
+    const target = this.findRouteByPathPrefix(routes, '/system')
+    if (!target) {
+      return
+    }
+    if (!target.children) {
+      target.children = [{ ...userCenterChildRoute }]
+      return
+    }
+    if (target.children.some((c) => c.name === 'UserCenter')) {
+      return
+    }
+    target.children.push({ ...userCenterChildRoute })
+  }
+
+  private normalizeRoutePath(path?: string): string {
+    const p = (path || '').trim()
+    if (!p) return ''
+    const withSlash = p.startsWith('/') ? p : `/${p}`
+    return withSlash.replace(/\/+$/, '') || '/'
+  }
+
+  /** 查找 path 规范化后为 /system 的节点（递归整棵树） */
+  private findRouteByPathPrefix(
+    routes: AppRouteRecord[],
+    absolute: string
+  ): AppRouteRecord | undefined {
+    for (const r of routes) {
+      if (this.normalizeRoutePath(r.path) === absolute) {
+        return r
+      }
+    }
+    for (const r of routes) {
+      if (r.children?.length) {
+        const found = this.findRouteByPathPrefix(r.children, absolute)
+        if (found) {
+          return found
+        }
+      }
+    }
+    return undefined
+  }
+
+  /**
    * 处理后端控制模式的菜单：优先使用 /auth/getMyMenus；失败或空数据时回退 asyncRoutes + 权限过滤
    */
   private async processBackendMenu(): Promise<AppRouteRecord[]> {
@@ -116,6 +163,7 @@ export class MenuProcessor {
       const remote = await fetchGetMyMenus()
       if (Array.isArray(remote) && remote.length > 0) {
         const fromApi = convertMyMenusToAppRoutes(remote)
+        this.mergeUserCenterIntoSystem(fromApi)
         return this.filterEmptyMenus(fromApi)
       }
       console.warn('[MenuProcessor] /auth/getMyMenus 返回空列表，回退本地 asyncRoutes')

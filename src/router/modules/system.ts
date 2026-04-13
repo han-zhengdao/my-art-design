@@ -1,5 +1,19 @@
 import { AppRouteRecord } from '@/types/router'
 
+/** 个人中心：侧栏隐藏，需随 /system 一并注册（后端 getMyMenus 通常不含此项） */
+export const userCenterChildRoute: AppRouteRecord = {
+  path: 'user-center',
+  name: 'UserCenter',
+  component: '/system/user-center',
+  meta: {
+    title: 'menus.system.userCenter',
+    icon: 'ri:user-line',
+    isHide: true,
+    keepAlive: true,
+    isHideTab: true
+  }
+}
+
 export const systemRoutes: AppRouteRecord = {
   path: '/system',
   name: 'System',
@@ -32,18 +46,7 @@ export const systemRoutes: AppRouteRecord = {
         roles: ['R_SUPER']
       }
     },
-    {
-      path: 'user-center',
-      name: 'UserCenter',
-      component: '/system/user-center',
-      meta: {
-        title: 'menus.system.userCenter',
-        icon: 'ri:user-line',
-        isHide: true,
-        keepAlive: true,
-        isHideTab: true
-      }
-    },
+    userCenterChildRoute,
     {
       path: 'menu',
       name: 'Menus',
