@@ -55,6 +55,126 @@ const TARGET_MOCK: Api.Dc.RechargeTargetItem[] = [
   }
 ]
 
+// ---------- 分配 DC（区域/门店列表 + 汇总） ----------
+const ALLOCATE_SUMMARY_MOCK: Api.Dc.AllocateSummary = {
+  dcBalance: 32550,
+  allocatableBalance: 11800
+}
+
+const ALLOCATE_TARGET_MOCK: Api.Dc.AllocateTargetItem[] = [
+  {
+    id: 501,
+    assignType: 'REGION',
+    targetName: '华东一区',
+    email: 'region-east@example.com',
+    contactName: '陈明',
+    phone: '021-60001001',
+    currentDcBalance: 4200
+  },
+  {
+    id: 502,
+    assignType: 'REGION',
+    targetName: '西南运营中心',
+    email: 'region-sw@example.com',
+    contactName: '刘洋',
+    phone: '028-60002002',
+    currentDcBalance: 3100
+  },
+  {
+    id: 503,
+    assignType: 'REGION',
+    targetName: '加州湾区',
+    email: 'region-ca@example.com',
+    contactName: 'Amy Chen',
+    phone: '+1-650-555-0103',
+    currentDcBalance: 2800
+  },
+  {
+    id: 601,
+    assignType: 'STORE',
+    targetName: '浦东旗舰店',
+    email: 'store-pd@example.com',
+    contactName: '周婷',
+    phone: '13800138011',
+    currentDcBalance: 950
+  },
+  {
+    id: 602,
+    assignType: 'STORE',
+    targetName: '成都高新店',
+    email: 'store-cd@example.com',
+    contactName: '赵磊',
+    phone: '13900139022',
+    currentDcBalance: 720
+  },
+  {
+    id: 603,
+    assignType: 'STORE',
+    targetName: 'SF Bay Store',
+    email: 'store-sf@example.com',
+    contactName: 'Chris Lee',
+    phone: '+1-415-555-0163',
+    currentDcBalance: 1100
+  },
+  {
+    id: 604,
+    assignType: 'STORE',
+    targetName: 'Oslo Downtown',
+    email: 'store-oslo@example.com',
+    contactName: 'Erik Nilsen',
+    phone: '+47-22-00-00-64',
+    currentDcBalance: 400
+  }
+]
+
+export function fetchDcAllocateSummary(): Promise<Api.Dc.AllocateSummary> {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve({ ...ALLOCATE_SUMMARY_MOCK })
+    }, 120)
+  })
+}
+
+/** 分配成功后由页面回写汇总（Mock 同步扣减可分配余额） */
+export function applyDcAllocateMock(amount: number): void {
+  if (amount <= 0) return
+  ALLOCATE_SUMMARY_MOCK.allocatableBalance = Math.max(
+    0,
+    ALLOCATE_SUMMARY_MOCK.allocatableBalance - amount
+  )
+}
+
+export function fetchDcAllocateTargetList(
+  params: Api.Dc.AllocateTargetSearchParams
+): Promise<Api.Dc.AllocateTargetList> {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      let list = [...ALLOCATE_TARGET_MOCK]
+      const kw = params.targetKeyword?.trim()
+      if (kw) {
+        list = list.filter(
+          (r) =>
+            r.targetName.includes(kw) ||
+            r.email.toLowerCase().includes(kw.toLowerCase()) ||
+            r.contactName.includes(kw)
+        )
+      }
+      if (params.assignType && params.assignType !== ('' as Api.Dc.AssignTargetType)) {
+        list = list.filter((r) => r.assignType === params.assignType)
+      }
+      const current = params.current ?? 1
+      const size = params.size ?? 20
+      const start = (current - 1) * size
+      resolve({
+        records: list.slice(start, start + size),
+        current,
+        size,
+        total: list.length
+      })
+    }, 200)
+  })
+}
+
 export function fetchDcRechargeTargetList(
   params: Api.Dc.RechargeTargetSearchParams
 ): Promise<Api.Dc.RechargeTargetList> {

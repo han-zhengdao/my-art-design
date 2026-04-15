@@ -26,6 +26,10 @@ export default ({ mode }: { mode: string }) => {
     base: VITE_BASE_URL,
     server: {
       port: Number(VITE_PORT),
+      /** 预转换常用视图，减轻首次点击菜单时动态 import 的等待与偶发失败 */
+      warmup: {
+        clientFiles: ['./src/views/**/*.vue']
+      },
       proxy: {
         /**
          * 兜底代理：后端接口按业务前缀分散（/system、/org、/biz...）时不再逐个配置。
@@ -38,13 +42,11 @@ export default ({ mode }: { mode: string }) => {
           bypass(req) {
             const url = req.url || ''
             const accept = req.headers?.accept || ''
-            // Vite/HMR/前端静态资源：不要代理
+            // Vite/HMR/前端静态资源：不要代理（/@* 覆盖各版本内部路径，避免误转发到后端）
             if (
               url === '/' ||
               accept.includes('text/html') ||
-              url.startsWith('/@vite') ||
-              url.startsWith('/@id') ||
-              url.startsWith('/@fs') ||
+              url.startsWith('/@') ||
               url.startsWith('/src') ||
               url.startsWith('/node_modules') ||
               url.startsWith('/__vite_ping') ||

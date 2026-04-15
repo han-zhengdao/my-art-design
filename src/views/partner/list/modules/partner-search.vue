@@ -11,6 +11,12 @@
 </template>
 
 <script setup lang="ts">
+  import { computed, onMounted, ref } from 'vue'
+  import { useI18n } from 'vue-i18n'
+  import { fetchCountryList, getCountryDisplayName } from '@/api/country'
+  import { useUserStore } from '@/store/modules/user'
+  import { LanguageEnum } from '@/enums/appEnum'
+
   interface Props {
     modelValue: Api.Partner.PartnerSearchParams
   }
@@ -23,6 +29,9 @@
   const props = defineProps<Props>()
   const emit = defineEmits<Emits>()
 
+  const { t } = useI18n()
+  const userStore = useUserStore()
+
   const searchBarRef = ref()
   const formData = computed({
     get: () => props.modelValue,
@@ -31,34 +40,55 @@
 
   const rules = {}
 
-  const countryOptions = [
-    { label: '中国', value: 'CN' },
-    { label: '美国', value: 'US' },
-    { label: '日本', value: 'JP' },
-    { label: '挪威', value: 'NO' },
-    { label: '德国', value: 'DE' }
-  ]
+  const countryList = ref<Api.Country.CountryListItem[]>([])
+  const countriesLoading = ref(false)
+
+  const countryLocale = computed<'zh' | 'en'>(() =>
+    userStore.language === LanguageEnum.EN ? 'en' : 'zh'
+  )
+
+  const countryOptions = computed(() =>
+    countryList.value.map((c) => ({
+      value: c.id,
+      label: getCountryDisplayName(c, countryLocale.value)
+    }))
+  )
+
+  async function loadCountries() {
+    countriesLoading.value = true
+    try {
+      countryList.value = await fetchCountryList()
+    } finally {
+      countriesLoading.value = false
+    }
+  }
+
+  onMounted(() => {
+    loadCountries()
+  })
 
   const formItems = computed(() => [
     {
-      label: '合作商名称',
+      label: t('partnerPage.search.partnerName'),
       key: 'partnerName',
       // 使用 auto 让 label 宽度按内容自适应，避免被固定 labelWidth 挤压换行
       labelWidth: 'auto',
       type: 'input',
-      placeholder: '支持模糊搜索',
+      placeholder: t('partnerPage.search.partnerNamePlaceholder'),
       clearable: true
     },
     {
-      label: '所属国家',
-      key: 'countryCode',
+      label: t('partnerPage.search.country'),
+      key: 'countryId',
       labelWidth: 'auto',
-      span: 4,
+      span: 5,
       type: 'select',
       props: {
-        placeholder: '全部',
+        placeholder: t('partnerPage.search.placeholderAll'),
         clearable: true,
-        options: countryOptions
+        filterable: true,
+        loading: countriesLoading.value,
+        options: countryOptions.value
       }
     }
   ])

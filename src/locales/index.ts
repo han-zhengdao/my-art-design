@@ -73,11 +73,14 @@ const getDefaultLanguage = (): LanguageEnum => {
     console.warn('[i18n] 从版本化存储获取语言设置失败:', error)
   }
 
-  // 尝试从系统存储中获取语言设置
+  // 尝试从系统存储中获取语言设置（user.language 可能为前端 'zh'|'en' 或后端 1|2）
   try {
     const sys = getSystemStorage()
     if (sys) {
       const { user } = JSON.parse(sys)
+      if (user?.language === 1 || user?.language === 2) {
+        return user.language === 2 ? LanguageEnum.EN : LanguageEnum.ZH
+      }
       if (user?.language && Object.values(LanguageEnum).includes(user.language)) {
         return user.language
       }

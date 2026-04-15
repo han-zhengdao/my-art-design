@@ -45,56 +45,6 @@
           placeholder="格式：经度,纬度（如 121.503,31.236）"
         />
       </ElFormItem>
-      <ElFormItem label="所属国家" prop="countryCode">
-        <ElSelect
-          v-model="form.countryCode"
-          class="w-full"
-          :disabled="isLockedByStore"
-          placeholder="请选择"
-        >
-          <ElOption
-            v-for="opt in countryOptions"
-            :key="opt.value"
-            :label="opt.label"
-            :value="opt.value"
-          />
-        </ElSelect>
-      </ElFormItem>
-      <ElFormItem label="所属合作商" prop="partnerId">
-        <ElSelect
-          v-model="form.partnerId"
-          class="w-full"
-          :disabled="isLockedByStore || !form.countryCode"
-          placeholder="请选择"
-        >
-          <ElOption v-for="p in partnerOptions" :key="p.id" :label="p.partnerName" :value="p.id" />
-        </ElSelect>
-      </ElFormItem>
-      <ElFormItem label="所属区域" prop="regionId">
-        <ElSelect
-          v-model="form.regionId"
-          class="w-full"
-          :disabled="isLockedByStore || form.partnerId == null"
-          placeholder="请选择"
-        >
-          <ElOption
-            v-for="r in regionOptions"
-            :key="String(r.value)"
-            :label="r.label"
-            :value="r.value"
-          />
-        </ElSelect>
-      </ElFormItem>
-      <ElFormItem label="所属门店" prop="storeId">
-        <ElSelect
-          v-model="form.storeId"
-          class="w-full"
-          :disabled="isLockedByStore || form.regionId == null"
-          placeholder="请选择"
-        >
-          <ElOption v-for="s in storeOptions" :key="s.id" :label="s.storeName" :value="s.id" />
-        </ElSelect>
-      </ElFormItem>
     </ElForm>
 
     <!-- 新增：单个 / 批量 -->
@@ -110,67 +60,6 @@
           </div>
 
           <ElForm ref="beaconFormRef" :model="form" :rules="formRules" label-width="120px">
-            <ElFormItem label="所属国家" prop="countryCode">
-              <ElSelect
-                v-model="form.countryCode"
-                class="w-full"
-                :disabled="isLockedByStore"
-                placeholder="请选择"
-              >
-                <ElOption
-                  v-for="opt in countryOptions"
-                  :key="opt.value"
-                  :label="opt.label"
-                  :value="opt.value"
-                />
-              </ElSelect>
-            </ElFormItem>
-            <ElFormItem label="所属合作商" prop="partnerId">
-              <ElSelect
-                v-model="form.partnerId"
-                class="w-full"
-                :disabled="isLockedByStore || !form.countryCode"
-                placeholder="请选择"
-              >
-                <ElOption
-                  v-for="p in partnerOptions"
-                  :key="p.id"
-                  :label="p.partnerName"
-                  :value="p.id"
-                />
-              </ElSelect>
-            </ElFormItem>
-            <ElFormItem label="所属区域" prop="regionId">
-              <ElSelect
-                v-model="form.regionId"
-                class="w-full"
-                :disabled="isLockedByStore || form.partnerId == null"
-                placeholder="请选择"
-              >
-                <ElOption
-                  v-for="r in regionOptions"
-                  :key="String(r.value)"
-                  :label="r.label"
-                  :value="r.value"
-                />
-              </ElSelect>
-            </ElFormItem>
-            <ElFormItem label="所属门店" prop="storeId">
-              <ElSelect
-                v-model="form.storeId"
-                class="w-full"
-                :disabled="isLockedByStore || form.regionId == null"
-                placeholder="请选择"
-              >
-                <ElOption
-                  v-for="s in storeOptions"
-                  :key="s.id"
-                  :label="s.storeName"
-                  :value="s.id"
-                />
-              </ElSelect>
-            </ElFormItem>
-
             <template v-if="singleSubTab === 'manual'">
               <ElFormItem label="信标 MAC" prop="beaconMac">
                 <ElInput v-model="form.beaconMac" maxlength="50" show-word-limit />
@@ -239,68 +128,7 @@
             show-icon
             title="请先下载模板并填写后导入；坐标与门店归属一致，模板中需填写经度、纬度。"
           />
-          <ElForm ref="batchFormRef" :model="form" :rules="formRules" label-width="120px">
-            <ElFormItem label="所属国家" prop="countryCode">
-              <ElSelect
-                v-model="form.countryCode"
-                class="w-full"
-                :disabled="isLockedByStore"
-                placeholder="请选择"
-              >
-                <ElOption
-                  v-for="opt in countryOptions"
-                  :key="opt.value"
-                  :label="opt.label"
-                  :value="opt.value"
-                />
-              </ElSelect>
-            </ElFormItem>
-            <ElFormItem label="所属合作商" prop="partnerId">
-              <ElSelect
-                v-model="form.partnerId"
-                class="w-full"
-                :disabled="isLockedByStore || !form.countryCode"
-                placeholder="请选择"
-              >
-                <ElOption
-                  v-for="p in partnerOptions"
-                  :key="p.id"
-                  :label="p.partnerName"
-                  :value="p.id"
-                />
-              </ElSelect>
-            </ElFormItem>
-            <ElFormItem label="所属区域" prop="regionId">
-              <ElSelect
-                v-model="form.regionId"
-                class="w-full"
-                :disabled="isLockedByStore || form.partnerId == null"
-                placeholder="请选择"
-              >
-                <ElOption
-                  v-for="r in regionOptions"
-                  :key="String(r.value)"
-                  :label="r.label"
-                  :value="r.value"
-                />
-              </ElSelect>
-            </ElFormItem>
-            <ElFormItem label="所属门店" prop="storeId">
-              <ElSelect
-                v-model="form.storeId"
-                class="w-full"
-                :disabled="isLockedByStore || form.regionId == null"
-                placeholder="请选择"
-              >
-                <ElOption
-                  v-for="s in storeOptions"
-                  :key="s.id"
-                  :label="s.storeName"
-                  :value="s.id"
-                />
-              </ElSelect>
-            </ElFormItem>
-          </ElForm>
+          <ElForm ref="batchFormRef" :model="form" :rules="batchRules" label-width="120px"></ElForm>
 
           <div class="mb-3 flex flex-wrap items-center gap-3">
             <ElButton type="primary" @click="downloadBeaconTemplate"
@@ -320,7 +148,7 @@
             type="success"
             :closable="false"
             show-icon
-            :title="`已解析 ${batchPreviewCount} 条，将导入到当前所选门店`"
+            :title="`已解析 ${batchPreviewCount} 条，将导入到当前列表筛选所对应的门店`"
           />
         </ElTabPane>
       </ElTabs>
@@ -349,7 +177,7 @@
 
 <script setup lang="ts">
   import { computed, nextTick, reactive, ref, watch } from 'vue'
-  import { fetchPartnersByCountry } from '@/api/partner'
+  import { fetchPartnerList, fetchPartnersByCountry } from '@/api/partner'
   import { fetchRegionList } from '@/api/region'
   import { fetchStoreList } from '@/api/store'
   import type { BeaconCreatePayload } from '@/api/beacon'
@@ -363,6 +191,10 @@
     modelValue: boolean
     mode: DialogMode
     row?: Api.Beacon.BeaconListItem | null
+    countryCode?: string
+    filterPartnerId?: number
+    filterRegionId?: number | 'NONE'
+    filterStoreId?: number
     lockedStoreId?: number
     lockedPartnerId?: number
   }>()
@@ -385,16 +217,6 @@
     if (props.mode === 'edit') return '编辑信标'
     return '信标详情'
   })
-
-  const isLockedByStore = computed(() => props.lockedStoreId != null)
-
-  const countryOptions = [
-    { label: '中国', value: 'CN' },
-    { label: '美国', value: 'US' },
-    { label: '日本', value: 'JP' },
-    { label: '挪威', value: 'NO' },
-    { label: '德国', value: 'DE' }
-  ]
 
   const partnerOptions = ref<Api.Partner.PartnerListItem[]>([])
   const regionOptions = ref<{ label: string; value: number | 'NONE' }[]>([])
@@ -456,77 +278,112 @@
     }
   }
 
-  const formRules: FormRules = {
-    beaconMac: [
-      ...(props.mode === 'edit'
+  const formRules = computed<FormRules>(() => ({
+    beaconMac:
+      props.mode === 'edit'
         ? []
-        : [{ required: true, message: '信标 MAC 为必填项', trigger: ['blur', 'change'] }])
-    ],
+        : [{ required: true, message: '信标 MAC 为必填项', trigger: ['blur', 'change'] }],
     regionCode: [{ required: true, message: '请输入区域编号', trigger: 'blur' }],
-    gpsCoordinateText: [{ required: true, validator: requiredGps, trigger: ['blur', 'change'] }],
-    countryCode: [{ required: true, message: '请选择所属国家', trigger: 'change' }],
-    partnerId: [{ required: true, message: '请选择所属合作商', trigger: 'change' }],
-    regionId: [{ required: true, message: '请选择所属区域', trigger: 'change' }],
-    storeId: [{ required: true, message: '请选择所属门店', trigger: 'change' }]
-  }
+    gpsCoordinateText: [{ required: true, validator: requiredGps, trigger: ['blur', 'change'] }]
+  }))
 
-  async function loadPartners() {
-    if (!form.countryCode) {
-      partnerOptions.value = []
-      form.partnerId = undefined
+  const batchRules: FormRules = {}
+
+  /** 新增：不展示国家/合作商/区域/门店表单项，从列表筛选或绑定门店解析 */
+  async function resolveAddBeaconContext(): Promise<void> {
+    partnerOptions.value = []
+    regionOptions.value = []
+    storeOptions.value = []
+
+    if (props.lockedStoreId != null) {
+      const list = await fetchStoreList({ current: 1, size: 500 })
+      const store = list.records.find((s) => s.id === props.lockedStoreId)
+      if (store) {
+        form.countryCode = store.countryCode
+        form.partnerId = store.partnerId
+        form.regionId = store.regionId == null ? 'NONE' : store.regionId
+        form.storeId = store.id
+        storeOptions.value = [store]
+        const pres = await fetchPartnerList({ pageNum: 1, pageSize: 500 })
+        const partner = pres.records.find((p) => p.id === store.partnerId)
+        if (partner) partnerOptions.value = [partner]
+        if (form.regionId !== 'NONE' && typeof form.regionId === 'number') {
+          const rlist = await fetchRegionList({
+            current: 1,
+            size: 500,
+            partnerId: store.partnerId,
+            countryCode: store.countryCode
+          })
+          const rec = rlist.records.find((r) => r.id === form.regionId)
+          regionOptions.value = rec ? [{ label: rec.regionName, value: rec.id }] : []
+        } else {
+          regionOptions.value = [{ label: '无区域', value: 'NONE' }]
+        }
+        syncGpsFromStore(store)
+      }
       return
     }
-    let list = await fetchPartnersByCountry(form.countryCode)
-    if (props.lockedPartnerId != null && !isLockedByStore.value) {
-      list = list.filter((p) => p.id === props.lockedPartnerId)
-    }
-    partnerOptions.value = list
-    if (form.partnerId != null && !list.some((p) => p.id === form.partnerId)) {
-      form.partnerId = undefined
-    }
-  }
 
-  async function loadRegions() {
-    if (form.partnerId == null || !form.countryCode) {
-      regionOptions.value = []
+    const code = props.countryCode
+    const pid = props.filterPartnerId
+    const rid = props.filterRegionId
+    const sid = props.filterStoreId
+
+    if (!code || pid == null) {
+      form.countryCode = code
+      form.partnerId = pid
       form.regionId = undefined
+      form.storeId = undefined
       return
     }
-    const list = await fetchRegionList({
-      current: 1,
-      size: 500,
-      partnerId: form.partnerId,
-      countryCode: form.countryCode
-    })
-    const opts = list.records.map((r) => ({ label: r.regionName, value: r.id as number }))
-    regionOptions.value = [...opts, { label: '无区域', value: 'NONE' }]
-    if (form.regionId != null && !regionOptions.value.some((o) => o.value === form.regionId)) {
-      form.regionId = 'NONE'
-    }
-    if (form.regionId == null) {
-      form.regionId = 'NONE'
-    }
-  }
 
-  async function loadStores() {
-    if (form.partnerId == null || !form.countryCode || form.regionId == null) {
-      storeOptions.value = []
+    const partners = await fetchPartnersByCountry(code)
+    partnerOptions.value = partners
+    const partner = partners.find((p) => p.id === pid)
+    if (!partner) {
+      form.countryCode = code
+      form.partnerId = undefined
+      form.regionId = undefined
       form.storeId = undefined
       return
     }
-    const list = await fetchStoreList({
+
+    form.countryCode = code
+    form.partnerId = pid
+
+    const rlist = await fetchRegionList({
       current: 1,
       size: 500,
-      partnerId: form.partnerId,
-      countryCode: form.countryCode,
-      regionId: form.regionId
+      partnerId: pid,
+      countryCode: code
     })
-    storeOptions.value = list.records
-    if (form.storeId != null && !storeOptions.value.some((s) => s.id === form.storeId)) {
-      form.storeId = undefined
+    const ropts = rlist.records.map((r) => ({ label: r.regionName, value: r.id as number }))
+    regionOptions.value = [...ropts, { label: '无区域', value: 'NONE' }]
+
+    let regionVal: number | 'NONE'
+    if (rid === 'NONE') {
+      regionVal = 'NONE'
+    } else if (typeof rid === 'number' && regionOptions.value.some((o) => o.value === rid)) {
+      regionVal = rid
+    } else {
+      regionVal = 'NONE'
     }
-    if (form.storeId == null && storeOptions.value.length > 0) {
-      form.storeId = storeOptions.value[0]!.id
+    form.regionId = regionVal
+
+    const slist = await fetchStoreList({
+      current: 1,
+      size: 500,
+      partnerId: pid,
+      countryCode: code,
+      regionId: regionVal
+    })
+    storeOptions.value = slist.records
+    if (sid != null && storeOptions.value.some((s) => s.id === sid)) {
+      form.storeId = sid
+      const st = storeOptions.value.find((s) => s.id === sid)
+      if (st) syncGpsFromStore(st)
+    } else {
+      form.storeId = undefined
     }
   }
 
@@ -537,7 +394,7 @@
   function applyStoreGps() {
     const store = storeOptions.value.find((s) => s.id === form.storeId)
     if (store) syncGpsFromStore(store)
-    else ElMessage.warning('请先选择门店')
+    else ElMessage.warning('请先在列表筛选中选定门店，或确认已绑定门店账号')
   }
 
   /** 扫码内容解析：纯 MAC（最常见）/ JSON / 管道分隔 */
@@ -700,7 +557,7 @@
         store ??
         (await fetchStoreList({ current: 1, size: 500 })).records.find((s) => s.id === form.storeId)
       if (!safeStore || form.storeId == null) {
-        ElMessage.warning('请先选择所属门店')
+        ElMessage.warning('请先在列表上方筛选国家、合作商、区域与门店，或确认已绑定门店账号')
         return
       }
       const regionId = safeStore.regionId == null ? null : safeStore.regionId
@@ -766,7 +623,18 @@
   )
 
   watch(
-    () => [props.modelValue, props.mode, props.row] as const,
+    () =>
+      [
+        props.modelValue,
+        props.mode,
+        props.row,
+        props.countryCode,
+        props.filterPartnerId,
+        props.filterRegionId,
+        props.filterStoreId,
+        props.lockedStoreId,
+        props.lockedPartnerId
+      ] as const,
     async ([open, mode, row]) => {
       if (!open || mode === 'detail') return
       resetForm()
@@ -775,49 +643,13 @@
         form.beaconMac = row.beaconMac
         form.regionCode = row.regionCode
         form.gpsCoordinateText = `${row.gpsCoordinate.lng},${row.gpsCoordinate.lat}`
-        form.countryCode = row.countryCode
-        form.partnerId = row.partnerId
-        form.regionId = row.regionId == null ? 'NONE' : row.regionId
-        form.storeId = row.storeId
       } else if (mode === 'add') {
-        if (props.lockedStoreId != null) {
-          const list = await fetchStoreList({ current: 1, size: 500 })
-          const store = list.records.find((s) => s.id === props.lockedStoreId)
-          if (store) {
-            form.countryCode = store.countryCode
-            form.partnerId = store.partnerId
-            form.regionId = store.regionId == null ? 'NONE' : store.regionId
-            form.storeId = store.id
-            syncGpsFromStore(store)
-          }
-        } else if (props.lockedPartnerId != null) {
-          form.partnerId = props.lockedPartnerId
-        }
+        await resolveAddBeaconContext()
       }
 
       await nextTick()
-      await loadPartners()
-      await loadRegions()
-      await loadStores()
     },
     { immediate: true }
-  )
-
-  watch(
-    () => [form.countryCode, form.partnerId] as const,
-    async () => {
-      if (props.mode === 'detail' || !visible.value) return
-      await loadPartners()
-    }
-  )
-
-  watch(
-    () => [form.partnerId, form.countryCode, form.regionId] as const,
-    async () => {
-      if (props.mode === 'detail' || !visible.value) return
-      await loadRegions()
-      await loadStores()
-    }
   )
 
   watch(
@@ -842,18 +674,45 @@
     if (!beaconFormRef.value) return
     await beaconFormRef.value.validate()
 
+    const gpsCoordinate = parsePoint(form.gpsCoordinateText)
+
+    if (props.mode === 'edit') {
+      const row = props.row
+      if (!row) return
+      emit('submit', {
+        id: row.id,
+        beaconMac: form.beaconMac,
+        regionCode: form.regionCode,
+        gpsCoordinate,
+        storeId: row.storeId,
+        storeName: row.storeName,
+        regionId: row.regionId ?? null,
+        regionName: row.regionName ?? '无区域',
+        partnerId: row.partnerId,
+        partnerName: row.partnerName,
+        countryCode: row.countryCode,
+        country: row.country
+      })
+      return
+    }
+
     const store = storeOptions.value.find((s) => s.id === form.storeId)
     const safeStore =
       store ??
       (await fetchStoreList({ current: 1, size: 500 })).records.find((s) => s.id === form.storeId)
 
-    if (!safeStore || form.storeId == null) return
+    if (!safeStore || form.storeId == null) {
+      ElMessage.warning(
+        props.lockedStoreId != null
+          ? '无法解析当前账号绑定的门店信息，请稍后重试'
+          : '请先在列表上方筛选中选择国家、合作商、区域与门店，再新增信标'
+      )
+      return
+    }
 
-    const gpsCoordinate = parsePoint(form.gpsCoordinateText)
     const regionId = safeStore.regionId == null ? null : safeStore.regionId
 
     emit('submit', {
-      id: props.mode === 'edit' ? props.row?.id : undefined,
       beaconMac: form.beaconMac,
       regionCode: form.regionCode,
       gpsCoordinate,
@@ -873,7 +732,7 @@
       await batchFormRef.value.validate()
     }
     if (batchParsedPayloads.value.length === 0) {
-      ElMessage.warning('请先选择门店并导入 Excel')
+      ElMessage.warning('请先确认列表筛选门店上下文并导入 Excel')
       return
     }
     emit('batch-submit', batchParsedPayloads.value)

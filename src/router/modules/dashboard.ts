@@ -7,7 +7,7 @@ export const dashboardRoutes: AppRouteRecord = {
   meta: {
     title: 'menus.dashboard.title',
     icon: 'ri:home-smile-2-line',
-    roles: ['R_SUPER', 'R_ADMIN']
+    roles: ['R_SUPER', 'R_ADMIN', 'PARTNER_ADMIN', 'REGION_ADMIN', 'STORE_ADMIN', 'STORE_STAFF']
   },
   children: [
     {
@@ -18,7 +18,8 @@ export const dashboardRoutes: AppRouteRecord = {
         title: 'menus.dashboard.console',
         icon: 'ri:pie-chart-line',
         keepAlive: false,
-        fixedTab: true
+        fixedTab: true,
+        roles: ['R_SUPER', 'R_ADMIN']
       }
     },
     {
@@ -28,7 +29,8 @@ export const dashboardRoutes: AppRouteRecord = {
       meta: {
         title: 'menus.dashboard.analysis',
         icon: 'ri:align-item-bottom-line',
-        keepAlive: false
+        keepAlive: false,
+        roles: ['R_SUPER', 'R_ADMIN']
       }
     },
     {
@@ -38,7 +40,8 @@ export const dashboardRoutes: AppRouteRecord = {
       meta: {
         title: 'menus.dashboard.mapView',
         icon: 'ri:map-pin-line',
-        keepAlive: true
+        keepAlive: true,
+        roles: ['R_SUPER', 'R_ADMIN', 'PARTNER_ADMIN', 'REGION_ADMIN', 'STORE_ADMIN', 'STORE_STAFF']
       }
     }
   ]

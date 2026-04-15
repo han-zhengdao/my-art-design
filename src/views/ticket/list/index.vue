@@ -62,9 +62,8 @@
       <ElForm label-position="top">
         <ElFormItem label="处理结果" required>
           <ElRadioGroup v-model="processForm.result" class="flex gap-3 items-start">
-            <ElRadio value="RECYCLE">回收</ElRadio>
+            <ElRadio value="RECYCLE">找回</ElRadio>
             <ElRadio value="LOST">丢失</ElRadio>
-            <ElRadio value="SCRAPPED">报废</ElRadio>
           </ElRadioGroup>
         </ElFormItem>
       </ElForm>
@@ -111,17 +110,17 @@
   const processForm = ref<{ result: Api.Ticket.ProcessResult | '' }>({ result: '' })
 
   function statusLabel(s: Api.Ticket.TicketStatus) {
-    return s === 'PENDING' ? '待处理' : '已完成'
+    return s === 'PENDING' ? '待处理' : '已处理'
   }
 
-  /** 与系统内其它列表状态一致：危险色=待处理，成功色=已完成 */
+  /** 与系统内其它列表状态一致：危险色=待处理，成功色=已处理 */
   function ticketStatusTagType(s: Api.Ticket.TicketStatus): 'danger' | 'success' {
     return s === 'PENDING' ? 'danger' : 'success'
   }
 
   function processLabel(p: Api.Ticket.ProcessResult) {
     const map: Record<Api.Ticket.ProcessResult, string> = {
-      RECYCLE: '回收',
+      RECYCLE: '找回',
       LOST: '丢失',
       SCRAPPED: '报废'
     }

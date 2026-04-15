@@ -8,7 +8,7 @@
         <template #left>
           <ElSpace wrap>
             <ElButton v-if="canOperateRegion" type="primary" @click="openDialog('add')" v-ripple>
-              新增区域
+              {{ t('regionPage.button.add') }}
             </ElButton>
             <ElButton
               v-if="canOperateRegion"
@@ -17,7 +17,7 @@
               :disabled="selectedRows.length === 0"
               @click="handleBatchDelete"
             >
-              批量删除
+              {{ t('regionPage.button.batchDelete') }}
             </ElButton>
           </ElSpace>
         </template>
@@ -38,7 +38,6 @@
       v-model="dialogVisible"
       :mode="dialogMode"
       :row="currentRow"
-      :country-code="searchForm.countryCode"
       :locked-partner-id="lockedPartnerId"
       @submit="handleDialogSubmit"
     />
@@ -50,6 +49,7 @@
   import { useTable } from '@/hooks/core/useTable'
   import {
     fetchRegionList,
+    getRegionDetail,
     createRegion,
     updateRegion,
     deleteRegion,
@@ -60,6 +60,7 @@
   import RegionDialog from './modules/region-dialog.vue'
   import { ElMessage, ElMessageBox } from 'element-plus'
   import { computed, h, nextTick, ref } from 'vue'
+  import { useI18n } from 'vue-i18n'
 
   defineOptions({ name: 'RegionList' })
 
@@ -67,6 +68,7 @@
   type DialogMode = 'add' | 'edit' | 'detail'
 
   const userStore = useUserStore()
+  const { t } = useI18n()
 
   const dialogVisible = ref(false)
   const dialogMode = ref<DialogMode>('add')
@@ -75,7 +77,7 @@
 
   const searchForm = ref<Api.Region.RegionSearchParams>({
     regionName: undefined,
-    countryCode: undefined,
+    countryId: undefined,
     partnerId: undefined
   })
 
@@ -110,15 +112,22 @@
     (row.wheelCount ?? 0) !== 0 ||
     (row.beaconCount ?? 0) !== 0
 
-  const ASSET_BLOCK_MSG =
-    '该区域下仍关联有效资产数据，不允许删除。请先清空其关联的 DC 余额、门店、车轮及信标信息。'
+  const ASSET_BLOCK_MSG = t('regionPage.messages.assetBlocked')
 
-  const openDialog = (mode: DialogMode, row?: RegionItem) => {
+  const openDialog = async (mode: DialogMode, row?: RegionItem) => {
     dialogMode.value = mode
-    currentRow.value = row ?? null
-    nextTick(() => {
-      dialogVisible.value = true
-    })
+    if (row?.id != null && (mode === 'edit' || mode === 'detail')) {
+      try {
+        currentRow.value = await getRegionDetail(row.id)
+      } catch (e) {
+        console.error(e)
+        currentRow.value = row
+      }
+    } else {
+      currentRow.value = row ?? null
+    }
+    await nextTick()
+    dialogVisible.value = true
   }
 
   const {
@@ -136,33 +145,98 @@
     core: {
       immediate: true,
       apiFn: fetchRegionList,
+      paginationKey: { current: 'pageNum', size: 'pageSize' },
       apiParams: {
-        current: 1,
-        size: 20,
+        pageNum: 1,
+        pageSize: 20,
         ...searchForm.value
       },
       columnsFactory: () => [
         { type: 'selection' },
-        { type: 'index', width: 'auto', minWidth: 60, label: '序号' },
-        { prop: 'id', label: 'ID', width: 'auto', minWidth: 90 },
-        { prop: 'userNickName', label: '用户昵称', width: 'auto', minWidth: 130 },
-        { prop: 'loginEmail', label: '登录邮箱', width: 'auto', minWidth: 200 },
-        { prop: 'regionName', label: '区域名称', width: 'auto', minWidth: 140 },
-        { prop: 'regionAddress', label: '区域地址', width: 'auto', minWidth: 180 },
-        { prop: 'regionContactName', label: '区域联系人', width: 'auto', minWidth: 110 },
-        { prop: 'regionPhone', label: '区域联系电话', width: 'auto', minWidth: 140 },
-        { prop: 'partnerName', label: '所属合作商', width: 'auto', minWidth: 140 },
-        { prop: 'country', label: '所属国家', width: 'auto', minWidth: 100 },
-        { prop: 'dcBalance', label: 'DC余额', width: 'auto', minWidth: 100 },
-        { prop: 'storeCount', label: '门店数', width: 'auto', minWidth: 88 },
-        { prop: 'wheelCount', label: '车轮总数', width: 'auto', minWidth: 88 },
-        { prop: 'beaconCount', label: '信标总数', width: 'auto', minWidth: 88 },
-        { prop: 'pendingTicketCount', label: '未处理工单数', width: 'auto', minWidth: 120 },
-        { prop: 'createTime', label: '创建时间', width: 'auto', minWidth: 170 },
-        { prop: 'operatorName', label: '操作人', width: 'auto', minWidth: 110 },
+        { type: 'index', width: 'auto', minWidth: 60, label: t('regionPage.column.index') },
+        { prop: 'id', label: t('regionPage.column.id'), width: 'auto', minWidth: 90 },
+        {
+          prop: 'loginEmail',
+          label: t('regionPage.column.loginEmail'),
+          width: 'auto',
+          minWidth: 200
+        },
+        {
+          prop: 'regionName',
+          label: t('regionPage.column.regionName'),
+          width: 'auto',
+          minWidth: 140
+        },
+        {
+          prop: 'regionAddress',
+          label: t('regionPage.column.regionAddress'),
+          width: 'auto',
+          minWidth: 180
+        },
+        {
+          prop: 'regionContactName',
+          label: t('regionPage.column.regionContactName'),
+          width: 'auto',
+          minWidth: 110
+        },
+        {
+          prop: 'regionPhone',
+          label: t('regionPage.column.regionPhone'),
+          width: 'auto',
+          minWidth: 140
+        },
+        {
+          prop: 'partnerName',
+          label: t('regionPage.column.partnerName'),
+          width: 'auto',
+          minWidth: 140
+        },
+        { prop: 'country', label: t('regionPage.column.country'), width: 'auto', minWidth: 100 },
+        {
+          prop: 'dcBalance',
+          label: t('regionPage.column.dcBalance'),
+          width: 'auto',
+          minWidth: 100
+        },
+        {
+          prop: 'storeCount',
+          label: t('regionPage.column.storeCount'),
+          width: 'auto',
+          minWidth: 88
+        },
+        {
+          prop: 'wheelCount',
+          label: t('regionPage.column.wheelCount'),
+          width: 'auto',
+          minWidth: 88
+        },
+        {
+          prop: 'beaconCount',
+          label: t('regionPage.column.beaconCount'),
+          width: 'auto',
+          minWidth: 88
+        },
+        {
+          prop: 'pendingTicketCount',
+          label: t('regionPage.column.pendingTicketCount'),
+          width: 'auto',
+          minWidth: 120
+        },
+        {
+          prop: 'createTime',
+          label: t('regionPage.column.createTime'),
+          width: 'auto',
+          minWidth: 170
+        },
+        {
+          prop: 'operatorName',
+          label: t('regionPage.column.operatorName'),
+          width: 'auto',
+          minWidth: 110
+        },
         {
           prop: 'operation',
-          label: '操作',
+          label: t('regionPage.column.operation'),
           width: 160,
           fixed: 'right',
           formatter: (row: RegionItem) =>
@@ -171,11 +245,7 @@
               [
                 h(ArtButtonTable, {
                   type: 'view',
-                  onClick: () => {
-                    dialogMode.value = 'detail'
-                    currentRow.value = row
-                    dialogVisible.value = true
-                  }
+                  onClick: () => openDialog('detail', row)
                 }),
                 canOperateRegion.value &&
                   canManagePartnerRow(row.partnerId) &&
@@ -206,27 +276,31 @@
   }
 
   const handleReset = () => {
-    searchForm.value = { regionName: undefined, countryCode: undefined, partnerId: undefined }
-    replaceSearchParams({ regionName: undefined, countryCode: undefined, partnerId: undefined })
+    searchForm.value = { regionName: undefined, countryId: undefined, partnerId: undefined }
+    replaceSearchParams({ regionName: undefined, countryId: undefined, partnerId: undefined })
     getData()
   }
 
   const handleDelete = (row: RegionItem) => {
     if (!canManagePartnerRow(row.partnerId)) {
-      ElMessage.warning('无权限删除该区域')
+      ElMessage.warning(t('regionPage.messages.deleteNoPermission'))
       return
     }
     if (hasRegionAssetData(row)) {
       ElMessage.warning(ASSET_BLOCK_MSG)
       return
     }
-    ElMessageBox.confirm(`确定删除区域「${row.regionName}」吗？`, '删除确认', {
-      type: 'warning',
-      confirmButtonText: '删除',
-      cancelButtonText: '取消'
-    }).then(async () => {
+    ElMessageBox.confirm(
+      t('regionPage.messages.deleteConfirm', { name: row.regionName }),
+      t('regionPage.messages.deleteTitle'),
+      {
+        type: 'warning',
+        confirmButtonText: t('regionPage.messages.btnDelete'),
+        cancelButtonText: t('common.cancel')
+      }
+    ).then(async () => {
       await deleteRegion(row.id)
-      ElMessage.success('已删除')
+      ElMessage.success(t('regionPage.messages.deleted'))
       refreshData()
     })
   }
@@ -236,10 +310,12 @@
     const manageable = selectedRows.value.filter((r) => canManagePartnerRow(r.partnerId))
     const blocked = selectedRows.value.filter((r) => !canManagePartnerRow(r.partnerId))
     if (blocked.length) {
-      ElMessage.warning(`有 ${blocked.length} 条记录无权限删除，已跳过`)
+      ElMessage.warning(
+        t('regionPage.messages.batchNoPermissionSkipped', { count: blocked.length })
+      )
     }
     if (manageable.length === 0) {
-      ElMessage.warning('没有可删除的记录')
+      ElMessage.warning(t('regionPage.messages.batchNoDeletable'))
       return
     }
     const withAsset = manageable.filter(hasRegionAssetData)
@@ -248,16 +324,16 @@
       return
     }
     ElMessageBox.confirm(
-      `确定批量删除选中的 ${manageable.length} 条区域吗？此操作不可恢复。`,
-      '批量删除确认',
+      t('regionPage.messages.batchDeleteConfirm', { count: manageable.length }),
+      t('regionPage.messages.batchDeleteTitle'),
       {
         type: 'warning',
-        confirmButtonText: '删除',
-        cancelButtonText: '取消'
+        confirmButtonText: t('regionPage.messages.btnDelete'),
+        cancelButtonText: t('common.cancel')
       }
     ).then(async () => {
       await batchDeleteRegions(manageable.map((r) => r.id))
-      ElMessage.success('已批量删除')
+      ElMessage.success(t('regionPage.messages.batchDeleted'))
       selectedRows.value = []
       refreshData()
     })
@@ -267,44 +343,40 @@
     payload: Partial<RegionItem> & {
       country?: string
       countryCode?: string
-      userNickName?: string
       loginEmail?: string
+      loginPassword?: string
     }
   ) => {
-    const operatorName = userStore.info.userName ?? '系统'
     try {
       if (dialogMode.value === 'add') {
         await createRegion({
-          regionName: payload.regionName!,
-          regionAddress: payload.regionAddress!,
-          regionContactName: payload.regionContactName!,
-          regionPhone: payload.regionPhone!,
+          regionName: payload.regionName!.trim(),
           partnerId: payload.partnerId!,
-          partnerName: payload.partnerName!,
-          country: payload.country!,
-          countryCode: payload.countryCode!,
-          operatorName,
-          userNickName: payload.userNickName,
-          loginEmail: payload.loginEmail
+          email: payload.loginEmail!.trim(),
+          password: payload.loginPassword!,
+          ...(payload.regionContactName?.trim()
+            ? { contact: payload.regionContactName.trim() }
+            : {}),
+          ...(payload.regionPhone?.trim() ? { phone: payload.regionPhone.trim() } : {}),
+          ...(payload.regionAddress?.trim() ? { address: payload.regionAddress.trim() } : {})
         })
-        ElMessage.success('新增成功')
+        ElMessage.success(t('regionPage.messages.addSuccess'))
       } else if (dialogMode.value === 'edit' && currentRow.value?.id != null) {
-        await updateRegion(currentRow.value.id, {
-          regionName: payload.regionName,
-          regionAddress: payload.regionAddress,
-          regionContactName: payload.regionContactName,
-          regionPhone: payload.regionPhone,
-          partnerId: payload.partnerId,
-          partnerName: payload.partnerName,
-          country: payload.country,
-          countryCode: payload.countryCode
+        await updateRegion({
+          id: currentRow.value.id,
+          regionName: payload.regionName!.trim(),
+          ...(payload.regionContactName?.trim()
+            ? { contact: payload.regionContactName.trim() }
+            : {}),
+          ...(payload.regionPhone?.trim() ? { phone: payload.regionPhone.trim() } : {}),
+          ...(payload.regionAddress?.trim() ? { address: payload.regionAddress.trim() } : {})
         })
-        ElMessage.success('保存成功')
+        ElMessage.success(t('regionPage.messages.saveSuccess'))
       }
       refreshData()
     } catch (e) {
       console.error(e)
-      ElMessage.error('操作失败')
+      ElMessage.error(t('regionPage.messages.operationFailed'))
     }
   }
 </script>

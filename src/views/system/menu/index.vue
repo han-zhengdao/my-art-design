@@ -72,10 +72,12 @@
   } from '@/api/system-manage'
   import { HttpError } from '@/utils/http/error'
   import { ElTag, ElMessage, ElMessageBox } from 'element-plus'
+  import { useI18n } from 'vue-i18n'
 
   type MenuTreeItem = Api.SystemManage.MenuTreeItem
 
   defineOptions({ name: 'Menus' })
+  const { locale } = useI18n()
 
   // 状态管理
   const loading = ref(false)
@@ -119,6 +121,14 @@
     loadDirectoryOptions()
     getMenuList()
   })
+
+  function getDisplayMenuName(row: MenuTreeItem): string {
+    const zh = (row.menuNameZh || '').trim()
+    const en = (row.menuNameEn || '').trim()
+    const fallback = (row.menuName || '').trim()
+    const isEn = locale.value?.toLowerCase().startsWith('en')
+    return isEn ? en || zh || fallback : zh || en || fallback
+  }
 
   const loadDirectoryOptions = async (): Promise<void> => {
     try {
@@ -195,7 +205,7 @@
       label: '菜单名称',
       minWidth: 100,
       width: 280,
-      formatter: (row: MenuTreeItem) => formatMenuTitle(row.menuName || '')
+      formatter: (row: MenuTreeItem) => formatMenuTitle(getDisplayMenuName(row) || '')
     },
     {
       prop: 'icon',
@@ -280,7 +290,7 @@
     const map: Record<number, string> = {}
     const walk = (nodes: MenuTreeItem[]) => {
       nodes.forEach((n) => {
-        map[n.id] = n.menuName
+        map[n.id] = getDisplayMenuName(n)
         if (n.children?.length) walk(n.children)
       })
     }
@@ -320,7 +330,7 @@
     for (const item of items) {
       const searchName = appliedFilters.name?.toLowerCase().trim() || ''
       const searchRoute = appliedFilters.route?.toLowerCase().trim() || ''
-      const menuTitle = (item.menuName || '').toLowerCase()
+      const menuTitle = getDisplayMenuName(item).toLowerCase()
       const menuPath = (item.path || '').toLowerCase()
       const nameMatch = !searchName || menuTitle.includes(searchName)
       const routeMatch = !searchRoute || menuPath.includes(searchRoute)
@@ -348,11 +358,13 @@
     return {
       id: row.id,
       parentId: row.parentId,
+      menuNameZh: row.menuNameZh,
+      menuNameEn: row.menuNameEn,
       type: row.type,
       path: row.path,
       name: row.menuCode,
       meta: {
-        title: row.menuName,
+        title: getDisplayMenuName(row),
         icon: row.icon,
         sort: row.sort,
         isEnable: row.status === 1
@@ -418,6 +430,7 @@
     parentId?: number
     menuType?: 'directory' | 'menu'
     name: string
+    nameEn?: string
     /** 权限标识 menuCode，可覆盖默认（与路由一致） */
     menuCode?: string
     label?: string
@@ -438,13 +451,22 @@
     const base = editingMenuDetail.value
     const fallbackMenuCode = (formData.path || formData.name || '').trim().replace(/\s+/g, '')
     const resolvedMenuCode = (formData.menuCode || '').trim() || base?.menuCode || fallbackMenuCode
+    const resolvedMenuNameZh =
+      (formData.name || '').trim() ||
+      (base?.menuNameZh || '').trim() ||
+      (base?.menuName || '').trim()
+    const resolvedMenuNameEn = (formData.nameEn || '').trim() || (base?.menuNameEn || '').trim()
+    const resolvedMenuName =
+      resolvedMenuNameZh || resolvedMenuNameEn || (base?.menuName || '').trim()
 
     try {
       if (base && (formData.id ?? base.id)) {
         const payload: Api.SystemManage.UpdateMenuPayload = {
           id: formData.id ?? base.id,
           parentId: Number(formData.parentId ?? base.parentId ?? 0),
-          menuName: formData.name?.trim() || base.menuName,
+          menuName: resolvedMenuName,
+          menuNameZh: resolvedMenuNameZh,
+          menuNameEn: resolvedMenuNameEn,
           menuCode: resolvedMenuCode,
           icon: formData.icon ?? '',
           path: formData.path?.trim() || base.path,
@@ -458,7 +480,9 @@
       } else {
         const payload: Api.SystemManage.CreateMenuPayload = {
           parentId: Number(formData.parentId ?? 0),
-          menuName: (formData.name || '').trim(),
+          menuName: resolvedMenuName,
+          menuNameZh: resolvedMenuNameZh,
+          menuNameEn: resolvedMenuNameEn,
           menuCode: resolvedMenuCode,
           icon: formData.icon ?? '',
           path: (formData.path || '').trim(),

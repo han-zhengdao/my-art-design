@@ -12,6 +12,8 @@
 
 <script setup lang="ts">
   import { fetchGetDictDataByDictCodeList } from '@/api/system-manage'
+  import { getDictDataDisplayLabel } from '@/utils/dict-label'
+  import { useI18n } from 'vue-i18n'
 
   type RoleSearchFormParams = Api.SystemManage.RoleSearchParams
 
@@ -28,6 +30,8 @@
   const props = defineProps<Props>()
   const emit = defineEmits<Emits>()
 
+  const { locale } = useI18n()
+
   const searchBarRef = ref()
 
   const formData = computed({
@@ -37,26 +41,33 @@
 
   const rules = {}
 
-  /** 字典 role_type，展示为「系统 / 用户」 */
+  /** GET /system/dict/getDictDataByDictCodeList?dictCode=role_type */
   const roleTypeOptions = ref<{ label: string; value: number }[]>([])
 
-  function roleTypeSelectLabel(dictKey: string, dictValue: string): string {
-    const k = Number(dictKey)
-    if (k === 1) return '系统'
-    if (k === 2) return '用户'
-    return dictValue
-  }
-
-  onMounted(async () => {
+  async function loadRoleTypeDict() {
     try {
       const list = await fetchGetDictDataByDictCodeList('role_type')
-      roleTypeOptions.value = list.map((d) => ({
-        label: roleTypeSelectLabel(d.dictKey, d.dictValue),
+      if (!Array.isArray(list) || list.length === 0) {
+        roleTypeOptions.value = []
+        return
+      }
+      const sorted = [...list].sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0))
+      const lc = locale.value
+      roleTypeOptions.value = sorted.map((d) => ({
+        label: getDictDataDisplayLabel(d, lc),
         value: Number(d.dictKey)
       }))
     } catch {
       roleTypeOptions.value = []
     }
+  }
+
+  onMounted(() => {
+    void loadRoleTypeDict()
+  })
+
+  watch(locale, () => {
+    void loadRoleTypeDict()
   })
 
   const formItems = computed(() => [

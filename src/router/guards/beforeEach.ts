@@ -36,7 +36,7 @@
  * @author Art Design Pro Team
  */
 import type { Router, RouteLocationNormalized, NavigationGuardNext } from 'vue-router'
-import { isRef, nextTick } from 'vue'
+import { nextTick } from 'vue'
 import NProgress from 'nprogress'
 import { useSettingStore } from '@/store/modules/setting'
 import { useUserStore } from '@/store/modules/user'
@@ -49,7 +49,6 @@ import { loadingService } from '@/utils/ui'
 import { useCommon } from '@/hooks/core/useCommon'
 import { useWorktabStore } from '@/store/modules/worktab'
 import { fetchGetUserInfo } from '@/api/auth'
-import i18n from '@/locales'
 import { LanguageEnum } from '@/enums/appEnum'
 import { ApiStatus } from '@/utils/http/status'
 import { isHttpError } from '@/utils/http/error'
@@ -369,19 +368,13 @@ async function handleDynamicRoutes(
 }
 
 /**
- * 后端 language：1 中文 2 英文 → 与前端 LanguageEnum / i18n 对齐
+ * 后端 language：1 中文 2 英文 → 与前端 LanguageEnum / vue-i18n（由 userStore.setLanguage 统一写入）
  */
 function applyLanguageFromUserInfo(language?: number): void {
   if (language !== 1 && language !== 2) return
   const userStore = useUserStore()
   const lang = language === 2 ? LanguageEnum.EN : LanguageEnum.ZH
   userStore.setLanguage(lang)
-  const locale = i18n.global.locale
-  if (isRef(locale)) {
-    locale.value = lang
-  } else {
-    i18n.global.locale = lang as typeof locale
-  }
 }
 
 /**

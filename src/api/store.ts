@@ -1,296 +1,205 @@
 /**
- * 门店管理（当前为前端 mock，对接后端时替换为真实接口）
+ * 门店管理：列表、新增、详情、修改、删除已对接后端。
  */
 
-import { appendStoreAdminUserFromStore } from '@/api/user-mock'
+import request from '@/utils/http'
+import { PARTNER_COUNTRY_CODE_TO_ID } from '@/api/partner'
 
-const MOCK_ROWS: Api.Store.StoreListItem[] = [
-  {
-    id: 3001,
-    userNickName: '门店管理员-浦东店',
-    loginEmail: 'store-pd@example.com',
-    storeName: '浦东旗舰店',
-    storeAddress: '上海市浦东新区世纪大道 188 号',
-    contactName: '赵明',
-    phone: '13800138021',
-    regionId: 2001,
-    regionName: '华东一区',
-    partnerId: 1001,
-    partnerName: '华东零售集团',
-    country: '中国',
-    countryCode: 'CN',
-    mapProvider: 'TENCENT',
-    storeCoordinate: { lng: 121.503, lat: 31.236 },
-    geofence: [
-      { lng: 121.502, lat: 31.236 },
-      { lng: 121.504, lat: 31.236 },
-      { lng: 121.504, lat: 31.237 },
-      { lng: 121.502, lat: 31.237 }
-    ],
-    timezone: 'Asia/Shanghai',
-    dcBalance: 500,
-    wheelCount: 20,
-    beaconCount: 4,
-    pendingTicketCount: 2,
-    createTime: '2026-01-05 10:00:00',
-    operatorName: '系统管理员'
-  },
-  {
-    id: 3002,
-    userNickName: '门店管理员-成都店',
-    loginEmail: 'store-cd@example.com',
-    storeName: '成都高新店',
-    storeAddress: '成都市高新区天府大道 88 号',
-    contactName: '陈佳',
-    phone: '13900139012',
-    regionId: 2002,
-    regionName: '西南运营中心',
-    partnerId: 1004,
-    partnerName: '西南商贸',
-    country: '中国',
-    countryCode: 'CN',
-    mapProvider: 'TENCENT',
-    storeCoordinate: { lng: 104.072, lat: 30.572 },
-    geofence: [
-      { lng: 104.071, lat: 30.571 },
-      { lng: 104.073, lat: 30.571 },
-      { lng: 104.073, lat: 30.573 },
-      { lng: 104.071, lat: 30.573 }
-    ],
-    timezone: 'Asia/Shanghai',
-    dcBalance: 0,
-    wheelCount: 0,
-    beaconCount: 0,
-    pendingTicketCount: 0,
-    createTime: '2026-01-12 14:20:00',
-    operatorName: '李运营'
-  },
-  {
-    id: 3003,
-    userNickName: '门店管理员-湾区店',
-    loginEmail: 'store-bay@example.com',
-    storeName: 'SF Bay Store',
-    storeAddress: 'San Francisco, Market St',
-    contactName: 'Alex',
-    phone: '+1-415-555-0123',
-    regionId: 2003,
-    regionName: '加州湾区',
-    partnerId: 1002,
-    partnerName: 'Pacific Foods LLC',
-    country: '美国',
-    countryCode: 'US',
-    mapProvider: 'GOOGLE',
-    storeCoordinate: { lng: -122.4194, lat: 37.7749 },
-    geofence: [
-      { lng: -122.421, lat: 37.774 },
-      { lng: -122.418, lat: 37.774 },
-      { lng: -122.418, lat: 37.776 },
-      { lng: -122.421, lat: 37.776 }
-    ],
-    timezone: 'America/Los_Angeles',
-    dcBalance: 0,
-    wheelCount: 5,
-    beaconCount: 0,
-    pendingTicketCount: 1,
-    createTime: '2025-11-25 09:10:00',
-    operatorName: '系统管理员'
-  },
-  {
-    id: 3004,
-    userNickName: '门店管理员-奥斯陆店',
-    loginEmail: 'store-oslo@example.com',
-    storeName: 'Oslo Downtown',
-    storeAddress: 'Oslo City Center',
-    contactName: 'Erik',
-    phone: '+47-21-00-01-01',
-    regionId: undefined,
-    regionName: '无区域',
-    partnerId: 1005,
-    partnerName: 'Nordic Retail AS',
-    country: '挪威',
-    countryCode: 'NO',
-    mapProvider: 'GOOGLE',
-    storeCoordinate: { lng: 10.7522, lat: 59.9139 },
-    geofence: [
-      { lng: 10.751, lat: 59.913 },
-      { lng: 10.753, lat: 59.913 },
-      { lng: 10.753, lat: 59.915 },
-      { lng: 10.751, lat: 59.915 }
-    ],
-    timezone: 'Europe/Oslo',
-    dcBalance: 0,
-    wheelCount: 0,
-    beaconCount: 0,
-    pendingTicketCount: 0,
-    createTime: '2026-02-12 11:00:00',
-    operatorName: '系统管理员'
-  }
-]
-
-let mockRows: Api.Store.StoreListItem[] = [...MOCK_ROWS]
-
-/** 是否作为有效筛选条件（兼容运行时空串、ElSelect 字符串化等，避免与声明类型比较触发 TS 报错） */
-function isActiveFilter(v: unknown): boolean {
-  if (v == null) return false
-  if (typeof v === 'string' && v.trim() === '') return false
-  return true
+/** 接口返回记录（分页/详情通用，字段名与后端对齐） */
+type StoreApiRecord = {
+  id: number
+  storeName: string
+  partnerId: number
+  partnerName: string
+  countryName?: string
+  regionId?: number | null
+  regionName?: string
+  contact?: string
+  phone?: string
+  address?: string
+  lat?: string
+  lng?: string
+  fenceData?: string
+  /** 地图类型：1=谷歌，其余按腾讯 */
+  mapType?: number
+  wheelCount?: number
+  beaconCount?: number
+  dcBalance?: number
+  TotalPendingWorkOrders?: number
+  totalPendingWorkOrders?: number
+  loginEmail?: string
+  country?: string
+  countryCode?: string
+  storeAddress?: string
+  contactName?: string
+  createTime?: string
+  operatorName?: string
+  mapProvider?: Api.Store.MapProvider
+  storeCoordinate?: Api.Store.GeoPoint
+  geofence?: Api.Store.GeoPoint[]
+  timezone?: string
 }
 
-function filterRows(params: Api.Store.StoreSearchParams): Api.Store.StoreListItem[] {
-  let list = [...mockRows]
-  const name = params.storeName?.trim()
-  if (name) {
-    list = list.filter((r) => r.storeName.includes(name))
-  }
-  if (params.countryCode) {
-    list = list.filter((r) => r.countryCode === params.countryCode)
-  }
-  if (isActiveFilter(params.partnerId)) {
-    list = list.filter((r) => r.partnerId == params.partnerId)
-  }
-  if (isActiveFilter(params.regionId)) {
-    if (params.regionId === 'NONE') {
-      list = list.filter((r) => r.regionId == null)
-    } else {
-      // ElSelect 可能把数字选项变成字符串，用宽松比较避免筛不出门店
-      list = list.filter((r) => r.regionId == params.regionId)
-    }
-  } else if (isActiveFilter(params.partnerId)) {
-    // 当已选合作商但未选区域时，仅显示该合作商下无区域门店
-    list = list.filter((r) => r.regionId == null)
-  }
-  return list
-}
-
-export function fetchStoreList(params: Api.Store.StoreSearchParams): Promise<Api.Store.StoreList> {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      const current = params.current ?? 1
-      const size = params.size ?? 20
-      const filtered = filterRows(params)
-      const start = (current - 1) * size
-      const records = filtered.slice(start, start + size)
-      resolve({
-        records,
-        current,
-        size,
-        total: filtered.length
+function parseStoreGeofence(fenceData?: string): Api.Store.GeoPoint[] {
+  if (!fenceData?.trim()) return []
+  try {
+    const data = JSON.parse(fenceData) as unknown
+    if (!Array.isArray(data)) return []
+    return data
+      .map((item) => {
+        if (item && typeof item === 'object') {
+          const obj = item as Record<string, unknown>
+          const lng = Number(obj.lng ?? obj.lon ?? obj[0])
+          const lat = Number(obj.lat ?? obj[1])
+          return { lng, lat }
+        }
+        return { lng: NaN, lat: NaN }
       })
-    }, 280)
-  })
-}
-
-export function createStore(
-  payload: Omit<
-    Api.Store.StoreListItem,
-    | 'id'
-    | 'dcBalance'
-    | 'wheelCount'
-    | 'beaconCount'
-    | 'pendingTicketCount'
-    | 'createTime'
-    | 'operatorName'
-  > & {
-    operatorName: string
-    userNickName?: string
-    loginEmail?: string
+      .filter((point) => Number.isFinite(point.lng) && Number.isFinite(point.lat))
+  } catch {
+    return []
   }
-): Promise<Api.Store.StoreListItem> {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      const nextId = mockRows.reduce((m, r) => Math.max(m, r.id), 0) + 1
-      const now = new Date()
-      const pad = (n: number) => String(n).padStart(2, '0')
-      const createTime = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`
-      const row: Api.Store.StoreListItem = {
-        id: nextId,
-        userNickName: payload.userNickName ?? '',
-        loginEmail: payload.loginEmail ?? '',
-        storeName: payload.storeName,
-        storeAddress: payload.storeAddress,
-        contactName: payload.contactName,
-        phone: payload.phone,
-        regionId: payload.regionId,
-        regionName: payload.regionName ?? '无区域',
-        partnerId: payload.partnerId,
-        partnerName: payload.partnerName,
-        country: payload.country,
-        countryCode: payload.countryCode,
-        mapProvider: payload.mapProvider,
-        storeCoordinate: payload.storeCoordinate,
-        geofence: payload.geofence,
-        timezone: payload.timezone,
-        dcBalance: 0,
-        wheelCount: 0,
-        beaconCount: 0,
-        pendingTicketCount: 0,
-        createTime,
-        operatorName: payload.operatorName
-      }
-      mockRows = [row, ...mockRows]
-      if (payload.userNickName?.trim() && payload.loginEmail?.trim()) {
-        appendStoreAdminUserFromStore({
-          nickName: payload.userNickName.trim(),
-          userEmail: payload.loginEmail.trim(),
-          storeName: row.storeName,
-          operatorName: payload.operatorName
-        })
-      }
-      resolve(row)
-    }, 200)
+}
+
+function normalizeStoreItem(row: StoreApiRecord): Api.Store.StoreListItem {
+  const lng = Number(row.lng)
+  const lat = Number(row.lat)
+  const hasCoordinate = Number.isFinite(lng) && Number.isFinite(lat)
+  const mapProvider: Api.Store.MapProvider =
+    row.mapProvider ?? (row.mapType === 1 ? 'GOOGLE' : 'TENCENT')
+  const regionId = row.regionId != null && row.regionId !== 0 ? Number(row.regionId) : undefined
+  const pendingRaw =
+    row.TotalPendingWorkOrders ??
+    row.totalPendingWorkOrders ??
+    (row as Record<string, unknown>)['TotalPendingWorkOrders']
+  const pendingCount =
+    typeof pendingRaw === 'number' && Number.isFinite(pendingRaw)
+      ? pendingRaw
+      : Number(pendingRaw) || 0
+
+  return {
+    id: row.id,
+    loginEmail: row.loginEmail,
+    storeName: row.storeName,
+    storeAddress: row.storeAddress ?? row.address ?? '',
+    contactName: row.contactName ?? row.contact ?? '',
+    phone: row.phone ?? '',
+    regionId,
+    regionName:
+      regionId == null
+        ? row.regionName?.trim()
+          ? row.regionName
+          : '无区域'
+        : (row.regionName ?? ''),
+    partnerId: row.partnerId,
+    partnerName: row.partnerName,
+    country: row.country ?? row.countryName ?? '',
+    countryCode: row.countryCode ?? '',
+    mapProvider,
+    storeCoordinate: hasCoordinate ? { lng, lat } : (row.storeCoordinate ?? { lng: 0, lat: 0 }),
+    geofence: row.geofence ?? parseStoreGeofence(row.fenceData),
+    timezone: row.timezone ?? '',
+    dcBalance: row.dcBalance ?? 0,
+    wheelCount: row.wheelCount ?? 0,
+    beaconCount: row.beaconCount ?? 0,
+    pendingTicketCount: pendingCount,
+    createTime: row.createTime ?? '',
+    operatorName: row.operatorName ?? ''
+  }
+}
+
+/** 分页查询门店 GET /org/store/getStorePageList */
+export async function fetchStoreList(
+  params: Api.Store.StoreSearchParams
+): Promise<Api.Store.StoreList> {
+  const pageNum = params.pageNum ?? params.current ?? 1
+  const pageSize = Math.min(params.pageSize ?? params.size ?? 10, 200)
+  const countryId =
+    params.countryId ??
+    (params.countryCode ? PARTNER_COUNTRY_CODE_TO_ID[params.countryCode] : undefined)
+
+  const data = await request.get<{
+    records: StoreApiRecord[]
+    total: number
+    pageNum: number
+    pageSize: number
+  }>({
+    url: '/org/store/getStorePageList',
+    params: {
+      pageNum,
+      pageSize,
+      ...(params.storeName?.trim() ? { storeName: params.storeName.trim() } : {}),
+      ...(countryId != null ? { countryId } : {}),
+      ...(params.partnerId != null ? { partnerId: params.partnerId } : {}),
+      ...(typeof params.regionId === 'number' ? { regionId: params.regionId } : {}),
+      ...(params.dataScopeSql ? { dataScopeSql: params.dataScopeSql } : {})
+    }
+  })
+
+  return {
+    records: (data.records ?? []).map(normalizeStoreItem),
+    total: data.total ?? 0,
+    current: data.pageNum ?? pageNum,
+    size: data.pageSize ?? pageSize
+  }
+}
+
+/** 新增门店 POST /org/store/createStore（同步创建登录用户） */
+export function createStore(payload: Api.Store.CreateStorePayload): Promise<number> {
+  return request.post<number>({
+    url: '/org/store/createStore',
+    params: {
+      storeName: payload.storeName,
+      partnerId: payload.partnerId,
+      email: payload.email,
+      password: payload.password,
+      ...(payload.regionId != null ? { regionId: payload.regionId } : {}),
+      ...(payload.contact?.trim() ? { contact: payload.contact.trim() } : {}),
+      ...(payload.phone?.trim() ? { phone: payload.phone.trim() } : {}),
+      ...(payload.address?.trim() ? { address: payload.address.trim() } : {}),
+      ...(payload.lat?.trim() ? { lat: payload.lat.trim() } : {}),
+      ...(payload.lng?.trim() ? { lng: payload.lng.trim() } : {}),
+      ...(payload.fenceData?.trim() ? { fenceData: payload.fenceData.trim() } : {}),
+      ...(payload.mapType != null ? { mapType: payload.mapType } : {})
+    }
   })
 }
 
-export function updateStore(
-  id: number,
-  payload: Partial<
-    Pick<
-      Api.Store.StoreListItem,
-      | 'storeName'
-      | 'storeAddress'
-      | 'contactName'
-      | 'phone'
-      | 'regionId'
-      | 'regionName'
-      | 'partnerId'
-      | 'partnerName'
-      | 'country'
-      | 'countryCode'
-      | 'mapProvider'
-      | 'storeCoordinate'
-      | 'geofence'
-      | 'timezone'
-    >
-  >
-): Promise<void> {
-  return new Promise((resolve, reject) => {
-    setTimeout(() => {
-      const idx = mockRows.findIndex((r) => r.id === id)
-      if (idx === -1) {
-        reject(new Error('记录不存在'))
-        return
-      }
-      mockRows[idx] = { ...mockRows[idx], ...payload }
-      resolve()
-    }, 200)
+/** 查询门店详情 GET /org/store/getStoreDetail */
+export async function getStoreDetail(id: number): Promise<Api.Store.StoreListItem> {
+  const data = await request.get<StoreApiRecord>({
+    url: '/org/store/getStoreDetail',
+    params: { id }
+  })
+  return normalizeStoreItem(data)
+}
+
+/** 修改门店 POST /org/store/updateStore */
+export function updateStore(payload: Api.Store.UpdateStorePayload): Promise<void> {
+  return request.post<void>({
+    url: '/org/store/updateStore',
+    params: {
+      id: payload.id,
+      storeName: payload.storeName,
+      ...(payload.contact?.trim() ? { contact: payload.contact.trim() } : {}),
+      ...(payload.phone?.trim() ? { phone: payload.phone.trim() } : {}),
+      ...(payload.address?.trim() ? { address: payload.address.trim() } : {}),
+      ...(payload.lat?.trim() ? { lat: payload.lat.trim() } : {}),
+      ...(payload.lng?.trim() ? { lng: payload.lng.trim() } : {}),
+      ...(payload.fenceData?.trim() ? { fenceData: payload.fenceData.trim() } : {}),
+      ...(payload.mapType != null ? { mapType: payload.mapType } : {})
+    }
   })
 }
 
+/** 删除门店 POST /org/store/deleteStore?id= */
 export function deleteStore(id: number): Promise<void> {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      mockRows = mockRows.filter((r) => r.id !== id)
-      resolve()
-    }, 200)
+  return request.post<void>({
+    url: `/org/store/deleteStore?id=${encodeURIComponent(String(id))}`
   })
 }
 
-export function batchDeleteStores(ids: number[]): Promise<void> {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      const set = new Set(ids)
-      mockRows = mockRows.filter((r) => !set.has(r.id))
-      resolve()
-    }, 200)
-  })
+/** 批量删除（当前无批量接口，循环调用单删） */
+export async function batchDeleteStores(ids: number[]): Promise<void> {
+  await Promise.all(ids.map((id) => deleteStore(id)))
 }

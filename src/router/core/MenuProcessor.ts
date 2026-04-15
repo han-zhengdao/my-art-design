@@ -7,7 +7,7 @@
  * @author Art Design Pro Team
  */
 
-import type { AppRouteRecord } from '@/types/router'
+import type { AppRouteRecord, RouteMeta } from '@/types/router'
 import { useUserStore } from '@/store/modules/user'
 import { useAppMode } from '@/hooks/core/useAppMode'
 import { fetchGetCurrentUserRoleMenuList, fetchGetMyMenus } from '@/api/auth'
@@ -127,6 +127,57 @@ export class MenuProcessor {
     target.children.push({ ...userCenterChildRoute })
   }
 
+  /**
+   * 后端菜单树不含 meta.authList，v-auth / useAuth 会误判无权限。
+   * 按 component 路径与本地 asyncRoutes 对齐，补全与静态路由一致的 authList。
+   */
+  private collectAuthListByComponent(
+    routes: AppRouteRecord[],
+    out: Map<string, NonNullable<RouteMeta['authList']>>
+  ): void {
+    for (const r of routes) {
+      const comp = r.component
+      if (typeof comp === 'string' && comp && r.meta?.authList?.length) {
+        const key = comp.replace(/\/+$/, '') || '/'
+        if (!out.has(key)) {
+          out.set(key, r.meta.authList)
+        }
+      }
+      if (r.children?.length) {
+        this.collectAuthListByComponent(r.children, out)
+      }
+    }
+  }
+
+  private mergeAuthMetaFromAsyncRoutes(routes: AppRouteRecord[]): void {
+    const map = new Map<string, NonNullable<RouteMeta['authList']>>()
+    this.collectAuthListByComponent(asyncRoutes, map)
+    if (map.size === 0) {
+      return
+    }
+
+    const apply = (items: AppRouteRecord[]): void => {
+      for (const item of items) {
+        if (item.children?.length) {
+          apply(item.children)
+        }
+        const comp = item.component
+        if (
+          typeof comp === 'string' &&
+          comp &&
+          (!item.meta?.authList || item.meta.authList.length === 0)
+        ) {
+          const key = comp.replace(/\/+$/, '') || '/'
+          const list = map.get(key)
+          if (list?.length) {
+            item.meta = { ...item.meta, authList: [...list] }
+          }
+        }
+      }
+    }
+    apply(routes)
+  }
+
   private normalizeRoutePath(path?: string): string {
     const p = (path || '').trim()
     if (!p) return ''
@@ -164,6 +215,7 @@ export class MenuProcessor {
       if (Array.isArray(remote) && remote.length > 0) {
         const fromApi = convertMyMenusToAppRoutes(remote)
         this.mergeUserCenterIntoSystem(fromApi)
+        this.mergeAuthMetaFromAsyncRoutes(fromApi)
         return this.filterEmptyMenus(fromApi)
       }
       console.warn('[MenuProcessor] /auth/getMyMenus 返回空列表，回退本地 asyncRoutes')

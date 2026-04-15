@@ -25,7 +25,6 @@
     <ElDialog v-model="detailVisible" title="分配记录详情" width="680px" destroy-on-close>
       <ElDescriptions v-if="detailRow" :column="1" border>
         <ElDescriptionsItem label="ID">{{ detailRow.id }}</ElDescriptionsItem>
-        <ElDescriptionsItem label="分配来源">{{ detailRow.assignSourceLabel }}</ElDescriptionsItem>
         <ElDescriptionsItem label="分配对象">{{ detailRow.assignTypeLabel }}</ElDescriptionsItem>
         <ElDescriptionsItem label="对象名称">{{ detailRow.targetName }}</ElDescriptionsItem>
         <ElDescriptionsItem label="分配金额">{{ detailRow.amount }}</ElDescriptionsItem>
@@ -48,16 +47,9 @@
 
   const searchForm = ref<Api.Dc.AssignRecordSearchParams>({
     targetKeyword: undefined,
-    assignSource: undefined,
     assignType: undefined,
     timeRange: undefined
   })
-
-  const sourceOptions = [
-    { label: '全部', value: '' },
-    { label: '合作商', value: 'PARTNER' },
-    { label: '区域', value: 'REGION' }
-  ]
 
   const typeOptions = [
     { label: '全部', value: '' },
@@ -76,19 +68,11 @@
       clearable: true
     },
     {
-      label: '分配来源',
-      key: 'assignSource',
-      type: 'select',
-      labelWidth: 'auto',
-      span: 4,
-      props: { placeholder: '全部', clearable: true, options: sourceOptions }
-    },
-    {
       label: '分配对象',
       key: 'assignType',
       type: 'select',
       labelWidth: 'auto',
-      span: 4,
+      span: 5,
       props: { placeholder: '全部', clearable: true, options: typeOptions }
     },
     {
@@ -96,7 +80,7 @@
       key: 'timeRange',
       type: 'daterange',
       labelWidth: 'auto',
-      span: 7,
+      span: 8,
       props: {
         type: 'datetimerange',
         startPlaceholder: '开始',
@@ -111,7 +95,6 @@
 
   const handleSearchParams = (p: Api.Dc.AssignRecordSearchParams) => {
     const next = { ...p }
-    if (next.assignSource === ('' as Api.Dc.AssignSource)) next.assignSource = undefined
     if (next.assignType === ('' as Api.Dc.AssignTargetType)) next.assignType = undefined
     return next
   }
@@ -135,7 +118,6 @@
       columnsFactory: () => [
         { type: 'index', label: '序号', width: 'auto', minWidth: 56 },
         { prop: 'id', label: 'ID', width: 'auto', minWidth: 80 },
-        { prop: 'assignSourceLabel', label: '分配来源', width: 'auto', minWidth: 100 },
         { prop: 'assignTypeLabel', label: '分配对象', width: 'auto', minWidth: 100 },
         { prop: 'targetName', label: '对象名称', width: 'auto', minWidth: 140 },
         { prop: 'amount', label: '分配金额', width: 'auto', minWidth: 100 },
@@ -167,7 +149,6 @@
   const handleReset = () => {
     searchForm.value = {
       targetKeyword: undefined,
-      assignSource: undefined,
       assignType: undefined,
       timeRange: undefined
     }

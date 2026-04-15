@@ -4,15 +4,60 @@
     v-model="formData"
     :items="formItems"
     :rules="rules"
-    :is-expand="true"
-    :show-expand="false"
+    :default-expanded="true"
     @reset="handleReset"
     @search="handleSearch"
   >
+    <template #partnerId>
+      <ElSelect
+        v-model="orgForm.partnerId"
+        :placeholder="t('systemUser.search.selectPartner')"
+        filterable
+        clearable
+        :loading="loadingPartner"
+        class="!w-full"
+        @change="onPartnerChange"
+      >
+        <ElOption v-for="p in partnerOptions" :key="p.id" :label="p.name" :value="p.id" />
+      </ElSelect>
+    </template>
+    <template #regionId>
+      <ElSelect
+        v-model="orgForm.regionId"
+        :placeholder="t('systemUser.search.selectRegion')"
+        filterable
+        clearable
+        :loading="loadingRegion"
+        :disabled="regionSelectDisabled"
+        class="!w-full"
+        @change="onRegionChange"
+      >
+        <ElOption v-for="r in regionOptions" :key="r.id" :label="r.name" :value="r.id" />
+      </ElSelect>
+    </template>
+    <template #storeId>
+      <ElSelect
+        v-model="orgForm.storeId"
+        :placeholder="t('systemUser.search.selectStore')"
+        filterable
+        clearable
+        :loading="loadingStore"
+        :disabled="storeSelectDisabled"
+        class="!w-full"
+        @change="emitOrgToParent"
+      >
+        <ElOption v-for="s in storeOptions" :key="s.id" :label="s.name" :value="s.id" />
+      </ElSelect>
+    </template>
   </ArtSearchBar>
 </template>
 
 <script setup lang="ts">
+  import { useOrgCascadeOptions, type OrgCascadeFormSlice } from '@/hooks/useOrgCascadeOptions'
+  import { useI18n } from 'vue-i18n'
+
+  const { t } = useI18n()
+
   interface Props {
     modelValue: Api.SystemManage.UserSearchParams
   }
@@ -24,75 +69,137 @@
   const props = defineProps<Props>()
   const emit = defineEmits<Emits>()
 
-  // 表单数据双向绑定
   const searchBarRef = ref()
   const formData = computed({
     get: () => props.modelValue,
     set: (val) => emit('update:modelValue', val)
   })
 
-  // 校验规则
-  const rules = {
-    // userName: [{ required: true, message: '请输入用户名', trigger: 'blur' }]
+  const rules = {}
+
+  const orgForm = reactive<OrgCascadeFormSlice>({})
+  const {
+    partnerOptions,
+    regionOptions,
+    storeOptions,
+    loadingPartner,
+    loadingRegion,
+    loadingStore,
+    loadPartners,
+    handlePartnerChange,
+    handleRegionChange,
+    hydrateFromForm
+  } = useOrgCascadeOptions(orgForm)
+
+  const hasPartner = () => orgForm.partnerId != null && orgForm.partnerId! > 0
+  const hasRegion = () => orgForm.regionId != null && orgForm.regionId! > 0
+  const regionSelectDisabled = computed(() => !hasPartner())
+  const storeSelectDisabled = computed(() => !hasPartner() || !hasRegion())
+
+  onMounted(() => {
+    void loadPartners()
+  })
+
+  watch(
+    () =>
+      [props.modelValue.partnerId, props.modelValue.regionId, props.modelValue.storeId] as const,
+    async ([p, r, s]) => {
+      if (orgForm.partnerId === p && orgForm.regionId === r && orgForm.storeId === s) {
+        return
+      }
+      Object.assign(orgForm, { partnerId: p, regionId: r, storeId: s })
+      await hydrateFromForm()
+    },
+    { flush: 'post' }
+  )
+
+  function emitOrgToParent() {
+    emit('update:modelValue', {
+      ...props.modelValue,
+      partnerId: orgForm.partnerId,
+      regionId: orgForm.regionId,
+      storeId: orgForm.storeId
+    })
   }
 
-  const userTypeOptions = [
-    { label: '全部', value: '' },
-    { label: '平台超管', value: 'SUPER' },
-    { label: '合作商', value: 'PARTNER' },
-    { label: '区域', value: 'REGION' },
-    { label: '门店', value: 'STORE' }
-  ]
+  function onPartnerChange() {
+    handlePartnerChange()
+    emitOrgToParent()
+  }
 
-  // 表单配置
+  function onRegionChange() {
+    handleRegionChange()
+    emitOrgToParent()
+  }
+
+  const userTypeOptions = computed(() => [
+    { label: t('systemUser.userTypes.ALL'), value: '' },
+    { label: t('systemUser.userTypes.SUPER'), value: 'SUPER' },
+    { label: t('systemUser.userTypes.PARTNER'), value: 'PARTNER' },
+    { label: t('systemUser.userTypes.REGION'), value: 'REGION' },
+    { label: t('systemUser.userTypes.STORE'), value: 'STORE' }
+  ])
+
   const formItems = computed(() => [
     {
-      label: '昵称',
+      label: t('systemUser.search.name'),
       key: 'nickName',
       type: 'input',
+      span: 5,
       labelWidth: 'auto',
-      placeholder: '请输入昵称',
+      placeholder: t('systemUser.search.namePlaceholder'),
       clearable: true
     },
     {
-      label: '邮箱',
+      label: t('systemUser.search.email'),
       key: 'email',
       type: 'input',
+      span: 5,
       labelWidth: 'auto',
-      placeholder: '请输入登录邮箱',
+      placeholder: t('systemUser.search.emailPlaceholder'),
       clearable: true
     },
     {
-      label: '手机号',
-      key: 'phone',
+      label: t('systemUser.search.partner'),
+      key: 'partnerId',
       type: 'input',
       labelWidth: 'auto',
-      placeholder: '请输入手机号',
-      clearable: true
+      span: 5
     },
     {
-      label: '用户类型',
+      label: t('systemUser.search.region'),
+      key: 'regionId',
+      type: 'input',
+      labelWidth: 'auto',
+      span: 5
+    },
+    {
+      label: t('systemUser.search.store'),
+      key: 'storeId',
+      type: 'input',
+      labelWidth: 'auto',
+      span: 5
+    },
+    {
+      label: t('systemUser.search.userType'),
       key: 'userType',
       type: 'select',
       labelWidth: 'auto',
       span: 4,
       props: {
-        placeholder: '全部',
+        placeholder: t('systemUser.search.placeholderAllUserTypes'),
         clearable: true,
-        options: userTypeOptions
+        options: userTypeOptions.value
       }
     }
   ])
 
-  // 事件
   function handleReset() {
-    console.log('重置表单')
     emit('reset')
   }
 
   async function handleSearch(params: Api.SystemManage.UserSearchParams) {
     await searchBarRef.value.validate()
     emit('search', params)
-    console.log('表单数据', params)
   }
 </script>

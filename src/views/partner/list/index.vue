@@ -7,7 +7,9 @@
       <ArtTableHeader v-model:columns="columnChecks" :loading="loading" @refresh="refreshData">
         <template #left>
           <ElSpace wrap>
-            <ElButton type="primary" @click="openDialog('add')" v-ripple>新增合作商</ElButton>
+            <ElButton type="primary" @click="openDialog('add')" v-ripple>
+              {{ $t('partnerPage.button.add') }}
+            </ElButton>
           </ElSpace>
         </template>
       </ArtTableHeader>
@@ -34,12 +36,19 @@
 <script setup lang="ts">
   import ArtButtonTable from '@/components/core/forms/art-button-table/index.vue'
   import { useTable } from '@/hooks/core/useTable'
-  import { fetchPartnerList, createPartner, updatePartner, deletePartner } from '@/api/partner'
+  import {
+    fetchPartnerList,
+    createPartner,
+    getPartnerDetail,
+    updatePartner,
+    deletePartner
+  } from '@/api/partner'
   import { useUserStore } from '@/store/modules/user'
   import PartnerSearch from './modules/partner-search.vue'
   import PartnerDialog from './modules/partner-dialog.vue'
   import { ElMessage, ElMessageBox } from 'element-plus'
   import { h, nextTick, ref } from 'vue'
+  import { useI18n } from 'vue-i18n'
 
   defineOptions({ name: 'PartnerList' })
 
@@ -47,6 +56,7 @@
   type DialogMode = 'add' | 'edit' | 'detail'
 
   const userStore = useUserStore()
+  const { t } = useI18n()
 
   const dialogVisible = ref(false)
   const dialogMode = ref<DialogMode>('add')
@@ -54,15 +64,23 @@
 
   const searchForm = ref<Api.Partner.PartnerSearchParams>({
     partnerName: undefined,
-    countryCode: undefined
+    countryId: undefined
   })
 
-  const openDialog = (mode: DialogMode, row?: PartnerItem) => {
+  const openDialog = async (mode: DialogMode, row?: PartnerItem) => {
     dialogMode.value = mode
-    currentRow.value = row ?? null
-    nextTick(() => {
-      dialogVisible.value = true
-    })
+    if (row?.id != null && (mode === 'edit' || mode === 'detail')) {
+      try {
+        currentRow.value = await getPartnerDetail(row.id)
+      } catch (e) {
+        console.error(e)
+        currentRow.value = row
+      }
+    } else {
+      currentRow.value = row ?? null
+    }
+    await nextTick()
+    dialogVisible.value = true
   }
 
   const {
@@ -79,33 +97,86 @@
   } = useTable({
     core: {
       apiFn: fetchPartnerList,
+      paginationKey: { current: 'pageNum', size: 'pageSize' },
       apiParams: {
-        current: 1,
-        size: 20,
+        pageNum: 1,
+        pageSize: 20,
         ...searchForm.value
       },
       columnsFactory: () => [
-        { type: 'index', width: 'auto', minWidth: 60, label: '序号' },
-        { prop: 'id', label: 'ID', width: 'auto', minWidth: 90 },
-        { prop: 'userNickName', label: '用户昵称', width: 'auto', minWidth: 130 },
-        { prop: 'loginEmail', label: '登录邮箱', width: 'auto', minWidth: 200 },
-        { prop: 'partnerName', label: '合作商名称', width: 'auto', minWidth: 160 },
-        { prop: 'enterpriseAddress', label: '企业地址', width: 'auto', minWidth: 180 },
-        { prop: 'contactName', label: '联系人', width: 'auto', minWidth: 100 },
-        { prop: 'phone', label: '联系电话', width: 'auto', minWidth: 160 },
-        { prop: 'country', label: '所属国家', width: 'auto', minWidth: 120 },
-        { prop: 'iotToken', label: 'IoT Token', width: 'auto', minWidth: 200 },
-        { prop: 'tenantId', label: 'Tenant ID', width: 'auto', minWidth: 160 },
-        { prop: 'dcBalance', label: 'DC余额', width: 'auto', minWidth: 100 },
-        { prop: 'regionCount', label: '区域数', width: 'auto', minWidth: 88 },
-        { prop: 'storeCount', label: '门店数', width: 'auto', minWidth: 88 },
-        { prop: 'wheelCount', label: '车轮总数', width: 'auto', minWidth: 88 },
-        { prop: 'beaconCount', label: '信标总数', width: 'auto', minWidth: 88 },
-        { prop: 'createTime', label: '创建时间', width: 'auto', minWidth: 170 },
-        { prop: 'operatorName', label: '操作人', width: 'auto', minWidth: 110 },
+        { type: 'index', width: 'auto', minWidth: 60, label: t('partnerPage.column.index') },
+        { prop: 'id', label: t('partnerPage.column.id'), width: 'auto', minWidth: 90 },
+        {
+          prop: 'loginEmail',
+          label: t('partnerPage.column.loginEmail'),
+          width: 'auto',
+          minWidth: 200
+        },
+        {
+          prop: 'partnerName',
+          label: t('partnerPage.column.partnerName'),
+          width: 'auto',
+          minWidth: 160
+        },
+        {
+          prop: 'enterpriseAddress',
+          label: t('partnerPage.column.enterpriseAddress'),
+          width: 'auto',
+          minWidth: 180
+        },
+        {
+          prop: 'contactName',
+          label: t('partnerPage.column.contactName'),
+          width: 'auto',
+          minWidth: 100
+        },
+        { prop: 'phone', label: t('partnerPage.column.phone'), width: 'auto', minWidth: 160 },
+        { prop: 'country', label: t('partnerPage.column.country'), width: 'auto', minWidth: 120 },
+        {
+          prop: 'dcBalance',
+          label: t('partnerPage.column.dcBalance'),
+          width: 'auto',
+          minWidth: 100
+        },
+        {
+          prop: 'regionCount',
+          label: t('partnerPage.column.regionCount'),
+          width: 'auto',
+          minWidth: 88
+        },
+        {
+          prop: 'storeCount',
+          label: t('partnerPage.column.storeCount'),
+          width: 'auto',
+          minWidth: 88
+        },
+        {
+          prop: 'wheelCount',
+          label: t('partnerPage.column.wheelCount'),
+          width: 'auto',
+          minWidth: 88
+        },
+        {
+          prop: 'beaconCount',
+          label: t('partnerPage.column.beaconCount'),
+          width: 'auto',
+          minWidth: 88
+        },
+        {
+          prop: 'createTime',
+          label: t('partnerPage.column.createTime'),
+          width: 'auto',
+          minWidth: 170
+        },
+        {
+          prop: 'operatorName',
+          label: t('partnerPage.column.operatorName'),
+          width: 'auto',
+          minWidth: 110
+        },
         {
           prop: 'operation',
-          label: '操作',
+          label: t('partnerPage.column.operation'),
           width: 160,
           fixed: 'right',
           formatter: (row: PartnerItem) =>
@@ -114,11 +185,7 @@
               [
                 h(ArtButtonTable, {
                   type: 'view',
-                  onClick: () => {
-                    dialogMode.value = 'detail'
-                    currentRow.value = row
-                    dialogVisible.value = true
-                  }
+                  onClick: () => openDialog('detail', row)
                 }),
                 h(ArtButtonTable, {
                   type: 'edit',
@@ -142,8 +209,8 @@
   }
 
   const handleReset = () => {
-    searchForm.value = { partnerName: undefined, countryCode: undefined }
-    replaceSearchParams({ partnerName: undefined, countryCode: undefined })
+    searchForm.value = { partnerName: undefined, countryId: undefined }
+    replaceSearchParams({ partnerName: undefined, countryId: undefined })
     getData()
   }
 
@@ -160,62 +227,61 @@
 
   const handleDelete = (row: PartnerItem) => {
     if (hasPartnerAssetData(row)) {
-      ElMessage.warning(
-        '该合作商下仍关联有效资产数据，不允许删除。请先清空其关联的 DC 余额、区域、门店、车轮及信标信息。'
-      )
+      ElMessage.warning(t('partnerPage.messages.deleteBlocked'))
       return
     }
-    ElMessageBox.confirm(`确定删除合作商「${row.partnerName}」吗？`, '删除确认', {
-      type: 'warning',
-      confirmButtonText: '删除',
-      cancelButtonText: '取消'
-    }).then(async () => {
+    ElMessageBox.confirm(
+      t('partnerPage.messages.deleteConfirm', { name: row.partnerName }),
+      t('partnerPage.messages.deleteTitle'),
+      {
+        type: 'warning',
+        confirmButtonText: t('partnerPage.messages.btnDelete'),
+        cancelButtonText: t('common.cancel')
+      }
+    ).then(async () => {
       await deletePartner(row.id)
-      ElMessage.success('已删除')
+      ElMessage.success(t('partnerPage.messages.deleted'))
       refreshData()
     })
   }
 
-  const handleDialogSubmit = async (payload: Partial<PartnerItem> & { country?: string }) => {
-    const operatorName = userStore.info.userName ?? '系统'
+  const handleDialogSubmit = async (
+    payload: Partial<PartnerItem> & {
+      country?: string
+      loginEmail?: string
+      loginPassword?: string
+    }
+  ) => {
     try {
       if (dialogMode.value === 'add') {
         await createPartner({
-          partnerName: payload.partnerName!,
-          country: payload.country!,
-          countryCode: payload.countryCode!,
-          contactName: payload.contactName!,
-          phone: payload.phone!,
-          enterpriseAddress: payload.enterpriseAddress!,
-          iotToken: payload.iotToken!,
-          tenantId: payload.tenantId!,
-          operatorName,
-          userNickName: payload.userNickName,
-          loginEmail: payload.loginEmail,
-          regionCount: 0,
-          storeCount: 0,
-          wheelCount: 0,
-          dcBalance: 0,
-          beaconCount: 0
+          partnerName: payload.partnerName!.trim(),
+          email: payload.loginEmail!.trim(),
+          password: payload.loginPassword!,
+          ...(payload.contactName?.trim() ? { contact: payload.contactName.trim() } : {}),
+          ...(payload.phone?.trim() ? { phone: payload.phone.trim() } : {}),
+          ...(payload.enterpriseAddress?.trim()
+            ? { address: payload.enterpriseAddress.trim() }
+            : {}),
+          ...(payload.countryId != null ? { countryId: payload.countryId } : {})
         })
-        ElMessage.success('新增成功')
+        ElMessage.success(t('partnerPage.messages.addSuccess'))
       } else if (dialogMode.value === 'edit' && payload.id != null) {
-        await updatePartner(payload.id, {
-          partnerName: payload.partnerName,
-          country: payload.country,
-          countryCode: payload.countryCode,
-          contactName: payload.contactName,
-          phone: payload.phone,
-          enterpriseAddress: payload.enterpriseAddress,
-          iotToken: payload.iotToken,
-          tenantId: payload.tenantId
+        await updatePartner({
+          id: payload.id,
+          ...(payload.contactName?.trim() ? { contact: payload.contactName.trim() } : {}),
+          ...(payload.phone?.trim() ? { phone: payload.phone.trim() } : {}),
+          ...(payload.enterpriseAddress?.trim()
+            ? { address: payload.enterpriseAddress.trim() }
+            : {}),
+          ...(payload.countryId != null ? { countryId: payload.countryId } : {})
         })
-        ElMessage.success('保存成功')
+        ElMessage.success(t('partnerPage.messages.saveSuccess'))
       }
       refreshData()
     } catch (e) {
       console.error(e)
-      ElMessage.error('操作失败')
+      ElMessage.error(t('partnerPage.messages.operationFailed'))
     }
   }
 </script>

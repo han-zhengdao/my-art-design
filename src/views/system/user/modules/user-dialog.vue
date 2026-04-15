@@ -8,30 +8,48 @@
       :rules="rules"
       label-width="100px"
     >
-      <ElFormItem label="昵称" prop="nickName">
-        <ElInput v-model="formData.nickName" placeholder="请输入昵称" />
+      <ElFormItem :label="t('systemUser.dialog.nickName')" prop="nickName">
+        <ElInput
+          v-model="formData.nickName"
+          :placeholder="t('systemUser.dialog.nickNamePlaceholder')"
+        />
       </ElFormItem>
-      <ElFormItem label="头像地址" prop="headPic">
-        <ElInput v-model="formData.headPic" placeholder="可选，头像 URL" clearable />
+      <ElFormItem :label="t('systemUser.dialog.headPic')" prop="headPic">
+        <ElInput
+          v-model="formData.headPic"
+          :placeholder="t('systemUser.dialog.headPicPlaceholder')"
+          clearable
+        />
       </ElFormItem>
-      <ElFormItem label="登录邮箱" prop="userEmail">
-        <ElInput v-model="formData.userEmail" placeholder="请输入登录邮箱" />
+      <ElFormItem :label="t('systemUser.dialog.userEmail')" prop="userEmail">
+        <ElInput
+          v-model="formData.userEmail"
+          :placeholder="t('systemUser.dialog.userEmailPlaceholder')"
+        />
       </ElFormItem>
-      <ElFormItem v-if="dialogType === 'add'" label="登录密码" prop="password">
+      <ElFormItem
+        v-if="dialogType === 'add'"
+        :label="t('systemUser.dialog.password')"
+        prop="password"
+      >
         <ElInput
           v-model="formData.password"
           type="password"
-          placeholder="请输入登录密码"
+          :placeholder="t('systemUser.dialog.passwordPlaceholder')"
           show-password
         />
       </ElFormItem>
-      <ElFormItem label="手机号" prop="phone">
-        <ElInput v-model="formData.phone" placeholder="请输入手机号" maxlength="20" />
+      <ElFormItem :label="t('systemUser.dialog.phone')" prop="phone">
+        <ElInput
+          v-model="formData.phone"
+          :placeholder="t('systemUser.dialog.phonePlaceholder')"
+          maxlength="20"
+        />
       </ElFormItem>
-      <ElFormItem label="对应角色" prop="roleId">
+      <ElFormItem :label="t('systemUser.dialog.roleId')" prop="roleId">
         <ElSelect
           v-model="formData.roleId"
-          placeholder="请选择角色"
+          :placeholder="t('systemUser.dialog.rolePlaceholder')"
           filterable
           :loading="rolesLoading"
           style="width: 100%"
@@ -39,15 +57,19 @@
           <ElOption
             v-for="r in roleOptions"
             :key="r.id"
-            :label="`${r.roleName}（${r.roleCode}）`"
+            :label="formatRoleOption(r)"
             :value="r.id"
           />
         </ElSelect>
       </ElFormItem>
-      <ElFormItem v-if="dialogType === 'add' && showOrgPartner" label="合作商" prop="partnerId">
+      <ElFormItem
+        v-if="dialogType === 'add' && showOrgPartner"
+        :label="t('systemUser.dialog.partner')"
+        prop="partnerId"
+      >
         <ElSelect
           v-model="formData.partnerId"
-          placeholder="请选择合作商"
+          :placeholder="t('systemUser.search.selectPartner')"
           filterable
           clearable
           :loading="orgLoadingPartner"
@@ -57,7 +79,11 @@
           <ElOption v-for="p in partnerOptions" :key="p.id" :label="p.name" :value="p.id" />
         </ElSelect>
       </ElFormItem>
-      <ElFormItem v-if="dialogType === 'add' && showOrgRegion" label="区域" prop="regionId">
+      <ElFormItem
+        v-if="dialogType === 'add' && showOrgRegion"
+        :label="t('systemUser.dialog.region')"
+        prop="regionId"
+      >
         <ElSelect
           v-model="formData.regionId"
           :placeholder="orgRegionPlaceholder"
@@ -71,7 +97,11 @@
           <ElOption v-for="r in regionOptions" :key="r.id" :label="r.name" :value="r.id" />
         </ElSelect>
       </ElFormItem>
-      <ElFormItem v-if="dialogType === 'add' && showOrgStore" label="门店" prop="storeId">
+      <ElFormItem
+        v-if="dialogType === 'add' && showOrgStore"
+        :label="t('systemUser.dialog.store')"
+        prop="storeId"
+      >
         <ElSelect
           v-model="formData.storeId"
           :placeholder="orgStorePlaceholder"
@@ -87,28 +117,47 @@
     </ElForm>
 
     <ElDescriptions v-else v-loading="detailLoading" :column="1" border>
-      <ElDescriptionsItem label="ID">{{ detailRow?.id }}</ElDescriptionsItem>
-      <ElDescriptionsItem label="昵称">{{ detailRow?.nickName }}</ElDescriptionsItem>
-      <ElDescriptionsItem label="登录邮箱">{{ detailRow?.userEmail }}</ElDescriptionsItem>
-      <ElDescriptionsItem label="对应角色">{{
+      <ElDescriptionsItem :label="t('systemUser.detail.id')">{{
+        detailRow?.id
+      }}</ElDescriptionsItem>
+      <ElDescriptionsItem :label="t('systemUser.detail.nickName')">{{
+        detailRow?.nickName
+      }}</ElDescriptionsItem>
+      <ElDescriptionsItem :label="t('systemUser.detail.userEmail')">{{
+        detailRow?.userEmail
+      }}</ElDescriptionsItem>
+      <ElDescriptionsItem :label="t('systemUser.detail.userType')">{{
+        userTypeDisplay(detailRow?.userType)
+      }}</ElDescriptionsItem>
+      <ElDescriptionsItem :label="t('systemUser.detail.userRoles')">{{
         detailRow?.roleName || roleLabel(detailRow?.userRoles || [])
       }}</ElDescriptionsItem>
-      <ElDescriptionsItem label="状态">{{
-        detailRow?.status === '4' ? '注销' : '正常'
+      <ElDescriptionsItem :label="t('systemUser.detail.status')">{{
+        detailRow?.status === '4'
+          ? t('systemUser.status.deactivated')
+          : t('systemUser.status.normal')
       }}</ElDescriptionsItem>
-      <ElDescriptionsItem label="创建时间">{{ detailRow?.createTime }}</ElDescriptionsItem>
-      <ElDescriptionsItem label="操作人">{{ detailRow?.createBy }}</ElDescriptionsItem>
-      <ElDescriptionsItem label="注销日期">{{
+      <ElDescriptionsItem :label="t('systemUser.detail.createTime')">{{
+        detailRow?.createTime
+      }}</ElDescriptionsItem>
+      <ElDescriptionsItem :label="t('systemUser.detail.createBy')">{{
+        detailRow?.createBy
+      }}</ElDescriptionsItem>
+      <ElDescriptionsItem :label="t('systemUser.detail.logoutDate')">{{
         detailRow && logoutDate(detailRow)
       }}</ElDescriptionsItem>
     </ElDescriptions>
     <template #footer>
       <div class="dialog-footer" v-if="dialogType !== 'view'">
-        <ElButton @click="dialogVisible = false">取消</ElButton>
-        <ElButton type="primary" :loading="submitLoading" @click="handleSubmit">提交</ElButton>
+        <ElButton @click="dialogVisible = false">{{ t('common.cancel') }}</ElButton>
+        <ElButton type="primary" :loading="submitLoading" @click="handleSubmit">{{
+          t('systemUser.dialog.submit')
+        }}</ElButton>
       </div>
       <div class="dialog-footer" v-else>
-        <ElButton type="primary" @click="dialogVisible = false">关闭</ElButton>
+        <ElButton type="primary" @click="dialogVisible = false">{{
+          t('systemUser.dialog.close')
+        }}</ElButton>
       </div>
     </template>
   </ElDialog>
@@ -124,6 +173,8 @@
   } from '@/api/system-manage'
   import { useOrgCascadeOptions } from '@/hooks/useOrgCascadeOptions'
   import { useUserStore } from '@/store/modules/user'
+  import { useI18n } from 'vue-i18n'
+  import { computed, reactive, ref, watch, nextTick } from 'vue'
 
   type OrgScope = 'super' | 'partner' | 'region' | 'store'
 
@@ -141,7 +192,13 @@
   const props = defineProps<Props>()
   const emit = defineEmits<Emits>()
 
+  const { t } = useI18n()
+
   const userStore = useUserStore()
+
+  function formatRoleOption(r: Api.SystemManage.RoleByUserTypeItem) {
+    return t('systemUser.dialog.roleOptionFmt', { name: r.roleName, code: r.roleCode })
+  }
 
   /** 当前登录用户组织范围：超管全量；合作商隐合作商；区域隐合作商+区域；门店全隐并带当前组织 id */
   const orgScope = computed((): OrgScope => {
@@ -165,13 +222,13 @@
   })
 
   const orgRegionPlaceholder = computed(() => {
-    if (orgScope.value === 'partner') return '请选择区域'
-    return '请先选择合作商'
+    if (orgScope.value === 'partner') return t('systemUser.dialog.orgSelectRegionFirst')
+    return t('systemUser.dialog.orgSelectPartnerFirst')
   })
 
   const orgStorePlaceholder = computed(() => {
-    if (orgScope.value === 'region') return '请选择门店'
-    return '请先选择区域'
+    if (orgScope.value === 'region') return t('systemUser.dialog.orgSelectStoreFirst')
+    return t('systemUser.dialog.orgSelectRegionBeforeStore')
   })
 
   const regionSelectDisabled = computed(() => {
@@ -193,9 +250,9 @@
   const dialogType = computed(() => props.type as 'add' | 'edit' | 'view')
 
   const dialogTitle = computed(() => {
-    if (dialogType.value === 'add') return '新增用户'
-    if (dialogType.value === 'edit') return '编辑用户'
-    return '用户详情'
+    if (dialogType.value === 'add') return t('systemUser.dialog.addTitle')
+    if (dialogType.value === 'edit') return t('systemUser.dialog.editTitle')
+    return t('systemUser.dialog.viewTitle')
   })
 
   const detailCache = ref<Api.SystemManage.UserDetail | null>(null)
@@ -257,17 +314,17 @@
   } = useOrgCascadeOptions(formData)
 
   // 表单验证规则
-  const rules: FormRules = {
-    nickName: [{ required: true, message: '请输入昵称', trigger: 'blur' }],
+  const rules = computed<FormRules>(() => ({
+    nickName: [{ required: true, message: t('systemUser.validation.nickName'), trigger: 'blur' }],
     userEmail: [
-      { required: true, message: '请输入登录邮箱', trigger: 'blur' },
-      { type: 'email', message: '请输入正确的邮箱格式', trigger: 'blur' }
+      { required: true, message: t('systemUser.validation.userEmail'), trigger: 'blur' },
+      { type: 'email', message: t('systemUser.validation.emailFormat'), trigger: 'blur' }
     ],
     password: [
       {
         validator: (_rule, value, callback) => {
           if (dialogType.value === 'add' && (!value || !String(value).trim())) {
-            callback(new Error('请输入登录密码'))
+            callback(new Error(t('systemUser.validation.password')))
           } else {
             callback()
           }
@@ -275,24 +332,30 @@
         trigger: 'blur'
       }
     ],
-    roleId: [{ required: true, message: '请选择对应角色', trigger: 'change' }]
-  }
+    roleId: [{ required: true, message: t('systemUser.validation.roleId'), trigger: 'change' }]
+  }))
 
   const roleLabel = (roles?: string[]) => {
-    const map: Record<string, string> = {
-      R_SUPER: '系统超级管理员',
-      R_ADMIN: '系统管理员',
-      PARTNER_ADMIN: '合作商管理员',
-      REGION_ADMIN: '区域管理员',
-      STORE_ADMIN: '门店管理员',
-      STORE_STAFF: '门店员工'
-    }
+    if (!roles?.length) return '-'
+    const sep = t('systemUser.listSeparator')
     return (
-      (roles || [])
-        .map((r) => map[r])
-        .filter(Boolean)
-        .join('、') || '-'
+      roles
+        .map((r) => {
+          const i18nKey = `systemUser.roles.${r}`
+          const label = t(i18nKey)
+          return label === i18nKey ? r : label
+        })
+        .join(sep) || '-'
     )
+  }
+
+  /** 与列表「用户类型」列一致：字典值转文案，未知则回显原值 */
+  function userTypeDisplay(userType?: string) {
+    if (!userType) return '--'
+    const key = userType.trim().toUpperCase()
+    const i18nKey = `systemUser.userTypes.${key}`
+    const label = t(i18nKey)
+    return label === i18nKey ? userType : label
   }
 
   const logoutDate = (row?: Partial<Api.SystemManage.UserListItem>) => {
@@ -451,7 +514,7 @@
 
     if (dialogType.value === 'add') {
       if (formData.roleId == null) {
-        ElMessage.warning('请选择对应角色')
+        ElMessage.warning(t('systemUser.messages.selectRole'))
         return
       }
       submitLoading.value = true
@@ -467,7 +530,7 @@
           regionId: formData.regionId ?? 0,
           storeId: formData.storeId ?? 0
         })
-        ElMessage.success('添加成功')
+        ElMessage.success(t('systemUser.messages.createSuccess'))
         dialogVisible.value = false
         emit('submit')
       } finally {
@@ -479,7 +542,7 @@
     if (dialogType.value === 'edit') {
       const id = editingUserId.value
       if (id == null || formData.roleId == null) {
-        ElMessage.warning('缺少用户信息或未选择角色')
+        ElMessage.warning(t('systemUser.messages.missingUserOrRole'))
         return
       }
       submitLoading.value = true
@@ -492,7 +555,7 @@
           phone: formData.phone.trim() || '',
           roleId: formData.roleId
         })
-        ElMessage.success('更新成功')
+        ElMessage.success(t('systemUser.messages.updateSuccess'))
         dialogVisible.value = false
         emit('submit')
       } finally {

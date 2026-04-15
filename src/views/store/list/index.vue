@@ -7,7 +7,7 @@
         <template #left>
           <ElSpace wrap>
             <ElButton v-if="canOperateStore" type="primary" @click="openDialog('add')" v-ripple>
-              新增门店
+              {{ t('storePage.button.add') }}
             </ElButton>
             <ElButton
               v-if="canOperateStore"
@@ -16,7 +16,7 @@
               :disabled="selectedRows.length === 0"
               @click="handleBatchDelete"
             >
-              批量删除
+              {{ t('storePage.button.batchDelete') }}
             </ElButton>
           </ElSpace>
         </template>
@@ -37,7 +37,7 @@
       v-model="dialogVisible"
       :mode="dialogMode"
       :row="currentRow"
-      :country-code="searchForm.countryCode"
+      :is-super-admin="isSuperAdmin"
       :locked-partner-id="lockedPartnerId"
       :locked-region-id="lockedRegionId"
       @submit="handleDialogSubmit"
@@ -51,6 +51,7 @@
   import {
     fetchStoreList,
     createStore,
+    getStoreDetail,
     updateStore,
     deleteStore,
     batchDeleteStores
@@ -59,6 +60,7 @@
   import StoreSearch from './modules/store-search.vue'
   import StoreDialog from './modules/store-dialog.vue'
   import { ElMessage, ElMessageBox } from 'element-plus'
+  import { useI18n } from 'vue-i18n'
   import { computed, h, nextTick, ref } from 'vue'
 
   defineOptions({ name: 'StoreList' })
@@ -67,6 +69,7 @@
   type DialogMode = 'add' | 'edit' | 'detail'
 
   const userStore = useUserStore()
+  const { t } = useI18n()
 
   const dialogVisible = ref(false)
   const dialogMode = ref<DialogMode>('add')
@@ -75,7 +78,7 @@
 
   const searchForm = ref<Api.Store.StoreSearchParams>({
     storeName: undefined,
-    countryCode: undefined,
+    countryId: undefined,
     partnerId: undefined,
     regionId: undefined
   })
@@ -89,6 +92,11 @@
     return (
       roles.includes('R_SUPER') || roles.includes('PARTNER_ADMIN') || roles.includes('REGION_ADMIN')
     )
+  })
+
+  const isSuperAdmin = computed(() => {
+    const roles = userStore.info.roles ?? []
+    return roles.includes('R_SUPER')
   })
 
   const lockedPartnerId = computed(() => {
@@ -134,15 +142,41 @@
   const hasStoreAssetData = (row: StoreItem) =>
     (row.dcBalance ?? 0) !== 0 || (row.wheelCount ?? 0) !== 0 || (row.beaconCount ?? 0) !== 0
 
-  const ASSET_BLOCK_MSG =
-    '该合作商下仍关联有效资产数据，不允许删除。请先清空其关联的 DC 余额、车轮及信标信息。'
+  const ASSET_BLOCK_MSG = computed(() => t('storePage.messages.assetBlocked'))
 
-  const openDialog = (mode: DialogMode, row?: StoreItem) => {
+  const openDialog = async (mode: DialogMode, row?: StoreItem) => {
     dialogMode.value = mode
-    currentRow.value = row ?? null
-    nextTick(() => {
-      dialogVisible.value = true
-    })
+    if (mode === 'add') {
+      currentRow.value = null
+      nextTick(() => {
+        dialogVisible.value = true
+      })
+      return
+    }
+    if (!row) return
+    try {
+      const detail = await getStoreDetail(row.id)
+      currentRow.value = {
+        ...row,
+        ...detail,
+        loginEmail: detail.loginEmail ?? row.loginEmail,
+        country: detail.country || row.country,
+        countryCode: detail.countryCode || row.countryCode,
+        timezone: detail.timezone || row.timezone,
+        createTime: detail.createTime || row.createTime,
+        operatorName: detail.operatorName || row.operatorName
+      }
+      nextTick(() => {
+        dialogVisible.value = true
+      })
+    } catch (error) {
+      console.error(error)
+      ElMessage.error(
+        mode === 'edit'
+          ? t('storePage.messages.loadEditFailed')
+          : t('storePage.messages.loadDetailFailed')
+      )
+    }
   }
 
   const {
@@ -160,55 +194,106 @@
     core: {
       immediate: true,
       apiFn: fetchStoreList,
+      paginationKey: { current: 'pageNum', size: 'pageSize' },
       apiParams: {
-        current: 1,
-        size: 20,
+        pageNum: 1,
+        pageSize: 20,
         ...searchForm.value
       },
       columnsFactory: () => [
         { type: 'selection' },
-        { type: 'index', width: 'auto', minWidth: 60, label: '序号' },
-        { prop: 'id', label: 'ID', width: 'auto', minWidth: 90 },
-        { prop: 'userNickName', label: '用户昵称', width: 'auto', minWidth: 130 },
-        { prop: 'loginEmail', label: '登录邮箱', width: 'auto', minWidth: 200 },
-        { prop: 'storeName', label: '门店名称', width: 'auto', minWidth: 150 },
-        { prop: 'storeAddress', label: '门店地址', width: 'auto', minWidth: 200 },
-        { prop: 'contactName', label: '联系人', width: 'auto', minWidth: 100 },
-        { prop: 'phone', label: '联系电话', width: 'auto', minWidth: 140 },
-        { prop: 'regionName', label: '所属区域', width: 'auto', minWidth: 140 },
-        { prop: 'partnerName', label: '所属合作商', width: 'auto', minWidth: 160 },
-        { prop: 'country', label: '所属国家', width: 'auto', minWidth: 100 },
+        { type: 'index', width: 'auto', minWidth: 60, label: t('storePage.column.index') },
+        { prop: 'id', label: t('storePage.column.id'), width: 'auto', minWidth: 90 },
+        {
+          prop: 'loginEmail',
+          label: t('storePage.column.loginEmail'),
+          width: 'auto',
+          minWidth: 200
+        },
+        { prop: 'storeName', label: t('storePage.column.storeName'), width: 'auto', minWidth: 150 },
+        {
+          prop: 'storeAddress',
+          label: t('storePage.column.storeAddress'),
+          width: 'auto',
+          minWidth: 200
+        },
+        {
+          prop: 'contactName',
+          label: t('storePage.column.contactName'),
+          width: 'auto',
+          minWidth: 100
+        },
+        { prop: 'phone', label: t('storePage.column.phone'), width: 'auto', minWidth: 140 },
+        {
+          prop: 'regionName',
+          label: t('storePage.column.regionName'),
+          width: 'auto',
+          minWidth: 140
+        },
+        {
+          prop: 'partnerName',
+          label: t('storePage.column.partnerName'),
+          width: 'auto',
+          minWidth: 160
+        },
+        { prop: 'country', label: t('storePage.column.country'), width: 'auto', minWidth: 100 },
         {
           prop: 'mapProvider',
-          label: '地图选择',
+          label: t('storePage.column.mapProvider'),
           width: 'auto',
           minWidth: 130,
-          formatter: (row: StoreItem) => (row.mapProvider === 'GOOGLE' ? '谷歌地图' : '腾讯地图')
+          formatter: (row: StoreItem) =>
+            row.mapProvider === 'GOOGLE' ? t('storePage.map.google') : t('storePage.map.tencent')
         },
         {
           prop: 'storeCoordinate',
-          label: '门店坐标',
+          label: t('storePage.column.storeCoordinate'),
           width: 'auto',
           minWidth: 200,
           formatter: (row: StoreItem) => `${row.storeCoordinate.lng},${row.storeCoordinate.lat}`
         },
         {
           prop: 'geofence',
-          label: '电子围栏',
+          label: t('storePage.column.geofence'),
           width: 'auto',
           minWidth: 200,
           formatter: (row: StoreItem) => row.geofence.map((p) => `${p.lng},${p.lat}`).join('; ')
         },
-        { prop: 'timezone', label: '时区', width: 'auto', minWidth: 140 },
-        { prop: 'dcBalance', label: 'DC余额', width: 'auto', minWidth: 90 },
-        { prop: 'wheelCount', label: '车轮总数', width: 'auto', minWidth: 90 },
-        { prop: 'beaconCount', label: '信标总数', width: 'auto', minWidth: 90 },
-        { prop: 'pendingTicketCount', label: '未处理工单数', width: 'auto', minWidth: 120 },
-        { prop: 'createTime', label: '创建时间', width: 'auto', minWidth: 170 },
-        { prop: 'operatorName', label: '操作人', width: 'auto', minWidth: 110 },
+        { prop: 'timezone', label: t('storePage.column.timezone'), width: 'auto', minWidth: 140 },
+        { prop: 'dcBalance', label: t('storePage.column.dcBalance'), width: 'auto', minWidth: 90 },
+        {
+          prop: 'wheelCount',
+          label: t('storePage.column.wheelCount'),
+          width: 'auto',
+          minWidth: 90
+        },
+        {
+          prop: 'beaconCount',
+          label: t('storePage.column.beaconCount'),
+          width: 'auto',
+          minWidth: 90
+        },
+        {
+          prop: 'pendingTicketCount',
+          label: t('storePage.column.pendingTicketCount'),
+          width: 'auto',
+          minWidth: 120
+        },
+        {
+          prop: 'createTime',
+          label: t('storePage.column.createTime'),
+          width: 'auto',
+          minWidth: 170
+        },
+        {
+          prop: 'operatorName',
+          label: t('storePage.column.operatorName'),
+          width: 'auto',
+          minWidth: 110
+        },
         {
           prop: 'operation',
-          label: '操作',
+          label: t('storePage.column.operation'),
           width: 160,
           fixed: 'right',
           formatter: (row: StoreItem) =>
@@ -217,13 +302,13 @@
               [
                 h(ArtButtonTable, {
                   type: 'view',
-                  onClick: () => openDialog('detail', row)
+                  onClick: () => void openDialog('detail', row)
                 }),
                 canOperateStore.value &&
                   canManageStoreRow(row) &&
                   h(ArtButtonTable, {
                     type: 'edit',
-                    onClick: () => openDialog('edit', row)
+                    onClick: () => void openDialog('edit', row)
                   }),
                 canOperateStore.value &&
                   canManageStoreRow(row) &&
@@ -250,7 +335,7 @@
   const handleReset = () => {
     searchForm.value = {
       storeName: undefined,
-      countryCode: undefined,
+      countryId: undefined,
       partnerId: undefined,
       regionId: undefined
     }
@@ -260,20 +345,24 @@
 
   const handleDelete = (row: StoreItem) => {
     if (!canManageStoreRow(row)) {
-      ElMessage.warning('无权限删除该门店')
+      ElMessage.warning(t('storePage.messages.deleteNoPermission'))
       return
     }
     if (hasStoreAssetData(row)) {
-      ElMessage.warning(ASSET_BLOCK_MSG)
+      ElMessage.warning(ASSET_BLOCK_MSG.value)
       return
     }
-    ElMessageBox.confirm(`确定删除门店「${row.storeName}」吗？`, '删除确认', {
-      type: 'warning',
-      confirmButtonText: '删除',
-      cancelButtonText: '取消'
-    }).then(async () => {
+    ElMessageBox.confirm(
+      t('storePage.messages.deleteConfirm', { name: row.storeName }),
+      t('storePage.messages.deleteTitle'),
+      {
+        type: 'warning',
+        confirmButtonText: t('storePage.messages.btnDelete'),
+        cancelButtonText: t('storePage.dialog.footerCancel')
+      }
+    ).then(async () => {
       await deleteStore(row.id)
-      ElMessage.success('已删除')
+      ElMessage.success(t('storePage.messages.deleted'))
       refreshData()
     })
   }
@@ -283,28 +372,28 @@
     const manageable = selectedRows.value.filter((r) => canManageStoreRow(r))
     const blocked = selectedRows.value.filter((r) => !canManageStoreRow(r))
     if (blocked.length) {
-      ElMessage.warning(`有 ${blocked.length} 条记录无权限删除，已跳过`)
+      ElMessage.warning(t('storePage.messages.batchNoPermissionSkipped', { count: blocked.length }))
     }
     if (manageable.length === 0) {
-      ElMessage.warning('没有可删除的记录')
+      ElMessage.warning(t('storePage.messages.batchNoDeletable'))
       return
     }
     const withAsset = manageable.filter(hasStoreAssetData)
     if (withAsset.length > 0) {
-      ElMessage.warning(ASSET_BLOCK_MSG)
+      ElMessage.warning(ASSET_BLOCK_MSG.value)
       return
     }
     ElMessageBox.confirm(
-      `确定批量删除选中的 ${manageable.length} 条门店吗？此操作不可恢复。`,
-      '批量删除确认',
+      t('storePage.messages.batchDeleteConfirm', { count: manageable.length }),
+      t('storePage.messages.batchDeleteTitle'),
       {
         type: 'warning',
-        confirmButtonText: '删除',
-        cancelButtonText: '取消'
+        confirmButtonText: t('storePage.messages.btnDelete'),
+        cancelButtonText: t('storePage.dialog.footerCancel')
       }
     ).then(async () => {
       await batchDeleteStores(manageable.map((r) => r.id))
-      ElMessage.success('已批量删除')
+      ElMessage.success(t('storePage.messages.batchDeleted'))
       selectedRows.value = []
       refreshData()
     })
@@ -312,56 +401,45 @@
 
   const handleDialogSubmit = async (
     payload: Partial<StoreItem> & {
-      userNickName?: string
       loginEmail?: string
+      loginPassword?: string
     }
   ) => {
-    const operatorName = userStore.info.userName ?? '系统'
     try {
       if (dialogMode.value === 'add') {
         await createStore({
           storeName: payload.storeName!,
-          storeAddress: payload.storeAddress!,
-          contactName: payload.contactName!,
-          phone: payload.phone!,
-          regionId: payload.regionId,
-          regionName: payload.regionName,
           partnerId: payload.partnerId!,
-          partnerName: payload.partnerName!,
-          country: payload.country!,
-          countryCode: payload.countryCode!,
-          mapProvider: payload.mapProvider!,
-          storeCoordinate: payload.storeCoordinate!,
-          geofence: payload.geofence!,
-          timezone: payload.timezone!,
-          operatorName,
-          userNickName: payload.userNickName,
-          loginEmail: payload.loginEmail
-        })
-        ElMessage.success('新增成功')
-      } else if (dialogMode.value === 'edit' && payload.id != null) {
-        await updateStore(payload.id, {
-          storeName: payload.storeName,
-          storeAddress: payload.storeAddress,
-          contactName: payload.contactName,
-          phone: payload.phone,
+          email: payload.loginEmail!,
+          password: payload.loginPassword!,
           regionId: payload.regionId,
-          regionName: payload.regionName,
-          partnerId: payload.partnerId,
-          partnerName: payload.partnerName,
-          country: payload.country,
-          countryCode: payload.countryCode,
-          mapProvider: payload.mapProvider,
-          storeCoordinate: payload.storeCoordinate,
-          geofence: payload.geofence,
-          timezone: payload.timezone
+          contact: payload.contactName,
+          phone: payload.phone,
+          address: payload.storeAddress,
+          lat: payload.storeCoordinate ? String(payload.storeCoordinate.lat) : undefined,
+          lng: payload.storeCoordinate ? String(payload.storeCoordinate.lng) : undefined,
+          fenceData: Array.isArray(payload.geofence) ? JSON.stringify(payload.geofence) : undefined,
+          mapType: payload.mapProvider === 'GOOGLE' ? 1 : 2
         })
-        ElMessage.success('保存成功')
+        ElMessage.success(t('storePage.messages.addSuccess'))
+      } else if (dialogMode.value === 'edit' && payload.id != null) {
+        await updateStore({
+          id: payload.id,
+          storeName: payload.storeName!,
+          contact: payload.contactName,
+          phone: payload.phone,
+          address: payload.storeAddress,
+          lat: payload.storeCoordinate ? String(payload.storeCoordinate.lat) : undefined,
+          lng: payload.storeCoordinate ? String(payload.storeCoordinate.lng) : undefined,
+          fenceData: Array.isArray(payload.geofence) ? JSON.stringify(payload.geofence) : undefined,
+          mapType: payload.mapProvider === 'GOOGLE' ? 1 : 2
+        })
+        ElMessage.success(t('storePage.messages.saveSuccess'))
       }
       refreshData()
     } catch (e) {
       console.error(e)
-      ElMessage.error('操作失败')
+      ElMessage.error(t('storePage.messages.operationFailed'))
     }
   }
 </script>

@@ -235,6 +235,7 @@
     "dc": {
       "title": "DC Management",
       "target": "Recharge Targets",
+      "allocate": "Allocate DC",
       "rechargeRecord": "Recharge History",
       "assignRecord": "Allocation History",
       "usageRecord": "Usage History"
@@ -242,6 +243,10 @@
     "help": {
       "title": "Help Center",
       "support": "Help Docs"
+    },
+    "wheelEntry": {
+      "title": "Wheel Entry",
+      "list": "Entry List"
     }
   },
   "table": {
@@ -271,5 +276,520 @@
     "zebra": "Zebra",
     "border": "Border",
     "headerBackground": "Header BG"
+  },
+  "mapView": {
+    "search": {
+      "country": "Country",
+      "partner": "Partner",
+      "region": "Region",
+      "store": "Store",
+      "placeholderSelect": "Please select",
+      "placeholderAll": "All",
+      "placeholderSelectCountryFirst": "Select country first",
+      "placeholderRegionAll": "All (including no region)",
+      "placeholderSelectPartnerFirst": "Select partner first",
+      "placeholderStoreOptional": "Optional; defaults to all stores in this region",
+      "placeholderSelectRegionFirst": "Select region first",
+      "noRegion": "No region"
+    },
+    "countries": {
+      "CN": "China",
+      "US": "United States",
+      "JP": "Japan",
+      "NO": "Norway",
+      "DE": "Germany"
+    },
+    "provider": {
+      "tencent": "Tencent Map",
+      "google": "Google Maps"
+    },
+    "hover": {
+      "tooltip": "{store} (Wheels: {count})",
+      "defaultPoint": "Wheel point"
+    },
+    "card": {
+      "title": "Wheel info",
+      "close": "Close",
+      "devEui": "DevEUI",
+      "store": "Store",
+      "latestLocateTime": "Latest locate time",
+      "outFenceDistanceKm": "Distance outside fence (km)",
+      "navigate": "Navigate",
+      "ticketProcess": "Work order"
+    },
+    "processDialog": {
+      "title": "Work order",
+      "resultLabel": "Outcome",
+      "recycle": "Recovered",
+      "lost": "Lost"
+    },
+    "drawer": {
+      "title": "Wheels inside fence",
+      "listTitle": "Wheel list",
+      "totalCount": "{n} in total",
+      "columnDevEui": "DevEUI",
+      "columnStore": "Store",
+      "columnBattery": "Battery",
+      "columnLastComm": "Last communication"
+    },
+    "messages": {
+      "selectResult": "Please select an outcome",
+      "wheelNotFound": "Wheel point not found",
+      "processSubmitted": "Work order submitted: {result}",
+      "noStores": "No store coordinates to show under current filters",
+      "selectFilters": "Select country, partner, and at least region before searching",
+      "regionNotBound": "No region is bound to this account; map coordinates cannot be shown",
+      "storeNotBound": "No store is bound to this account; map coordinates cannot be shown",
+      "storeDataMissing": "Store coordinate data not found"
+    },
+    "config": {
+      "missingKeys": "Configure at least Tencent or Google Maps: VITE_TENCENT_MAP_KEY / VITE_TENCENT_MAP_SCRIPT_SRC and VITE_GOOGLE_MAP_KEY / VITE_GOOGLE_MAP_SCRIPT_SRC"
+    }
+  },
+  "regionPage": {
+    "search": {
+      "regionName": "Region name",
+      "regionNamePlaceholder": "Fuzzy search supported",
+      "country": "Country",
+      "partner": "Partner",
+      "placeholderAll": "All",
+      "placeholderSelectCountryFirst": "Please select country first"
+    },
+    "button": {
+      "add": "Add region",
+      "batchDelete": "Batch delete"
+    },
+    "column": {
+      "index": "No.",
+      "id": "ID",
+      "loginEmail": "Login email",
+      "regionName": "Region name",
+      "regionAddress": "Region address",
+      "regionContactName": "Region contact",
+      "regionPhone": "Region phone",
+      "partnerName": "Partner",
+      "country": "Country",
+      "dcBalance": "DC balance",
+      "storeCount": "Stores",
+      "wheelCount": "Wheels",
+      "beaconCount": "Beacons",
+      "pendingTicketCount": "Pending tickets",
+      "createTime": "Created at",
+      "operatorName": "Operator",
+      "operation": "Actions"
+    },
+    "dialog": {
+      "titleAdd": "Add region",
+      "titleEdit": "Edit region",
+      "titleDetail": "Region details",
+      "stepInfo": "Region info",
+      "stepAccount": "Region account",
+      "regionName": "Region name",
+      "regionAddress": "Region address",
+      "regionContactName": "Region contact",
+      "regionPhone": "Region phone",
+      "partner": "Partner",
+      "selectPartner": "Please select partner",
+      "inputPlaceholder": "Please enter",
+      "alertAccount": "A region admin account will be created and synced to User Management.",
+      "loginEmail": "Login email",
+      "loginEmailPlaceholder": "Email for login",
+      "loginPassword": "Password",
+      "loginPasswordPlaceholder": "Set login password",
+      "detail": {
+        "id": "ID",
+        "loginEmail": "Login email",
+        "regionName": "Region name",
+        "regionAddress": "Region address",
+        "regionContactName": "Region contact",
+        "regionPhone": "Region phone",
+        "partnerName": "Partner",
+        "country": "Country",
+        "dcBalance": "DC balance",
+        "storeCount": "Stores",
+        "wheelCount": "Wheels",
+        "beaconCount": "Beacons",
+        "pendingTicketCount": "Pending tickets",
+        "createTime": "Created at",
+        "operatorName": "Operator"
+      },
+      "footerCancel": "Cancel",
+      "footerPrev": "Back",
+      "footerNext": "Next",
+      "footerConfirm": "OK"
+    },
+    "validation": {
+      "regionName": "Please enter region name",
+      "regionAddress": "Please enter region address",
+      "regionContactName": "Please enter region contact",
+      "regionPhone": "Please enter region phone",
+      "partnerId": "Please select partner",
+      "loginEmail": "Please enter login email",
+      "emailFormat": "Please enter a valid email",
+      "loginPassword": "Please enter password",
+      "passwordMin": "Password must be at least 6 characters"
+    },
+    "messages": {
+      "assetBlocked": "This region still has linked assets and cannot be deleted. Clear DC balance, stores, wheels, and beacons first.",
+      "deleteNoPermission": "No permission to delete this region",
+      "deleteConfirm": "Delete region \"{name}\"?",
+      "deleteTitle": "Confirm delete",
+      "btnDelete": "Delete",
+      "deleted": "Deleted",
+      "batchNoPermissionSkipped": "{count} records have no permission and were skipped",
+      "batchNoDeletable": "No deletable records",
+      "batchDeleteConfirm": "Delete the selected {count} regions? This action cannot be undone.",
+      "batchDeleteTitle": "Confirm batch delete",
+      "batchDeleted": "Batch deleted",
+      "addSuccess": "Created successfully",
+      "saveSuccess": "Saved successfully",
+      "operationFailed": "Operation failed",
+      "lockedPartnerMissing": "Unable to resolve the bound partner of current account, please try later",
+      "selectPartnerRequired": "Please select partner before creating region"
+    },
+    "emptyText": "--"
+  },
+  "partnerPage": {
+    "search": {
+      "partnerName": "Partner name",
+      "partnerNamePlaceholder": "Fuzzy search supported",
+      "country": "Country",
+      "placeholderAll": "All"
+    },
+    "button": {
+      "add": "Add partner"
+    },
+    "column": {
+      "index": "No.",
+      "id": "ID",
+      "loginEmail": "Login email",
+      "partnerName": "Partner name",
+      "enterpriseAddress": "Address",
+      "contactName": "Contact",
+      "phone": "Phone",
+      "country": "Country",
+      "dcBalance": "DC balance",
+      "regionCount": "Regions",
+      "storeCount": "Stores",
+      "wheelCount": "Wheels",
+      "beaconCount": "Beacons",
+      "createTime": "Created at",
+      "operatorName": "Operator",
+      "operation": "Actions"
+    },
+    "dialog": {
+      "titleAdd": "Add partner",
+      "titleEdit": "Edit partner",
+      "titleDetail": "Partner details",
+      "stepInfo": "Partner info",
+      "stepAccount": "Partner account",
+      "partnerName": "Partner name",
+      "address": "Address",
+      "contactName": "Contact",
+      "phone": "Phone",
+      "country": "Country",
+      "selectCountry": "Please select",
+      "inputPlaceholder": "Please enter",
+      "addressPlaceholder": "Enter address",
+      "loginEmail": "Login email",
+      "loginEmailPlaceholder": "Email for login",
+      "loginPassword": "Password",
+      "loginPasswordPlaceholder": "Set login password",
+      "alertAccount": "A partner admin account will be created and synced to User Management.",
+      "detail": {
+        "id": "ID",
+        "loginEmail": "Login email",
+        "partnerName": "Partner name",
+        "address": "Address",
+        "contactName": "Contact",
+        "phone": "Phone",
+        "country": "Country",
+        "dcBalance": "DC balance",
+        "regionCount": "Regions",
+        "storeCount": "Stores",
+        "wheelCount": "Wheels",
+        "beaconCount": "Beacons"
+      },
+      "footerCancel": "Cancel",
+      "footerPrev": "Back",
+      "footerNext": "Next",
+      "footerConfirm": "OK"
+    },
+    "validation": {
+      "partnerName": "Please enter partner name",
+      "country": "Please select a country",
+      "loginEmail": "Please enter login email",
+      "emailFormat": "Please enter a valid email",
+      "loginPassword": "Please enter password",
+      "passwordMin": "Password must be at least 6 characters"
+    },
+    "messages": {
+      "deleteBlocked": "This partner still has linked assets and cannot be deleted. Clear DC balance, regions, stores, wheels, and beacons first.",
+      "deleteConfirm": "Delete partner \"{name}\"?",
+      "deleteTitle": "Confirm delete",
+      "btnDelete": "Delete",
+      "deleted": "Deleted",
+      "addSuccess": "Created successfully",
+      "saveSuccess": "Saved successfully",
+      "operationFailed": "Operation failed"
+    },
+    "emptyText": "--"
+  },
+  "storePage": {
+    "search": {
+      "storeName": "Store name",
+      "storeNamePlaceholder": "Fuzzy search supported",
+      "country": "Country",
+      "partner": "Partner",
+      "region": "Region",
+      "placeholderAll": "All",
+      "placeholderSelectCountryFirst": "Please select country first",
+      "placeholderSelectPartnerFirst": "Please select partner first"
+    },
+    "button": {
+      "add": "Add store",
+      "batchDelete": "Batch delete"
+    },
+    "column": {
+      "index": "No.",
+      "id": "ID",
+      "loginEmail": "Login email",
+      "storeName": "Store name",
+      "storeAddress": "Store address",
+      "contactName": "Contact",
+      "phone": "Phone",
+      "regionName": "Region",
+      "partnerName": "Partner",
+      "country": "Country",
+      "mapProvider": "Map",
+      "storeCoordinate": "Coordinate",
+      "geofence": "Geofence",
+      "timezone": "Timezone",
+      "dcBalance": "DC balance",
+      "wheelCount": "Wheels",
+      "beaconCount": "Beacons",
+      "pendingTicketCount": "Pending tickets",
+      "createTime": "Created at",
+      "operatorName": "Operator",
+      "operation": "Actions"
+    },
+    "dialog": {
+      "titleAdd": "Add store",
+      "titleEdit": "Edit store",
+      "titleDetail": "Store details",
+      "stepInfo": "Store info",
+      "stepAccount": "Store account",
+      "storeName": "Store name",
+      "storeAddress": "Store address",
+      "contactName": "Contact",
+      "phone": "Phone",
+      "partner": "Partner",
+      "selectPartner": "Please select partner",
+      "region": "Region",
+      "selectRegionOptional": "Please select region (optional)",
+      "mapProvider": "Map",
+      "storeCoordinate": "Coordinate",
+      "storeCoordinatePlaceholder": "lng,lat; you can pick a point on map",
+      "pickCoordinate": "Pick on map",
+      "geofence": "Geofence",
+      "geofencePlaceholder": "At least 3 points: lng,lat;lng,lat;... You can draw on map.",
+      "pickGeofence": "Draw geofence",
+      "geofenceHelp": "Use the same map provider above. Operate in popup and fill here after confirm.",
+      "alertAccount": "A store admin account will be created and synced to User Management; asset is the store name.",
+      "loginEmail": "Login email",
+      "loginPassword": "Password",
+      "detail": {
+        "id": "ID",
+        "loginEmail": "Login email",
+        "storeName": "Store name",
+        "storeAddress": "Store address",
+        "contactName": "Contact",
+        "phone": "Phone",
+        "regionName": "Region",
+        "partnerName": "Partner",
+        "country": "Country",
+        "mapProvider": "Map",
+        "storeCoordinate": "Coordinate",
+        "geofence": "Geofence",
+        "timezone": "Timezone",
+        "dcBalance": "DC balance",
+        "wheelCount": "Wheels",
+        "beaconCount": "Beacons",
+        "pendingTicketCount": "Pending tickets",
+        "createTime": "Created at",
+        "operatorName": "Operator"
+      },
+      "footerCancel": "Cancel",
+      "footerPrev": "Back",
+      "footerNext": "Next",
+      "footerConfirm": "OK"
+    },
+    "validation": {
+      "storeName": "Please enter store name",
+      "partner": "Please select partner",
+      "storeAddress": "Please enter store address",
+      "contactName": "Please enter contact",
+      "phone": "Please enter phone",
+      "mapProvider": "Please select map",
+      "storeCoordinate": "Please enter valid coordinate: lng,lat",
+      "geofence": "At least 3 points required: lng,lat;lng,lat;...",
+      "loginEmail": "Please enter login email",
+      "emailFormat": "Please enter a valid email",
+      "loginPassword": "Please enter password",
+      "passwordMin": "Password must be at least 6 characters"
+    },
+    "messages": {
+      "loadEditFailed": "Failed to load store info",
+      "loadDetailFailed": "Failed to get store details",
+      "assetBlocked": "This partner still has linked assets and cannot be deleted. Clear DC balance, wheels, and beacons first.",
+      "deleteNoPermission": "No permission to delete this store",
+      "deleteConfirm": "Delete store \"{name}\"?",
+      "deleteTitle": "Confirm delete",
+      "btnDelete": "Delete",
+      "deleted": "Deleted",
+      "batchNoPermissionSkipped": "{count} records have no permission and were skipped",
+      "batchNoDeletable": "No deletable records",
+      "batchDeleteConfirm": "Delete the selected {count} stores? This action cannot be undone.",
+      "batchDeleteTitle": "Confirm batch delete",
+      "batchDeleted": "Batch deleted",
+      "addSuccess": "Created successfully",
+      "saveSuccess": "Saved successfully",
+      "operationFailed": "Operation failed",
+      "lockedPartnerMissing": "Unable to resolve the bound partner of current account, please try later",
+      "selectPartnerRequired": "Please select partner before submit",
+      "boundPartnerMissing": "Unable to get bound partner of current account, please contact admin",
+      "timezoneMissing": "Unable to determine timezone, please check network or filters and try again"
+    },
+    "map": {
+      "tencent": "Tencent Maps",
+      "google": "Google Maps"
+    },
+    "common": {
+      "noRegion": "No region",
+      "emptyText": "--"
+    }
+  },
+  "systemUser": {
+    "actions": {
+      "addUser": "Add user",
+      "batchDelete": "Batch delete"
+    },
+    "search": {
+      "name": "Name",
+      "namePlaceholder": "Enter name",
+      "email": "Email",
+      "emailPlaceholder": "Enter login email",
+      "partner": "Partner",
+      "region": "Region",
+      "store": "Store",
+      "userType": "User type",
+      "placeholderAllUserTypes": "All",
+      "selectPartner": "Select partner",
+      "selectRegion": "Select region",
+      "selectStore": "Select store"
+    },
+    "userTypes": {
+      "ALL": "All",
+      "SUPER": "Platform super admin",
+      "PARTNER": "Partner",
+      "REGION": "Region",
+      "STORE": "Store"
+    },
+    "roles": {
+      "R_SUPER": "Super administrator",
+      "R_ADMIN": "System administrator",
+      "PARTNER_ADMIN": "Partner administrator",
+      "partner_admin": "Partner administrator",
+      "REGION_ADMIN": "Region administrator",
+      "region_admin": "Region administrator",
+      "STORE_ADMIN": "Store administrator",
+      "store_admin": "Store administrator",
+      "STORE_STAFF": "Store staff",
+      "store_staff": "Store staff"
+    },
+    "listSeparator": ", ",
+    "table": {
+      "index": "No.",
+      "id": "ID",
+      "nickName": "Name",
+      "userEmail": "Login email",
+      "userType": "User type",
+      "userRoles": "Roles",
+      "partnerName": "Partner",
+      "regionName": "Region",
+      "storeName": "Store",
+      "status": "Status",
+      "operation": "Actions"
+    },
+    "status": {
+      "enabled": "Enabled",
+      "disabled": "Disabled",
+      "normal": "Active",
+      "deactivated": "Deactivated"
+    },
+    "detail": {
+      "id": "ID",
+      "nickName": "Nickname",
+      "userEmail": "Login email",
+      "userType": "User type",
+      "userRoles": "Roles",
+      "status": "Status",
+      "createTime": "Created at",
+      "createBy": "Created by",
+      "logoutDate": "Deactivated at"
+    },
+    "dialog": {
+      "addTitle": "Add user",
+      "editTitle": "Edit user",
+      "viewTitle": "View details",
+      "nickName": "Nickname",
+      "nickNamePlaceholder": "Enter nickname",
+      "headPic": "Avatar URL",
+      "headPicPlaceholder": "Optional avatar URL",
+      "userEmail": "Login email",
+      "userEmailPlaceholder": "Enter login email",
+      "password": "Password",
+      "passwordPlaceholder": "Enter password",
+      "phone": "Phone",
+      "phonePlaceholder": "Enter phone number",
+      "roleId": "Role",
+      "rolePlaceholder": "Select role",
+      "partner": "Partner",
+      "region": "Region",
+      "store": "Store",
+      "orgSelectRegionFirst": "Select region",
+      "orgSelectPartnerFirst": "Select partner first",
+      "orgSelectStoreFirst": "Select store",
+      "orgSelectRegionBeforeStore": "Select region first",
+      "submit": "Submit",
+      "close": "Close",
+      "roleOptionFmt": "{name} ({code})"
+    },
+    "validation": {
+      "nickName": "Please enter nickname",
+      "userEmail": "Please enter login email",
+      "emailFormat": "Please enter a valid email",
+      "password": "Please enter password",
+      "roleId": "Please select a role"
+    },
+    "messages": {
+      "onlySuperChangeStatus": "Only platform super admins can change user status",
+      "onlySuperDelete": "Only platform super admins can delete users",
+      "selectUsersFirst": "Select users to delete first",
+      "toggleStatusConfirm": "Change this user's status to \"{status}\"?",
+      "toggleStatusSuccess": "Status changed to \"{status}\" (local only until API is connected)",
+      "selectRole": "Please select a role",
+      "missingUserOrRole": "Missing user info or role",
+      "createSuccess": "Created successfully",
+      "updateSuccess": "Updated successfully",
+      "deleteSuccess": "Deleted successfully"
+    },
+    "confirm": {
+      "changeStatusTitle": "Change status",
+      "deleteUserTitle": "Delete user",
+      "batchDeleteTitle": "Batch delete users",
+      "deleteUserBody": "Permanently delete this user?",
+      "batchDeleteBody": "Permanently delete {count} selected users?"
+    }
   }
 }

@@ -235,6 +235,7 @@
     "dc": {
       "title": "DC管理",
       "target": "充值对象",
+      "allocate": "分配DC",
       "rechargeRecord": "充值记录",
       "assignRecord": "分配记录",
       "usageRecord": "使用记录"
@@ -242,6 +243,10 @@
     "help": {
       "title": "帮助中心",
       "support": "帮助文档"
+    },
+    "wheelEntry": {
+      "title": "车轮录入",
+      "list": "录入列表"
     }
   },
   "table": {
@@ -271,5 +276,520 @@
     "zebra": "斑马纹",
     "border": "边框",
     "headerBackground": "表头背景"
+  },
+  "mapView": {
+    "search": {
+      "country": "所属国家",
+      "partner": "所属合作商",
+      "region": "所属区域",
+      "store": "所属门店",
+      "placeholderSelect": "请选择",
+      "placeholderAll": "全部",
+      "placeholderSelectCountryFirst": "请先选择所属国家",
+      "placeholderRegionAll": "全部（含无区域）",
+      "placeholderSelectPartnerFirst": "请先选择合作商",
+      "placeholderStoreOptional": "可选，默认该区域下全部门店",
+      "placeholderSelectRegionFirst": "请先选择所属区域",
+      "noRegion": "无区域"
+    },
+    "countries": {
+      "CN": "中国",
+      "US": "美国",
+      "JP": "日本",
+      "NO": "挪威",
+      "DE": "德国"
+    },
+    "provider": {
+      "tencent": "腾讯地图",
+      "google": "谷歌地图"
+    },
+    "hover": {
+      "tooltip": "{store}（车轮数：{count}）",
+      "defaultPoint": "车轮点"
+    },
+    "card": {
+      "title": "车轮信息",
+      "close": "关闭",
+      "devEui": "DevEUI",
+      "store": "所属门店",
+      "latestLocateTime": "最新定位时间",
+      "outFenceDistanceKm": "出围栏距离（km）",
+      "navigate": "一键导航",
+      "ticketProcess": "工单处理"
+    },
+    "processDialog": {
+      "title": "工单处理",
+      "resultLabel": "处理结果",
+      "recycle": "找回",
+      "lost": "丢失"
+    },
+    "drawer": {
+      "title": "围栏内车轮列表",
+      "listTitle": "车轮列表",
+      "totalCount": "共 {n} 条",
+      "columnDevEui": "DevEUI",
+      "columnStore": "所属门店",
+      "columnBattery": "电池电量",
+      "columnLastComm": "最后通信时间"
+    },
+    "messages": {
+      "selectResult": "请选择处理结果",
+      "wheelNotFound": "未找到当前车轮点位",
+      "processSubmitted": "工单处理已提交：{result}",
+      "noStores": "当前条件下没有可展示的门店坐标",
+      "selectFilters": "请选择所属国家、合作商，并至少选择到区域后再查询",
+      "regionNotBound": "当前账号未绑定区域，无法展示地图坐标",
+      "storeNotBound": "当前账号未绑定门店，无法展示地图坐标",
+      "storeDataMissing": "未找到门店坐标数据"
+    },
+    "config": {
+      "missingKeys": "请至少配置腾讯或谷歌地图：VITE_TENCENT_MAP_KEY / VITE_TENCENT_MAP_SCRIPT_SRC 与 VITE_GOOGLE_MAP_KEY / VITE_GOOGLE_MAP_SCRIPT_SRC"
+    }
+  },
+  "regionPage": {
+    "search": {
+      "regionName": "区域名称",
+      "regionNamePlaceholder": "支持模糊搜索",
+      "country": "所属国家",
+      "partner": "所属合作商",
+      "placeholderAll": "全部",
+      "placeholderSelectCountryFirst": "请先选择国家"
+    },
+    "button": {
+      "add": "新增区域",
+      "batchDelete": "批量删除"
+    },
+    "column": {
+      "index": "序号",
+      "id": "ID",
+      "loginEmail": "登录邮箱",
+      "regionName": "区域名称",
+      "regionAddress": "区域地址",
+      "regionContactName": "区域联系人",
+      "regionPhone": "区域联系电话",
+      "partnerName": "所属合作商",
+      "country": "所属国家",
+      "dcBalance": "DC余额",
+      "storeCount": "门店数",
+      "wheelCount": "车轮总数",
+      "beaconCount": "信标总数",
+      "pendingTicketCount": "未处理工单数",
+      "createTime": "创建时间",
+      "operatorName": "操作人",
+      "operation": "操作"
+    },
+    "dialog": {
+      "titleAdd": "新增区域",
+      "titleEdit": "编辑区域",
+      "titleDetail": "区域详情",
+      "stepInfo": "区域信息",
+      "stepAccount": "区域账户",
+      "regionName": "区域名称",
+      "regionAddress": "区域地址",
+      "regionContactName": "区域联系人",
+      "regionPhone": "区域联系电话",
+      "partner": "所属合作商",
+      "selectPartner": "请选择所属合作商",
+      "inputPlaceholder": "请输入",
+      "alertAccount": "将创建区域管理员账户，并同步至用户管理。",
+      "loginEmail": "登录邮箱",
+      "loginEmailPlaceholder": "用于登录的邮箱",
+      "loginPassword": "登录密码",
+      "loginPasswordPlaceholder": "请设置登录密码",
+      "detail": {
+        "id": "ID",
+        "loginEmail": "登录邮箱",
+        "regionName": "区域名称",
+        "regionAddress": "区域地址",
+        "regionContactName": "区域联系人",
+        "regionPhone": "区域联系电话",
+        "partnerName": "所属合作商",
+        "country": "所属国家",
+        "dcBalance": "DC余额",
+        "storeCount": "门店数",
+        "wheelCount": "车轮总数",
+        "beaconCount": "信标总数",
+        "pendingTicketCount": "未处理工单数",
+        "createTime": "创建时间",
+        "operatorName": "操作人"
+      },
+      "footerCancel": "取消",
+      "footerPrev": "上一步",
+      "footerNext": "下一步",
+      "footerConfirm": "确定"
+    },
+    "validation": {
+      "regionName": "请输入区域名称",
+      "regionAddress": "请输入区域地址",
+      "regionContactName": "请输入区域联系人",
+      "regionPhone": "请输入区域联系电话",
+      "partnerId": "请选择所属合作商",
+      "loginEmail": "请输入登录邮箱",
+      "emailFormat": "请输入有效邮箱",
+      "loginPassword": "请输入登录密码",
+      "passwordMin": "密码至少 6 位"
+    },
+    "messages": {
+      "assetBlocked": "该区域下仍关联有效资产数据，不允许删除。请先清空其关联的 DC 余额、门店、车轮及信标信息。",
+      "deleteNoPermission": "无权限删除该区域",
+      "deleteConfirm": "确定删除区域「{name}」吗？",
+      "deleteTitle": "删除确认",
+      "btnDelete": "删除",
+      "deleted": "已删除",
+      "batchNoPermissionSkipped": "有 {count} 条记录无权限删除，已跳过",
+      "batchNoDeletable": "没有可删除的记录",
+      "batchDeleteConfirm": "确定批量删除选中的 {count} 条区域吗？此操作不可恢复。",
+      "batchDeleteTitle": "批量删除确认",
+      "batchDeleted": "已批量删除",
+      "addSuccess": "新增成功",
+      "saveSuccess": "保存成功",
+      "operationFailed": "操作失败",
+      "lockedPartnerMissing": "无法解析当前账号绑定的合作商信息，请稍后重试",
+      "selectPartnerRequired": "请选择所属合作商后再新增区域"
+    },
+    "emptyText": "--"
+  },
+  "partnerPage": {
+    "search": {
+      "partnerName": "合作商名称",
+      "partnerNamePlaceholder": "支持模糊搜索",
+      "country": "所属国家",
+      "placeholderAll": "全部"
+    },
+    "button": {
+      "add": "新增合作商"
+    },
+    "column": {
+      "index": "序号",
+      "id": "ID",
+      "loginEmail": "登录邮箱",
+      "partnerName": "合作商名称",
+      "enterpriseAddress": "联系地址",
+      "contactName": "联系人",
+      "phone": "联系电话",
+      "country": "所属国家",
+      "dcBalance": "DC余额",
+      "regionCount": "区域数",
+      "storeCount": "门店数",
+      "wheelCount": "车轮总数",
+      "beaconCount": "信标总数",
+      "createTime": "创建时间",
+      "operatorName": "操作人",
+      "operation": "操作"
+    },
+    "dialog": {
+      "titleAdd": "新增合作商",
+      "titleEdit": "编辑合作商",
+      "titleDetail": "合作商详情",
+      "stepInfo": "合作商信息",
+      "stepAccount": "合作商账户",
+      "partnerName": "合作商名称",
+      "address": "联系地址",
+      "contactName": "联系人",
+      "phone": "联系电话",
+      "country": "所属国家",
+      "selectCountry": "请选择",
+      "inputPlaceholder": "请输入",
+      "addressPlaceholder": "请输入联系地址",
+      "loginEmail": "登录邮箱",
+      "loginEmailPlaceholder": "用于登录的邮箱",
+      "loginPassword": "登录密码",
+      "loginPasswordPlaceholder": "请设置登录密码",
+      "alertAccount": "将创建合作商管理员账户，并同步至「用户管理」。",
+      "detail": {
+        "id": "ID",
+        "loginEmail": "登录邮箱",
+        "partnerName": "合作商名称",
+        "address": "联系地址",
+        "contactName": "联系人",
+        "phone": "联系电话",
+        "country": "所属国家",
+        "dcBalance": "DC余额",
+        "regionCount": "区域数",
+        "storeCount": "门店数",
+        "wheelCount": "车轮总数",
+        "beaconCount": "信标总数"
+      },
+      "footerCancel": "取消",
+      "footerPrev": "上一步",
+      "footerNext": "下一步",
+      "footerConfirm": "确定"
+    },
+    "validation": {
+      "partnerName": "请输入合作商名称",
+      "country": "请选择国家",
+      "loginEmail": "请输入登录邮箱",
+      "emailFormat": "请输入有效邮箱",
+      "loginPassword": "请输入登录密码",
+      "passwordMin": "密码至少 6 位"
+    },
+    "messages": {
+      "deleteBlocked": "该合作商下仍关联有效资产数据，不允许删除。请先清空其关联的 DC 余额、区域、门店、车轮及信标信息。",
+      "deleteConfirm": "确定删除合作商「{name}」吗？",
+      "deleteTitle": "删除确认",
+      "btnDelete": "删除",
+      "deleted": "已删除",
+      "addSuccess": "新增成功",
+      "saveSuccess": "保存成功",
+      "operationFailed": "操作失败"
+    },
+    "emptyText": "--"
+  },
+  "storePage": {
+    "search": {
+      "storeName": "门店名称",
+      "storeNamePlaceholder": "支持模糊搜索",
+      "country": "所属国家",
+      "partner": "所属合作商",
+      "region": "所属区域",
+      "placeholderAll": "全部",
+      "placeholderSelectCountryFirst": "请先选择国家",
+      "placeholderSelectPartnerFirst": "请先选择合作商"
+    },
+    "button": {
+      "add": "新增门店",
+      "batchDelete": "批量删除"
+    },
+    "column": {
+      "index": "序号",
+      "id": "ID",
+      "loginEmail": "登录邮箱",
+      "storeName": "门店名称",
+      "storeAddress": "门店地址",
+      "contactName": "联系人",
+      "phone": "联系电话",
+      "regionName": "所属区域",
+      "partnerName": "所属合作商",
+      "country": "所属国家",
+      "mapProvider": "地图选择",
+      "storeCoordinate": "门店坐标",
+      "geofence": "电子围栏",
+      "timezone": "时区",
+      "dcBalance": "DC余额",
+      "wheelCount": "车轮总数",
+      "beaconCount": "信标总数",
+      "pendingTicketCount": "未处理工单数",
+      "createTime": "创建时间",
+      "operatorName": "操作人",
+      "operation": "操作"
+    },
+    "dialog": {
+      "titleAdd": "新增门店",
+      "titleEdit": "编辑门店",
+      "titleDetail": "门店详情",
+      "stepInfo": "门店信息",
+      "stepAccount": "门店账户",
+      "storeName": "门店名称",
+      "storeAddress": "门店地址",
+      "contactName": "联系人",
+      "phone": "联系电话",
+      "partner": "所属合作商",
+      "selectPartner": "请选择所属合作商",
+      "region": "所属区域",
+      "selectRegionOptional": "请选择所属区域（可为空）",
+      "mapProvider": "地图选择",
+      "storeCoordinate": "门店坐标",
+      "storeCoordinatePlaceholder": "经度,纬度；可点击右侧在地图上选点",
+      "pickCoordinate": "地图选点",
+      "geofence": "电子围栏",
+      "geofencePlaceholder": "至少 3 个顶点：lng,lat;lng,lat;… 可通过地图绘制填入",
+      "pickGeofence": "地图绘制围栏",
+      "geofenceHelp": "与上方「地图选择」一致：在子窗口中操作地图，确定后填入此处，不影响其它页面。",
+      "alertAccount": "将创建门店管理员账户，并同步至用户管理；对应资产为门店名称。",
+      "loginEmail": "登录邮箱",
+      "loginPassword": "登录密码",
+      "detail": {
+        "id": "ID",
+        "loginEmail": "登录邮箱",
+        "storeName": "门店名称",
+        "storeAddress": "门店地址",
+        "contactName": "联系人",
+        "phone": "联系电话",
+        "regionName": "所属区域",
+        "partnerName": "所属合作商",
+        "country": "所属国家",
+        "mapProvider": "地图选择",
+        "storeCoordinate": "门店坐标",
+        "geofence": "电子围栏",
+        "timezone": "时区",
+        "dcBalance": "DC余额",
+        "wheelCount": "车轮总数",
+        "beaconCount": "信标总数",
+        "pendingTicketCount": "未处理工单数",
+        "createTime": "创建时间",
+        "operatorName": "操作人"
+      },
+      "footerCancel": "取消",
+      "footerPrev": "上一步",
+      "footerNext": "下一步",
+      "footerConfirm": "确定"
+    },
+    "validation": {
+      "storeName": "请输入门店名称",
+      "partner": "请选择所属合作商",
+      "storeAddress": "请输入门店地址",
+      "contactName": "请输入联系人",
+      "phone": "请输入联系电话",
+      "mapProvider": "请选择地图",
+      "storeCoordinate": "请输入正确坐标格式：经度,纬度",
+      "geofence": "围栏至少 3 个顶点，格式：lng,lat;lng,lat;…",
+      "loginEmail": "请输入登录邮箱",
+      "emailFormat": "请输入有效邮箱",
+      "loginPassword": "请输入登录密码",
+      "passwordMin": "密码至少 6 位"
+    },
+    "messages": {
+      "loadEditFailed": "加载门店信息失败",
+      "loadDetailFailed": "获取门店详情失败",
+      "assetBlocked": "该合作商下仍关联有效资产数据，不允许删除。请先清空其关联的 DC 余额、车轮及信标信息。",
+      "deleteNoPermission": "无权限删除该门店",
+      "deleteConfirm": "确定删除门店「{name}」吗？",
+      "deleteTitle": "删除确认",
+      "btnDelete": "删除",
+      "deleted": "已删除",
+      "batchNoPermissionSkipped": "有 {count} 条记录无权限删除，已跳过",
+      "batchNoDeletable": "没有可删除的记录",
+      "batchDeleteConfirm": "确定批量删除选中的 {count} 条门店吗？此操作不可恢复。",
+      "batchDeleteTitle": "批量删除确认",
+      "batchDeleted": "已批量删除",
+      "addSuccess": "新增成功",
+      "saveSuccess": "保存成功",
+      "operationFailed": "操作失败",
+      "lockedPartnerMissing": "无法解析当前账号绑定的合作商信息，请稍后重试",
+      "selectPartnerRequired": "请选择所属合作商后再提交",
+      "boundPartnerMissing": "无法获取当前账号绑定的合作商信息，请联系管理员",
+      "timezoneMissing": "未能确定时区，请检查网络或筛选条件后重试"
+    },
+    "map": {
+      "tencent": "腾讯地图",
+      "google": "谷歌地图"
+    },
+    "common": {
+      "noRegion": "无区域",
+      "emptyText": "--"
+    }
+  },
+  "systemUser": {
+    "actions": {
+      "addUser": "添加用户",
+      "batchDelete": "批量删除"
+    },
+    "search": {
+      "name": "名称",
+      "namePlaceholder": "请输入名称",
+      "email": "邮箱",
+      "emailPlaceholder": "请输入登录邮箱",
+      "partner": "所属合作商",
+      "region": "所属区域",
+      "store": "所属门店",
+      "userType": "用户类型",
+      "placeholderAllUserTypes": "全部",
+      "selectPartner": "请选择合作商",
+      "selectRegion": "请选择区域",
+      "selectStore": "请选择门店"
+    },
+    "userTypes": {
+      "ALL": "全部",
+      "SUPER": "平台超管",
+      "PARTNER": "合作商",
+      "REGION": "区域",
+      "STORE": "门店"
+    },
+    "roles": {
+      "R_SUPER": "系统超级管理员",
+      "R_ADMIN": "系统管理员",
+      "PARTNER_ADMIN": "合作商管理员",
+      "partner_admin": "合作商管理员",
+      "REGION_ADMIN": "区域管理员",
+      "region_admin": "区域管理员",
+      "STORE_ADMIN": "门店管理员",
+      "store_admin": "门店管理员",
+      "STORE_STAFF": "门店员工",
+      "store_staff": "门店员工"
+    },
+    "listSeparator": "、",
+    "table": {
+      "index": "序号",
+      "id": "ID",
+      "nickName": "名称",
+      "userEmail": "登录邮箱",
+      "userType": "用户类型",
+      "userRoles": "对应角色",
+      "partnerName": "所属合作商",
+      "regionName": "所属区域",
+      "storeName": "所属门店",
+      "status": "状态",
+      "operation": "操作"
+    },
+    "status": {
+      "enabled": "启用",
+      "disabled": "禁用",
+      "normal": "正常",
+      "deactivated": "注销"
+    },
+    "detail": {
+      "id": "ID",
+      "nickName": "昵称",
+      "userEmail": "登录邮箱",
+      "userType": "用户类型",
+      "userRoles": "对应角色",
+      "status": "状态",
+      "createTime": "创建时间",
+      "createBy": "操作人",
+      "logoutDate": "注销日期"
+    },
+    "dialog": {
+      "addTitle": "添加用户",
+      "editTitle": "编辑用户",
+      "viewTitle": "查看详情",
+      "nickName": "昵称",
+      "nickNamePlaceholder": "请输入昵称",
+      "headPic": "头像地址",
+      "headPicPlaceholder": "可选，头像 URL",
+      "userEmail": "登录邮箱",
+      "userEmailPlaceholder": "请输入登录邮箱",
+      "password": "登录密码",
+      "passwordPlaceholder": "请输入登录密码",
+      "phone": "手机号",
+      "phonePlaceholder": "请输入手机号",
+      "roleId": "对应角色",
+      "rolePlaceholder": "请选择角色",
+      "partner": "合作商",
+      "region": "区域",
+      "store": "门店",
+      "orgSelectRegionFirst": "请选择区域",
+      "orgSelectPartnerFirst": "请先选择合作商",
+      "orgSelectStoreFirst": "请选择门店",
+      "orgSelectRegionBeforeStore": "请先选择区域",
+      "submit": "提交",
+      "close": "关闭",
+      "roleOptionFmt": "{name}（{code}）"
+    },
+    "validation": {
+      "nickName": "请输入昵称",
+      "userEmail": "请输入登录邮箱",
+      "emailFormat": "请输入正确的邮箱格式",
+      "password": "请输入登录密码",
+      "roleId": "请选择对应角色"
+    },
+    "messages": {
+      "onlySuperChangeStatus": "仅平台超级管理员可修改用户状态",
+      "onlySuperDelete": "仅平台超级管理员可删除用户",
+      "selectUsersFirst": "请先选择要删除的用户",
+      "toggleStatusConfirm": "确认将该用户状态改为「{status}」吗？",
+      "toggleStatusSuccess": "已切换为「{status}」（本地生效，待接口对接）",
+      "selectRole": "请选择对应角色",
+      "missingUserOrRole": "缺少用户信息或未选择角色",
+      "createSuccess": "添加成功",
+      "updateSuccess": "更新成功",
+      "deleteSuccess": "删除成功"
+    },
+    "confirm": {
+      "changeStatusTitle": "修改状态",
+      "deleteUserTitle": "删除用户",
+      "batchDeleteTitle": "批量删除用户",
+      "deleteUserBody": "确定要永久删除该用户吗？",
+      "batchDeleteBody": "确定永久删除选中的 {count} 个用户吗？"
+    }
   }
 }

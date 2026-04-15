@@ -115,6 +115,7 @@
     id: number
     parentId: number
     name: string
+    nameEn: string
     /** 权限标识，对应后端 menuCode；留空时由列表页用路由地址推导 */
     menuCode: string
     path: string
@@ -168,6 +169,7 @@
     id: 0,
     parentId: 0,
     name: '',
+    nameEn: '',
     menuCode: '',
     path: '',
     label: '',
@@ -225,6 +227,12 @@
           props: { placeholder: '请选择父级菜单', options: parentOptions, clearable: false }
         },
         { label: '菜单名称', key: 'name', type: 'input', props: { placeholder: '菜单名称' } },
+        {
+          label: '菜单名称英文',
+          key: 'nameEn',
+          type: 'input',
+          props: { placeholder: 'Menu Name (English)' }
+        },
         {
           label: createLabelTooltip(
             '路由地址',
@@ -314,7 +322,8 @@
     form.id = row.id || 0
     form.parentId = Number(row.parentId ?? 0)
     form.menuType = Number(row.type) === 2 ? 'menu' : 'directory'
-    form.name = formatMenuTitle(row.meta?.title || '')
+    form.name = row.menuNameZh || formatMenuTitle(row.meta?.title || '')
+    form.nameEn = row.menuNameEn || ''
     form.menuCode = row.name || ''
     form.path = row.path || ''
     form.label = row.name || ''

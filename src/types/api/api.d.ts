@@ -177,9 +177,11 @@ declare namespace Api {
       dataScopeSql: string
       nickName: string
       email: string
-      phone: string
       userType: string
       roleId: number
+      partnerId: number
+      regionId: number
+      storeId: number
     }>
 
     /** POST /system/user/createUser，成功时 data 为新用户 id */
@@ -220,6 +222,13 @@ declare namespace Api {
       headPic: string
       phone: string
       roleId: number
+    }
+
+    /** POST /system/user/resetPassword（个人中心修改密码） */
+    interface ResetPasswordPayload {
+      id: number
+      oldPassword: string
+      newPassword: string
     }
 
     /** GET /system/role/getRoleByUserTypeList 单条（data 为 id，创建用户时 roleId 传该 id） */
@@ -290,11 +299,12 @@ declare namespace Api {
       roleType: number
     }
 
-    /** GET /system/role/getRoleMenuByRoleIdList 返回项 */
+    /** GET /system/role/getRoleMenuByRoleIdList 返回项（扁平列表，可与菜单树按 menuId 合并） */
     interface RoleMenuByRoleItem {
       menuId: number
       parentId: number
-      menuName: string
+      menuNameZh: string
+      menuNameEn?: string
       menuCode: string
       /** 1 目录 2 菜单 */
       type: number
@@ -317,6 +327,8 @@ declare namespace Api {
       id: number
       parentId: number
       menuName: string
+      menuNameZh?: string
+      menuNameEn?: string
       menuCode: string
       /** 可为空字符串 */
       icon?: string
@@ -334,6 +346,8 @@ declare namespace Api {
       id: number
       parentId: number
       menuName: string
+      menuNameZh?: string
+      menuNameEn?: string
       menuCode: string
       icon?: string
       path: string
@@ -346,6 +360,8 @@ declare namespace Api {
     interface CreateMenuPayload {
       parentId: number
       menuName: string
+      menuNameZh?: string
+      menuNameEn?: string
       menuCode: string
       icon?: string
       path: string
@@ -370,6 +386,7 @@ declare namespace Api {
       /** 与业务含义对应，如 menu_type：1 目录 2 菜单 */
       dictKey: string
       dictValue: string
+      dictValueZh?: string
       dictValueEn?: string
       sortOrder: number
     }
@@ -377,74 +394,167 @@ declare namespace Api {
 
   /** 合作商管理 */
   namespace Partner {
+    /**
+     * GET /org/partner/getPartnerPageList 列表行（与后端字段一致）
+     * 详情/编辑可能仍含更多字段，故多数为可选
+     */
     interface PartnerListItem {
       id: number
-      /** 关联用户昵称 */
-      userNickName?: string
-      /** 关联用户登录邮箱 */
-      loginEmail?: string
       partnerName: string
-      country: string
-      countryCode: string
-      iotToken: string
-      tenantId: string
-      dcBalance: number
-      contactName: string
-      phone: string
-      enterpriseAddress: string
+      /** 列表接口：联系人 */
+      contact?: string
+      phone?: string
+      /** 列表接口：地址 */
+      address?: string
+      countryId?: number
+      countryName?: string
       regionCount: number
       storeCount: number
       wheelCount: number
       beaconCount: number
-      operatorName: string
-      createTime: string
+      dcBalance: number
+      /** 关联用户登录邮箱（详情等） */
+      loginEmail?: string
+      country?: string
+      countryCode?: string
+      lorawanNetworkServerUrl?: string
+      apiKey?: string
+      applicationId?: string
+      deviceProfileId?: string
+      applicationServerUrl?: string
+      /** 与 contact 二选一，前端展示统一用其一 */
+      contactName?: string
+      /** 与 address 二选一 */
+      enterpriseAddress?: string
+      operatorName?: string
+      createTime?: string
     }
 
     type PartnerList = Api.Common.PaginatedResponse<PartnerListItem>
 
-    type PartnerSearchParams = Partial<
-      Api.Common.CommonSearchParams & {
-        partnerName?: string
-        countryCode?: string
-      }
-    >
+    /** 分页查询合作商 GET /org/partner/getPartnerPageList */
+    type PartnerSearchParams = Partial<{
+      pageNum: number
+      pageSize: number
+      dataScopeSql?: string
+      partnerName?: string
+      /** 所属国家 id */
+      countryId?: number
+      /** 前端筛选用国家编码，请求时映射为 countryId */
+      countryCode?: string
+    }>
+
+    /** POST /org/partner/createPartner body，成功时 data 为新合作商 id */
+    interface CreatePartnerPayload {
+      partnerName: string
+      email: string
+      password: string
+      contact?: string
+      phone?: string
+      address?: string
+      countryId?: number
+    }
+
+    /** GET /org/partner/getPartnerDetail 的 data */
+    interface PartnerDetail {
+      id: number
+      partnerName: string
+      contact?: string
+      phone?: string
+      address?: string
+      countryId: number
+      countryName?: string
+      regionCount: number
+      storeCount: number
+      wheelCount: number
+      beaconCount: number
+      dcBalance: number
+    }
+
+    /** POST /org/partner/updatePartner body */
+    interface UpdatePartnerPayload {
+      id: number
+      contact?: string
+      phone?: string
+      address?: string
+      countryId?: number
+    }
   }
 
   /** 区域管理 */
   namespace Region {
+    /** GET /org/region/getRegionPageList 归一化后的列表行（兼容接口 contact/phone/address、countryName） */
     interface RegionListItem {
       id: number
-      /** 区域管理员账户昵称（列表展示） */
-      userNickName?: string
-      /** 区域管理员登录邮箱（列表展示） */
-      loginEmail?: string
       regionName: string
-      regionAddress: string
-      regionContactName: string
-      regionPhone: string
       partnerId: number
       partnerName: string
       country: string
       countryCode: string
+      regionAddress: string
+      regionContactName: string
+      regionPhone: string
       dcBalance: number
       storeCount: number
       wheelCount: number
       beaconCount: number
       pendingTicketCount: number
+      /** 区域管理员登录邮箱（列表展示，接口未返回时为空） */
+      loginEmail?: string
       createTime: string
       operatorName: string
     }
 
     type RegionList = Api.Common.PaginatedResponse<RegionListItem>
 
-    type RegionSearchParams = Partial<
-      Api.Common.CommonSearchParams & {
-        regionName?: string
-        /** 必选：筛选该国家下的区域 */
-        countryCode?: string
-        partnerId?: number
-      }
-    >
+    /** GET /org/region/getRegionPageList 查询；countryCode 由前端映射为 countryId；current/size 与 pageNum/pageSize 二选一 */
+    type RegionSearchParams = Partial<{
+      pageNum: number
+      pageSize: number
+      current?: number
+      size?: number
+      dataScopeSql?: string
+      regionName?: string
+      countryId?: number
+      countryCode?: string
+      partnerId?: number
+    }>
+
+    /** POST /org/region/createRegion body，成功时 data 为新区域 id */
+    interface CreateRegionPayload {
+      regionName: string
+      partnerId: number
+      email: string
+      password: string
+      contact?: string
+      phone?: string
+      address?: string
+    }
+
+    /** GET /org/region/getRegionDetail 的 data */
+    interface RegionDetail {
+      id: number
+      regionName: string
+      partnerId: number
+      partnerName: string
+      countryName?: string
+      storeCount?: number
+      contact?: string
+      phone?: string
+      address?: string
+      wheelCount?: number
+      beaconCount?: number
+      dcBalance?: number
+    }
+
+    /** POST /org/region/updateRegion body */
+    interface UpdateRegionPayload {
+      id: number
+      regionName: string
+      contact?: string
+      phone?: string
+      address?: string
+    }
   }
 
   /** 门店管理 */
@@ -456,10 +566,9 @@ declare namespace Api {
       lat: number
     }
 
+    /** GET /org/store/getStorePageList 归一化后的列表行（兼容接口 address/contact、countryName、lat/lng、fenceData、mapType） */
     interface StoreListItem {
       id: number
-      /** 门店管理员账户昵称（列表展示） */
-      userNickName?: string
       /** 门店管理员登录邮箱（列表展示） */
       loginEmail?: string
       storeName: string
@@ -486,15 +595,53 @@ declare namespace Api {
 
     type StoreList = Api.Common.PaginatedResponse<StoreListItem>
 
-    type StoreSearchParams = Partial<
-      Api.Common.CommonSearchParams & {
-        storeName?: string
-        countryCode?: string
-        partnerId?: number
-        /** NONE 表示查询无区域 */
-        regionId?: number | 'NONE'
-      }
-    >
+    /** POST /org/store/createStore body，成功时 data 为新门店 id */
+    interface CreateStorePayload {
+      storeName: string
+      partnerId: number
+      regionId?: number
+      contact?: string
+      phone?: string
+      address?: string
+      lat?: string
+      lng?: string
+      fenceData?: string
+      /** 地图类型：1 谷歌，2 腾讯 */
+      mapType?: number
+      /** 同步创建用户时使用的登录邮箱 */
+      email: string
+      /** 同步创建用户时使用的初始密码 */
+      password: string
+    }
+
+    /** POST /org/store/updateStore body */
+    interface UpdateStorePayload {
+      id: number
+      storeName: string
+      contact?: string
+      phone?: string
+      address?: string
+      lat?: string
+      lng?: string
+      fenceData?: string
+      /** 地图类型：1 谷歌，2 腾讯 */
+      mapType?: number
+    }
+
+    /** GET /org/store/getStorePageList；countryCode 映射为 countryId；current/size 与 pageNum/pageSize 二选一 */
+    type StoreSearchParams = Partial<{
+      pageNum: number
+      pageSize: number
+      current?: number
+      size?: number
+      dataScopeSql?: string
+      storeName?: string
+      countryId?: number
+      countryCode?: string
+      partnerId?: number
+      /** NONE 表示仅无区域门店：需后端支持，当前请求不传 regionId */
+      regionId?: number | 'NONE'
+    }>
   }
 
   /** 信标管理 */
@@ -570,10 +717,14 @@ declare namespace Api {
       fenceStatus: FenceStatus
       /** 出围栏时长（秒） */
       outFenceDurationSec: number
+      /** 出围栏时间（展示用，空表示无） */
+      outFenceTime?: string
       /** 出围栏距离（米） */
       outFenceDistanceM: number
       /** 最新定位（经纬度） */
       lastPosition: Store.GeoPoint
+      /** 最新定位时间 */
+      lastPositionTime: string
       lastCommTime: string
       createTime: string
       operatorName: string
@@ -591,7 +742,7 @@ declare namespace Api {
         deviceStatus?: DeviceStatus
         gpsAccuracy?: GpsAccuracy
         fenceStatus?: FenceStatus
-        /** 排序字段：batteryLevel | beaconSignal | loraSignal */
+        /** 排序字段：batteryLevel */
         sortField?: string
         sortOrder?: 'ascending' | 'descending'
       }
@@ -640,6 +791,39 @@ declare namespace Api {
         alertTimeRange?: string[]
         /** 列表 Tab：全部 | 待处理 | 已处理 */
         ticketTab?: 'all' | 'pending' | 'done'
+      }
+    >
+  }
+
+  /** 车轮录入 */
+  namespace WheelEntry {
+    type JoinMethod = 'OTAA' | 'ABP'
+
+    interface WheelEntryItem {
+      id: number
+      packagingNo: string
+      productModel: string
+      bluetoothPassword: string
+      deviceEui: string
+      joinEui: string
+      joinMethod: JoinMethod
+      applicationKey: string
+      deviceAddress: string
+      networkSessionKey: string
+      applicationSessionKey: string
+      packagingTime: string
+      batchId: string
+      productionLineId: string
+      factoryId: string
+      operatorId: string
+    }
+
+    type WheelEntryList = Api.Common.PaginatedResponse<WheelEntryItem>
+
+    type WheelEntrySearchParams = Partial<
+      Api.Common.CommonSearchParams & {
+        deviceEui?: string
+        productModel?: string
       }
     >
   }
@@ -758,6 +942,55 @@ declare namespace Api {
         timeRange?: string[]
       }
     >
+
+    /** 分配 DC：可分配对象（区域 / 门店） */
+    interface AllocateTargetItem {
+      id: number
+      assignType: AssignTargetType
+      targetName: string
+      email: string
+      contactName: string
+      phone: string
+      /** 详情：该对象当前 DC 余额 */
+      currentDcBalance?: number
+    }
+
+    type AllocateTargetList = Api.Common.PaginatedResponse<AllocateTargetItem>
+
+    type AllocateTargetSearchParams = Partial<
+      Api.Common.CommonSearchParams & {
+        targetKeyword?: string
+        assignType?: AssignTargetType | ''
+      }
+    >
+
+    /** 分配 DC 页顶部汇总 */
+    interface AllocateSummary {
+      dcBalance: number
+      allocatableBalance: number
+    }
+  }
+
+  /** 工作台 / 查看地图等 */
+  namespace Dashboard {
+    /** 查看地图：组织筛选（超级管理员 / 合作商管理员需选至区域后再展示） */
+    interface MapViewSearchParams {
+      countryCode?: string
+      partnerId?: number
+      regionId?: number | 'NONE'
+      /** 可选；不选则展示该区域内全部门店坐标 */
+      storeId?: number
+    }
+  }
+
+  /** 国家：系统基础数据 */
+  namespace Country {
+    /** GET /system/country/getCountryList 单项 */
+    interface CountryListItem {
+      id: number
+      countryNameZh: string
+      countryNameEn: string
+    }
   }
 
   /** 组织维度：合作商 / 区域 / 门店下拉（联动筛选） */

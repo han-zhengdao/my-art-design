@@ -24,6 +24,7 @@ const MOCK_ROWS: Api.Wheel.WheelListItem[] = [
     outFenceDurationSec: 0,
     outFenceDistanceM: 0,
     lastPosition: { lng: 121.5018, lat: 31.2355 },
+    lastPositionTime: '2026-04-03 14:21:58',
     lastCommTime: '2026-04-03 14:22:10',
     createTime: '2026-01-06 10:00:00',
     operatorName: '系统管理员'
@@ -47,8 +48,10 @@ const MOCK_ROWS: Api.Wheel.WheelListItem[] = [
     loraSignal: -85,
     fenceStatus: 'OUTSIDE',
     outFenceDurationSec: 3600,
+    outFenceTime: '2026-04-03 07:00:00',
     outFenceDistanceM: 120,
     lastPosition: { lng: 121.5015, lat: 31.235 },
+    lastPositionTime: '2026-04-03 07:55:00',
     lastCommTime: '2026-04-03 08:00:00',
     createTime: '2026-01-07 11:20:00',
     operatorName: '李运营'
@@ -74,6 +77,7 @@ const MOCK_ROWS: Api.Wheel.WheelListItem[] = [
     outFenceDurationSec: 0,
     outFenceDistanceM: 0,
     lastPosition: { lng: 104.068, lat: 30.569 },
+    lastPositionTime: '2026-03-31 23:58:00',
     lastCommTime: '2026-04-01 00:00:00',
     createTime: '2026-01-13 12:00:00',
     operatorName: '李运营'
@@ -99,6 +103,7 @@ const MOCK_ROWS: Api.Wheel.WheelListItem[] = [
     outFenceDurationSec: 0,
     outFenceDistanceM: 0,
     lastPosition: { lng: 10.748, lat: 59.911 },
+    lastPositionTime: '2026-04-03 14:24:40',
     lastCommTime: '2026-04-03 14:25:00',
     createTime: '2026-02-13 11:00:00',
     operatorName: '系统管理员'
@@ -122,8 +127,10 @@ const MOCK_ROWS: Api.Wheel.WheelListItem[] = [
     loraSignal: -95,
     fenceStatus: 'OUTSIDE',
     outFenceDurationSec: 86400,
+    outFenceTime: '2026-02-28 09:00:00',
     outFenceDistanceM: 500,
     lastPosition: { lng: 10.7522, lat: 59.9139 },
+    lastPositionTime: '2026-03-01 08:45:00',
     lastCommTime: '2026-03-01 09:00:00',
     createTime: '2026-02-13 11:30:00',
     operatorName: '系统管理员'
@@ -245,6 +252,7 @@ function buildNewWheelRow(
     outFenceDurationSec: 0,
     outFenceDistanceM: 0,
     lastPosition: { ...pt },
+    lastPositionTime: createTime,
     lastCommTime: createTime,
     createTime,
     operatorName: payload.operatorName
@@ -277,6 +285,7 @@ export function updateWheel(
   payload: Partial<
     Pick<
       Api.Wheel.WheelListItem,
+      | 'deviceStatus'
       | 'storeId'
       | 'storeName'
       | 'regionId'

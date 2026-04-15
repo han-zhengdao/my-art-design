@@ -13,7 +13,9 @@
       <ArtTableHeader v-model:columns="columnChecks" :loading="loading" @refresh="refreshData">
         <template #left>
           <ElSpace wrap>
-            <ElButton type="primary" @click="showDialog('add')" v-ripple>新增用户</ElButton>
+            <ElButton type="primary" @click="showDialog('add')" v-ripple>{{
+              t('systemUser.actions.addUser')
+            }}</ElButton>
             <ElButton
               v-if="isSuperAdmin"
               type="danger"
@@ -21,7 +23,7 @@
               :disabled="selectedRows.length === 0"
               @click="handleBatchDelete"
             >
-              批量删除
+              {{ t('systemUser.actions.batchDelete') }}
             </ElButton>
           </ElSpace>
         </template>
@@ -59,8 +61,12 @@
   import { DialogType } from '@/types'
   import { useUserStore } from '@/store/modules/user'
   import { fetchDeleteUser, fetchGetUserPageList } from '@/api/system-manage'
+  import { useI18n } from 'vue-i18n'
+  import { watch } from 'vue'
 
   defineOptions({ name: 'User' })
+
+  const { t, locale } = useI18n()
 
   type UserListItem = Api.SystemManage.UserListItem
 
@@ -79,9 +85,11 @@
   const searchForm = ref<Api.SystemManage.UserSearchParams>({
     nickName: undefined,
     email: undefined,
-    phone: undefined,
     userType: undefined,
-    roleId: undefined
+    roleId: undefined,
+    partnerId: undefined,
+    regionId: undefined,
+    storeId: undefined
   })
 
   /** 是否启用：0/4 为禁用，其余视为启用（接口未定时可按后端约定再改） */
@@ -92,42 +100,23 @@
 
   const getUserRoleLabel = (roles?: string[]): string => {
     if (!Array.isArray(roles) || roles.length === 0) return '-'
-    const map: Record<string, string> = {
-      R_SUPER: '系统超级管理员',
-      R_ADMIN: '系统管理员',
-      PARTNER_ADMIN: '合作商管理员',
-      partner_admin: '合作商管理员',
-      REGION_ADMIN: '区域管理员',
-      region_admin: '区域管理员',
-      STORE_ADMIN: '门店管理员',
-      store_admin: '门店管理员',
-      STORE_STAFF: '门店员工',
-      store_staff: '门店员工'
-    }
-    const matched = roles
-      .map((r) => map[r])
-      .filter(Boolean)
-      .join('、')
-    return matched || '-'
+    const sep = t('systemUser.listSeparator')
+    const matched = roles.map((r) => {
+      const i18nKey = `systemUser.roles.${r}`
+      const label = t(i18nKey)
+      return label === i18nKey ? r : label
+    })
+    return matched.length ? matched.join(sep) : '-'
   }
 
   /** 用户类型（字典 user_type），与搜索栏「用户类型」选项一致 */
   const getUserTypeLabel = (userType?: string): string => {
     if (!userType) return '--'
-    const map: Record<string, string> = {
-      SUPER: '平台超管',
-      PARTNER: '合作商',
-      REGION: '区域',
-      STORE: '门店'
-    }
     const key = userType.trim().toUpperCase()
-    return map[key] || userType
-  }
-
-  const getLogoutDate = (row: UserListItem) => {
-    // 仅对已注销用户展示注销日期（暂用 updateTime 占位），否则显示 --
-    if (row.status !== '4') return '--'
-    return row.updateTime || '--'
+    const i18nKey = `systemUser.userTypes.${key}` as const
+    const label = t(i18nKey)
+    if (label === i18nKey) return userType
+    return label
   }
 
   const {
@@ -141,7 +130,8 @@
     resetSearchParams,
     handleSizeChange,
     handleCurrentChange,
-    refreshData
+    refreshData,
+    resetColumns
   } = useTable({
     // 核心配置
     core: {
@@ -159,68 +149,63 @@
       // },
       columnsFactory: () => [
         { type: 'selection' },
-        { type: 'index', width: 60, label: '序号' }, // 序号
+        { type: 'index', width: 60, label: t('systemUser.table.index') },
         {
           prop: 'id',
-          label: 'ID',
+          label: t('systemUser.table.id'),
           width: 80
         },
         {
           prop: 'nickName',
-          label: '昵称',
+          label: t('systemUser.table.nickName'),
           width: 160
         },
         {
           prop: 'userEmail',
-          label: '登录邮箱',
+          label: t('systemUser.table.userEmail'),
           minWidth: 200
         },
         {
           prop: 'userType',
-          label: '用户类型',
+          label: t('systemUser.table.userType'),
           width: 120,
           formatter: (row: UserListItem) => getUserTypeLabel(row.userType)
         },
         {
           prop: 'userRoles',
-          label: '对应角色',
+          label: t('systemUser.table.userRoles'),
           minWidth: 160,
           formatter: (row: UserListItem) => row.roleName || getUserRoleLabel(row.userRoles)
         },
         {
           prop: 'partnerName',
-          label: '所属合作商',
+          label: t('systemUser.table.partnerName'),
           minWidth: 140,
           formatter: (row: UserListItem) => row.partnerName || '--'
         },
         {
           prop: 'regionName',
-          label: '所属区域',
+          label: t('systemUser.table.regionName'),
           minWidth: 140,
           formatter: (row: UserListItem) => row.regionName || '--'
         },
         {
           prop: 'storeName',
-          label: '所属门店',
+          label: t('systemUser.table.storeName'),
           minWidth: 140,
           formatter: (row: UserListItem) => row.storeName || '--'
         },
         {
-          prop: 'assetName',
-          label: '对应资产',
-          minWidth: 200,
-          formatter: (row: UserListItem) => row.assetName || '--'
-        },
-        {
           prop: 'status',
-          label: '状态',
-          width: 110,
+          label: t('systemUser.table.status'),
+          width: 120,
           formatter: (row: UserListItem) => {
             const enabled = isUserEnabled(row.status)
+            const statusLabel = enabled
+              ? t('systemUser.status.enabled')
+              : t('systemUser.status.disabled')
             if (!isSuperAdmin.value) {
-              return h(ElTag, { type: enabled ? 'success' : 'info' }, () =>
-                enabled ? '启用' : '禁用'
-              )
+              return h(ElTag, { type: enabled ? 'success' : 'info' }, () => statusLabel)
             }
             return h(
               ElTag,
@@ -232,20 +217,13 @@
                   handleToggleUserStatus(row)
                 }
               },
-              () => (enabled ? '启用' : '禁用')
+              () => statusLabel
             )
           }
         },
         {
-          prop: 'logoutTime',
-          label: '注销日期',
-          width: 180,
-          sortable: true,
-          formatter: (row: UserListItem) => getLogoutDate(row)
-        },
-        {
           prop: 'operation',
-          label: '操作',
+          label: t('systemUser.table.operation'),
           width: 160,
           fixed: 'right', // 固定列
           formatter: (row) =>
@@ -293,23 +271,33 @@
     }
   })
 
+  watch(locale, () => {
+    resetColumns?.()
+  })
+
   /** 切换启用/禁用（暂无接口：仅更新当前列表行数据） */
   const handleToggleUserStatus = (row: UserListItem) => {
     if (!isSuperAdmin.value) {
-      ElMessage.warning('仅平台超级管理员可修改用户状态')
+      ElMessage.warning(t('systemUser.messages.onlySuperChangeStatus'))
       return
     }
     const enabled = isUserEnabled(row.status)
-    const nextText = enabled ? '禁用' : '启用'
+    const nextTargetLabel = enabled
+      ? t('systemUser.status.disabled')
+      : t('systemUser.status.enabled')
     const nextStatus = enabled ? '0' : '1'
-    ElMessageBox.confirm(`确认将该用户状态改为「${nextText}」吗？`, '修改状态', {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
-      type: 'warning'
-    })
+    ElMessageBox.confirm(
+      t('systemUser.messages.toggleStatusConfirm', { status: nextTargetLabel }),
+      t('systemUser.confirm.changeStatusTitle'),
+      {
+        confirmButtonText: t('common.confirm'),
+        cancelButtonText: t('common.cancel'),
+        type: 'warning'
+      }
+    )
       .then(() => {
         row.status = nextStatus
-        ElMessage.success(`已切换为「${nextText}」（本地生效，待接口对接）`)
+        ElMessage.success(t('systemUser.messages.toggleStatusSuccess', { status: nextTargetLabel }))
       })
       .catch(() => {})
   }
@@ -339,38 +327,46 @@
    */
   const deleteUser = (row: UserListItem): void => {
     if (!isSuperAdmin.value) {
-      ElMessage.warning('仅平台超级管理员可删除用户')
+      ElMessage.warning(t('systemUser.messages.onlySuperDelete'))
       return
     }
 
-    ElMessageBox.confirm(`确定要永久删除该用户吗？`, '删除用户', {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
-      type: 'warning'
-    }).then(async () => {
+    ElMessageBox.confirm(
+      t('systemUser.confirm.deleteUserBody'),
+      t('systemUser.confirm.deleteUserTitle'),
+      {
+        confirmButtonText: t('common.confirm'),
+        cancelButtonText: t('common.cancel'),
+        type: 'warning'
+      }
+    ).then(async () => {
       await fetchDeleteUser(row.id)
-      ElMessage.success('删除成功')
+      ElMessage.success(t('systemUser.messages.deleteSuccess'))
       refreshData()
     })
   }
 
   const handleBatchDelete = (): void => {
     if (!isSuperAdmin.value) {
-      ElMessage.warning('仅平台超级管理员可删除用户')
+      ElMessage.warning(t('systemUser.messages.onlySuperDelete'))
       return
     }
     if (selectedRows.value.length === 0) {
-      ElMessage.warning('请先选择要删除的用户')
+      ElMessage.warning(t('systemUser.messages.selectUsersFirst'))
       return
     }
     const ids = selectedRows.value.map((r) => r.id)
-    ElMessageBox.confirm(`确定永久删除选中的 ${ids.length} 个用户吗？`, '批量删除用户', {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
-      type: 'warning'
-    }).then(async () => {
+    ElMessageBox.confirm(
+      t('systemUser.confirm.batchDeleteBody', { count: ids.length }),
+      t('systemUser.confirm.batchDeleteTitle'),
+      {
+        confirmButtonText: t('common.confirm'),
+        cancelButtonText: t('common.cancel'),
+        type: 'warning'
+      }
+    ).then(async () => {
       await Promise.all(ids.map((id) => fetchDeleteUser(id)))
-      ElMessage.success('删除成功')
+      ElMessage.success(t('systemUser.messages.deleteSuccess'))
       selectedRows.value = []
       refreshData()
     })

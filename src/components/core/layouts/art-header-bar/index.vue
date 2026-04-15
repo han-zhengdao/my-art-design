@@ -166,11 +166,14 @@
   import { useSettingStore } from '@/store/modules/setting'
   import { useUserStore } from '@/store/modules/user'
   import { useMenuStore } from '@/store/modules/menu'
+  import { useWorktabStore } from '@/store/modules/worktab'
+  import { MenuProcessor, RouteRegistry, IframeRouteManager } from '@/router/core'
   import { languageOptions } from '@/locales'
   import { mittBus } from '@/utils/sys'
   import { themeAnimation } from '@/utils/ui/animation'
   import { useCommon } from '@/hooks/core/useCommon'
   import { useHeaderBar } from '@/hooks/core/useHeaderBar'
+  import { fetchUpdateCurrentUserLanguage } from '@/api/system-manage'
   import ArtUserMenu from './widget/ArtUserMenu.vue'
 
   defineOptions({ name: 'ArtHeaderBar' })
@@ -185,6 +188,7 @@
   const settingStore = useSettingStore()
   const userStore = useUserStore()
   const menuStore = useMenuStore()
+  const worktabStore = useWorktabStore()
 
   // 顶部栏功能配置
   const {
@@ -269,13 +273,49 @@
   }
 
   /**
-   * 切换系统语言
+   * 语言切换后重建动态菜单与路由，确保后端 menuName 语言同步到侧栏
+   */
+  const rebuildMenusAfterLanguageChange = async (): Promise<void> => {
+    if (!userStore.isLogin || !userStore.accessToken) return
+    const menuProcessor = new MenuProcessor()
+    const nextMenuList = await menuProcessor.getMenuList()
+    if (!menuProcessor.validateMenuList(nextMenuList)) {
+      throw new Error('切换语言后重新获取菜单失败')
+    }
+
+    menuStore.removeAllDynamicRoutes()
+    menuStore.setMenuList([])
+    IframeRouteManager.getInstance().clear()
+
+    const routeRegistry = new RouteRegistry(router)
+    routeRegistry.register(nextMenuList)
+
+    menuStore.setMenuList(nextMenuList)
+    menuStore.addRemoveRouteFns(routeRegistry.getRemoveRouteFns())
+    IframeRouteManager.getInstance().save()
+    worktabStore.validateWorktabs(router)
+  }
+
+  /**
+   * 切换系统语言（已登录时同步后端 /system/user/updateCurrentUserLanguage）
    * @param {LanguageEnum} lang - 目标语言类型
    */
-  const changeLanguage = (lang: LanguageEnum): void => {
+  const changeLanguage = async (lang: LanguageEnum): Promise<void> => {
     if (locale.value === lang) return
-    locale.value = lang
+    if (userStore.isLogin && userStore.accessToken) {
+      const apiLang = lang === LanguageEnum.EN ? 2 : 1
+      try {
+        await fetchUpdateCurrentUserLanguage(apiLang)
+      } catch {
+        return
+      }
+    }
     userStore.setLanguage(lang)
+    try {
+      await rebuildMenusAfterLanguageChange()
+    } catch (error) {
+      console.error('[HeaderBar] 语言切换后重建菜单失败:', error)
+    }
     reload(50)
   }
 

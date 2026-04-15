@@ -19,10 +19,6 @@
         <ElDescriptionsItem label="ID">{{ detailRow.id }}</ElDescriptionsItem>
         <ElDescriptionsItem label="设备类型">{{ detailRow.usageTypeLabel }}</ElDescriptionsItem>
         <ElDescriptionsItem label="设备ID">{{ detailRow.deviceId }}</ElDescriptionsItem>
-        <ElDescriptionsItem label="所属门店">{{ detailRow.storeName }}</ElDescriptionsItem>
-        <ElDescriptionsItem label="所属区域">{{ detailRow.regionName }}</ElDescriptionsItem>
-        <ElDescriptionsItem label="所属合作商">{{ detailRow.partnerName }}</ElDescriptionsItem>
-        <ElDescriptionsItem label="所属国家">{{ detailRow.country }}</ElDescriptionsItem>
         <ElDescriptionsItem label="使用额度">{{ detailRow.amount }}</ElDescriptionsItem>
         <ElDescriptionsItem label="使用时间">{{ detailRow.usageTime }}</ElDescriptionsItem>
       </ElDescriptions>
@@ -44,10 +40,6 @@
   const searchForm = ref<Api.Dc.UsageRecordSearchParams>({
     deviceKeyword: undefined,
     usageType: undefined,
-    countryCode: undefined,
-    partnerId: undefined,
-    regionId: undefined,
-    storeId: undefined,
     timeRange: undefined
   })
 
@@ -81,10 +73,6 @@
         { prop: 'id', label: 'ID', width: 'auto', minWidth: 80 },
         { prop: 'usageTypeLabel', label: '设备类型', width: 'auto', minWidth: 90 },
         { prop: 'deviceId', label: '设备ID', width: 'auto', minWidth: 200 },
-        { prop: 'storeName', label: '所属门店', width: 'auto', minWidth: 130 },
-        { prop: 'regionName', label: '所属区域', width: 'auto', minWidth: 120 },
-        { prop: 'partnerName', label: '所属合作商', width: 'auto', minWidth: 140 },
-        { prop: 'country', label: '所属国家', width: 'auto', minWidth: 90 },
         { prop: 'amount', label: '使用额度', width: 'auto', minWidth: 90 },
         { prop: 'usageTime', label: '使用时间', width: 'auto', minWidth: 170 },
         {
@@ -114,10 +102,6 @@
     searchForm.value = {
       deviceKeyword: undefined,
       usageType: undefined,
-      countryCode: undefined,
-      partnerId: undefined,
-      regionId: undefined,
-      storeId: undefined,
       timeRange: undefined
     }
     replaceSearchParams({ ...searchForm.value })

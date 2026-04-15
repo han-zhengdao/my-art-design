@@ -40,7 +40,13 @@
       </ElForm>
     </div>
 
-    <ElDialog v-model="pwdDialogVisible" title="修改密码" width="460px" destroy-on-close>
+    <ElDialog
+      v-model="pwdDialogVisible"
+      title="修改密码"
+      width="460px"
+      destroy-on-close
+      @closed="resetPwdForm"
+    >
       <ElForm
         ref="pwdFormRef"
         class="pwd-dialog-form my-0"
@@ -60,7 +66,9 @@
       </ElForm>
       <template #footer>
         <ElButton @click="pwdDialogVisible = false">取消</ElButton>
-        <ElButton type="primary" @click="submitPassword">确认修改</ElButton>
+        <ElButton type="primary" :loading="pwdSubmitting" @click="submitPassword">
+          确认修改
+        </ElButton>
       </template>
     </ElDialog>
   </div>
@@ -70,6 +78,7 @@
   import type { FormInstance, FormRules, UploadProps, UploadRawFile } from 'element-plus'
   import { ElMessage } from 'element-plus'
   import { useUserStore } from '@/store/modules/user'
+  import { fetchResetPassword } from '@/api/system-manage'
 
   defineOptions({ name: 'UserCenter' })
 
@@ -79,6 +88,7 @@
   const profileFormRef = ref<FormInstance>()
   const pwdFormRef = ref<FormInstance>()
   const pwdDialogVisible = ref(false)
+  const pwdSubmitting = ref(false)
 
   const profileForm = reactive({
     avatar: userInfo.value.avatar || '/src/assets/images/user/avatar.webp',
@@ -137,14 +147,35 @@
     ElMessage.success('个人信息已保存')
   }
 
-  const submitPassword = async () => {
-    const valid = await pwdFormRef.value?.validate().catch(() => false)
-    if (!valid) return
-    ElMessage.success('密码修改成功')
-    pwdDialogVisible.value = false
+  function resetPwdForm() {
     pwdForm.oldPassword = ''
     pwdForm.newPassword = ''
     pwdForm.confirmPassword = ''
+    pwdFormRef.value?.resetFields()
+  }
+
+  const submitPassword = async () => {
+    const valid = await pwdFormRef.value?.validate().catch(() => false)
+    if (!valid) return
+    const id = userInfo.value.userId
+    if (id == null) {
+      ElMessage.error('无法获取当前用户，请重新登录后再试')
+      return
+    }
+    pwdSubmitting.value = true
+    try {
+      await fetchResetPassword({
+        id,
+        oldPassword: pwdForm.oldPassword,
+        newPassword: pwdForm.newPassword
+      })
+      pwdDialogVisible.value = false
+      resetPwdForm()
+    } catch {
+      // 错误提示由 http 封装处理
+    } finally {
+      pwdSubmitting.value = false
+    }
   }
 </script>
 

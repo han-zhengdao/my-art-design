@@ -25,9 +25,15 @@ export class ComponentLoader {
       return this.createEmptyComponent()
     }
 
+    // 与 import.meta.glob 的 key 一致：去掉多余斜杠，避免后端 path 为 //system/menu 时匹配失败
+    const normalized = `/${componentPath}`
+      .replace(/\\/g, '/')
+      .replace(/\/+/g, '/')
+      .replace(/\/$/, '')
+
     // 构建可能的路径
-    const fullPath = `../../views${componentPath}.vue`
-    const fullPathWithIndex = `../../views${componentPath}/index.vue`
+    const fullPath = `../../views${normalized}.vue`
+    const fullPathWithIndex = `../../views${normalized}/index.vue`
 
     // 先尝试直接路径，再尝试添加/index的路径
     const module = this.modules[fullPath] || this.modules[fullPathWithIndex]

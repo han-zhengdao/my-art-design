@@ -42,7 +42,7 @@
                       : 'text-g-700 dark:text-g-300'
                   "
                 >
-                  {{ data.menuName }}
+                  {{ treeNodeLabel(data) }}
                 </span>
                 <div v-if="data.type === 2" class="flex shrink-0 items-center gap-4" @click.stop>
                   <ElCheckbox
@@ -83,6 +83,7 @@
 
 <script setup lang="ts">
   import { ElMessage } from 'element-plus'
+  import { useI18n } from 'vue-i18n'
   import {
     fetchAssignRoleMenus,
     fetchGetMenuTree,
@@ -109,6 +110,16 @@
   })
 
   const emit = defineEmits<Emits>()
+
+  const { locale } = useI18n()
+
+  /** 与菜单管理一致：优先中英文名字段，回退 menuName */
+  function treeNodeLabel(node: MenuTreeItem): string {
+    const isEn = locale.value?.toLowerCase().startsWith('en')
+    if (isEn && node.menuNameEn?.trim()) return node.menuNameEn.trim()
+    if (!isEn && node.menuNameZh?.trim()) return node.menuNameZh.trim()
+    return node.menuName ?? ''
+  }
 
   const menuTree = ref<MenuTreeItem[]>([])
   /** 仅 type===2 菜单：读/写 */

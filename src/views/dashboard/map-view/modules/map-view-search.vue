@@ -1,10 +1,12 @@
 <template>
   <ArtSearchBar
+    v-if="!hidden"
     ref="searchBarRef"
     v-model="formData"
     :items="formItems"
     :rules="rules"
-    :default-expanded="true"
+    :is-expand="true"
+    :show-expand="false"
     @reset="handleReset"
     @search="handleSearch"
   />
@@ -12,21 +14,32 @@
 
 <script setup lang="ts">
   import { computed, ref, watch } from 'vue'
+  import { useI18n } from 'vue-i18n'
   import { fetchPartnersByCountry } from '@/api/partner'
   import { fetchRegionList } from '@/api/region'
   import { fetchStoreList } from '@/api/store'
 
+  const { t, locale } = useI18n()
+
   interface Props {
-    modelValue: Api.Ticket.TicketSearchParams
+    modelValue: Api.Dashboard.MapViewSearchParams
+    /** 为 true 时不展示筛选（区域/门店用户由地图页自动带范围） */
+    hidden?: boolean
+    /** 合作商管理员：锁定合作商，不可改 */
+    lockedPartnerId?: number
   }
 
   interface Emits {
-    (e: 'update:modelValue', value: Api.Ticket.TicketSearchParams): void
-    (e: 'search', params: Api.Ticket.TicketSearchParams): void
+    (e: 'update:modelValue', value: Api.Dashboard.MapViewSearchParams): void
+    (e: 'search', params: Api.Dashboard.MapViewSearchParams): void
     (e: 'reset'): void
   }
 
-  const props = defineProps<Props>()
+  const props = withDefaults(defineProps<Props>(), {
+    hidden: false,
+    lockedPartnerId: undefined
+  })
+
   const emit = defineEmits<Emits>()
 
   const searchBarRef = ref()
@@ -38,20 +51,13 @@
 
   const rules = {}
 
-  const countryOptions = [
-    { label: '中国', value: 'CN' },
-    { label: '美国', value: 'US' },
-    { label: '日本', value: 'JP' },
-    { label: '挪威', value: 'NO' },
-    { label: '德国', value: 'DE' }
-  ]
-
-  const processResultOptions = [
-    { label: '全部', value: '' },
-    { label: '找回', value: 'RECYCLE' },
-    { label: '丢失', value: 'LOST' },
-    { label: '报废', value: 'SCRAPPED' }
-  ]
+  const countryOptions = computed(() => [
+    { label: t('mapView.countries.CN'), value: 'CN' },
+    { label: t('mapView.countries.US'), value: 'US' },
+    { label: t('mapView.countries.JP'), value: 'JP' },
+    { label: t('mapView.countries.NO'), value: 'NO' },
+    { label: t('mapView.countries.DE'), value: 'DE' }
+  ])
 
   const partnerOptions = ref<Api.Partner.PartnerListItem[]>([])
   const regionOptions = ref<{ label: string; value: number | 'NONE' }[]>([])
@@ -68,7 +74,7 @@
     }
     const list = await fetchRegionList({ current: 1, size: 500, partnerId, countryCode })
     const opts = list.records.map((r) => ({ label: r.regionName, value: r.id as number }))
-    regionOptions.value = [...opts, { label: '无区域', value: 'NONE' }]
+    regionOptions.value = [...opts, { label: t('mapView.search.noRegion'), value: 'NONE' }]
   }
 
   async function loadStoreOptions(
@@ -96,7 +102,7 @@
       if (code !== prev) {
         emit('update:modelValue', {
           ...formData.value,
-          partnerId: undefined,
+          partnerId: props.lockedPartnerId ?? undefined,
           regionId: undefined,
           storeId: undefined
         })
@@ -135,100 +141,85 @@
     { immediate: true }
   )
 
+  watch(
+    () => props.lockedPartnerId,
+    (pid) => {
+      if (pid != null) {
+        emit('update:modelValue', { ...formData.value, partnerId: pid })
+      }
+    },
+    { immediate: true }
+  )
+
+  watch(locale, () => {
+    if (formData.value.partnerId != null) {
+      void loadRegionOptions(formData.value.partnerId, formData.value.countryCode)
+    }
+  })
+
   const formItems = computed(() => [
     {
-      label: 'DevEUI',
-      key: 'devEui',
-      labelWidth: 'auto',
-      span: 5,
-      type: 'input',
-      placeholder: '支持模糊匹配',
-      clearable: true
-    },
-    {
-      label: '所属国家',
+      label: t('mapView.search.country'),
       key: 'countryCode',
       labelWidth: 'auto',
       span: 4,
       type: 'select',
       props: {
-        placeholder: '全部',
+        placeholder: t('mapView.search.placeholderSelect'),
         clearable: true,
-        options: countryOptions
+        options: countryOptions.value
       }
     },
     {
-      label: '所属合作商',
+      label: t('mapView.search.partner'),
       key: 'partnerId',
       labelWidth: 'auto',
-      span: 4,
+      span: 5,
       type: 'select',
       props: {
-        placeholder: formData.value.countryCode ? '全部' : '请先选择所属国家',
-        clearable: true,
-        disabled: !formData.value.countryCode,
+        placeholder: formData.value.countryCode
+          ? t('mapView.search.placeholderAll')
+          : t('mapView.search.placeholderSelectCountryFirst'),
+        clearable: !props.lockedPartnerId,
+        disabled: !formData.value.countryCode || props.lockedPartnerId != null,
         options: partnerOptions.value.map((p) => ({ label: p.partnerName, value: p.id }))
       }
     },
     {
-      label: '所属区域',
+      label: t('mapView.search.region'),
       key: 'regionId',
       labelWidth: 'auto',
-      span: 4,
+      span: 5,
       type: 'select',
       props: {
-        placeholder: formData.value.partnerId ? '全部（含无区域）' : '请先选择合作商',
+        placeholder: formData.value.partnerId
+          ? t('mapView.search.placeholderRegionAll')
+          : t('mapView.search.placeholderSelectPartnerFirst'),
         clearable: true,
         disabled: !formData.value.partnerId,
         options: regionOptions.value
       }
     },
     {
-      label: '所属门店',
+      label: t('mapView.search.store'),
       key: 'storeId',
       labelWidth: 'auto',
-      span: 4,
+      span: 5,
       type: 'select',
       props: {
-        placeholder: formData.value.regionId != null ? '请选择门店' : '请先选择所属区域',
+        placeholder:
+          formData.value.regionId != null
+            ? t('mapView.search.placeholderStoreOptional')
+            : t('mapView.search.placeholderSelectRegionFirst'),
         clearable: true,
         disabled: formData.value.regionId == null,
         options: storeOptions.value
       }
-    },
-    {
-      label: '处理结果',
-      key: 'processResult',
-      labelWidth: 'auto',
-      span: 4,
-      type: 'select',
-      props: {
-        placeholder: '全部',
-        clearable: true,
-        options: processResultOptions
-      }
-    },
-    {
-      label: '告警时间',
-      key: 'alertTimeRange',
-      type: 'daterange',
-      labelWidth: 'auto',
-      span: 7,
-      props: {
-        type: 'datetimerange',
-        startPlaceholder: '开始时间',
-        endPlaceholder: '结束时间',
-        valueFormat: 'YYYY-MM-DD HH:mm:ss'
-      }
     }
   ])
 
-  const handleSearch = (params: Api.Ticket.TicketSearchParams) => {
-    const cleaned = { ...params }
-    if (cleaned.processResult === ('' as unknown as Api.Ticket.ProcessResult)) {
-      cleaned.processResult = undefined
-    }
-    emit('search', cleaned)
+  const handleSearch = (params: Api.Dashboard.MapViewSearchParams) => {
+    emit('search', params)
   }
 
   const handleReset = () => {

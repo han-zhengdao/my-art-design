@@ -9,6 +9,7 @@ import { beaconRoutes } from './beacon'
 import { ticketRoutes } from './ticket'
 import { dcRoutes } from './dc'
 import { helpRoutes } from './help'
+import { wheelEntryRoutes } from './wheel-entry'
 
 /**
  * 导出所有模块化路由
@@ -23,5 +24,6 @@ export const routeModules: AppRouteRecord[] = [
   beaconRoutes,
   ticketRoutes,
   dcRoutes,
-  helpRoutes
+  helpRoutes,
+  wheelEntryRoutes
 ]

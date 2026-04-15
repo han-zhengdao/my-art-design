@@ -1,250 +1,145 @@
 /**
- * 区域管理（当前为前端 mock，对接后端时替换为真实接口）
+ * 区域管理：分页列表、新增、详情、修改、删除已对接后端；
+ * 批量删除暂以循环调用单删接口实现。
  */
 
-import { appendRegionAdminUserFromRegion } from '@/api/user-mock'
+import request from '@/utils/http'
+import { PARTNER_COUNTRY_CODE_TO_ID } from '@/api/partner'
 
-const MOCK_ROWS: Api.Region.RegionListItem[] = [
-  {
-    id: 2001,
-    userNickName: '区域管理员-华东一',
-    loginEmail: 'region-hd1@example.com',
-    regionName: '华东一区',
-    regionAddress: '上海市浦东新区世纪大道 100 号',
-    regionContactName: '李四',
-    regionPhone: '13800138011',
-    partnerId: 1001,
-    partnerName: '华东零售集团',
-    country: '中国',
-    countryCode: 'CN',
-    dcBalance: 0,
-    storeCount: 0,
-    wheelCount: 0,
-    beaconCount: 0,
-    pendingTicketCount: 2,
-    createTime: '2025-12-05 10:00:00',
-    operatorName: '系统管理员'
-  },
-  {
-    id: 2002,
-    userNickName: '区域管理员-西南',
-    loginEmail: 'region-xn@example.com',
-    regionName: '西南运营中心',
-    regionAddress: '成都市高新区天府大道 200 号',
-    regionContactName: '王芳',
-    regionPhone: '13900139002',
-    partnerId: 1004,
-    partnerName: '西南商贸',
-    country: '中国',
-    countryCode: 'CN',
-    dcBalance: 1200,
-    storeCount: 3,
-    wheelCount: 0,
-    beaconCount: 0,
-    pendingTicketCount: 0,
-    createTime: '2026-01-10 14:20:00',
-    operatorName: '李运营'
-  },
-  {
-    id: 2003,
-    userNickName: '区域管理员-湾区',
-    loginEmail: 'region-ca@example.com',
-    regionName: '加州湾区',
-    regionAddress: 'San Francisco, CA',
-    regionContactName: 'John Smith',
-    regionPhone: '+1-415-555-0101',
-    partnerId: 1002,
-    partnerName: 'Pacific Foods LLC',
-    country: '美国',
-    countryCode: 'US',
-    dcBalance: 0,
-    storeCount: 0,
-    wheelCount: 5,
-    beaconCount: 0,
-    pendingTicketCount: 1,
-    createTime: '2025-11-22 09:15:00',
-    operatorName: '系统管理员'
-  },
-  {
-    id: 2004,
-    userNickName: '区域管理员-东京圈',
-    loginEmail: 'region-tokyo@example.com',
-    regionName: '关东鲜选·东京圈',
-    regionAddress: '東京都千代田区',
-    regionContactName: '佐藤健',
-    regionPhone: '+81-3-1234-5678',
-    partnerId: 1003,
-    partnerName: '关东鲜选',
-    country: '日本',
-    countryCode: 'JP',
-    dcBalance: 0,
-    storeCount: 0,
-    wheelCount: 0,
-    beaconCount: 0,
-    pendingTicketCount: 0,
-    createTime: '2026-02-01 08:30:00',
-    operatorName: '李运营'
-  },
-  {
-    id: 2005,
-    userNickName: '区域管理员-奥斯陆',
-    loginEmail: 'region-oslo@example.com',
-    regionName: '奥斯陆北区',
-    regionAddress: 'Oslo City Center',
-    regionContactName: 'Erik Hansen',
-    regionPhone: '+47-21-00-00-00',
-    partnerId: 1005,
-    partnerName: 'Nordic Retail AS',
-    country: '挪威',
-    countryCode: 'NO',
-    dcBalance: 0,
-    storeCount: 0,
-    wheelCount: 0,
-    beaconCount: 2,
-    pendingTicketCount: 0,
-    createTime: '2026-02-10 11:00:00',
-    operatorName: '系统管理员'
-  }
-]
-
-let mockRows: Api.Region.RegionListItem[] = [...MOCK_ROWS]
-
-function filterRows(params: Api.Region.RegionSearchParams): Api.Region.RegionListItem[] {
-  let list = [...mockRows]
-  if (params.countryCode) {
-    list = list.filter((r) => r.countryCode === params.countryCode)
-  }
-  const name = params.regionName?.trim()
-  if (name) {
-    list = list.filter((r) => r.regionName.includes(name))
-  }
-  if (params.partnerId != null) {
-    list = list.filter((r) => r.partnerId === params.partnerId)
-  }
-  return list
+/** 接口分页单条（字段名与列表展示字段对齐） */
+type RegionPageRecord = {
+  id: number
+  regionName: string
+  partnerId: number
+  partnerName: string
+  countryName?: string
+  storeCount?: number
+  contact?: string
+  phone?: string
+  address?: string
+  wheelCount?: number
+  beaconCount?: number
+  dcBalance?: number
+  country?: string
+  countryCode?: string
+  regionAddress?: string
+  regionContactName?: string
+  regionPhone?: string
+  loginEmail?: string
+  pendingTicketCount?: number
+  createTime?: string
+  operatorName?: string
 }
 
-export function fetchRegionList(
+function normalizeRegionListItem(row: RegionPageRecord): Api.Region.RegionListItem {
+  return {
+    id: row.id,
+    regionName: row.regionName,
+    partnerId: row.partnerId,
+    partnerName: row.partnerName,
+    country: row.country ?? row.countryName ?? '',
+    countryCode: row.countryCode ?? '',
+    regionAddress: row.regionAddress ?? row.address ?? '',
+    regionContactName: row.regionContactName ?? row.contact ?? '',
+    regionPhone: row.regionPhone ?? row.phone ?? '',
+    dcBalance: row.dcBalance ?? 0,
+    storeCount: row.storeCount ?? 0,
+    wheelCount: row.wheelCount ?? 0,
+    beaconCount: row.beaconCount ?? 0,
+    pendingTicketCount: row.pendingTicketCount ?? 0,
+    loginEmail: row.loginEmail,
+    createTime: row.createTime ?? '',
+    operatorName: row.operatorName ?? ''
+  }
+}
+
+/** 分页查询区域 GET /org/region/getRegionPageList */
+export async function fetchRegionList(
   params: Api.Region.RegionSearchParams
 ): Promise<Api.Region.RegionList> {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      const current = params.current ?? 1
-      const size = params.size ?? 20
-      const filtered = filterRows(params)
-      const start = (current - 1) * size
-      const records = filtered.slice(start, start + size)
-      resolve({
-        records,
-        current,
-        size,
-        total: filtered.length
-      })
-    }, 280)
-  })
-}
+  const countryId =
+    params.countryId ??
+    (params.countryCode ? PARTNER_COUNTRY_CODE_TO_ID[params.countryCode] : undefined)
 
-export function createRegion(
-  payload: Pick<
-    Api.Region.RegionListItem,
-    | 'regionName'
-    | 'regionAddress'
-    | 'regionContactName'
-    | 'regionPhone'
-    | 'partnerId'
-    | 'partnerName'
-    | 'country'
-    | 'countryCode'
-  > & {
-    operatorName: string
-    userNickName?: string
-    loginEmail?: string
+  const pageNum = params.pageNum ?? params.current ?? 1
+  const pageSize = Math.min(params.pageSize ?? params.size ?? 10, 200)
+
+  const data = await request.get<{
+    records: RegionPageRecord[]
+    total: number
+    pageNum: number
+    pageSize: number
+  }>({
+    url: '/org/region/getRegionPageList',
+    params: {
+      pageNum,
+      pageSize,
+      ...(params.regionName?.trim() ? { regionName: params.regionName.trim() } : {}),
+      ...(countryId != null ? { countryId } : {}),
+      ...(params.partnerId != null ? { partnerId: params.partnerId } : {}),
+      ...(params.dataScopeSql ? { dataScopeSql: params.dataScopeSql } : {})
+    }
+  })
+
+  return {
+    records: (data.records ?? []).map(normalizeRegionListItem),
+    total: data.total ?? 0,
+    current: data.pageNum ?? pageNum,
+    size: data.pageSize ?? pageSize
   }
-): Promise<Api.Region.RegionListItem> {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      const nextId = mockRows.reduce((m, r) => Math.max(m, r.id), 0) + 1
-      const now = new Date()
-      const pad = (n: number) => String(n).padStart(2, '0')
-      const createTime = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`
-      const row: Api.Region.RegionListItem = {
-        id: nextId,
-        userNickName: payload.userNickName ?? '',
-        loginEmail: payload.loginEmail ?? '',
-        regionName: payload.regionName,
-        regionAddress: payload.regionAddress,
-        regionContactName: payload.regionContactName,
-        regionPhone: payload.regionPhone,
-        partnerId: payload.partnerId,
-        partnerName: payload.partnerName,
-        country: payload.country,
-        countryCode: payload.countryCode,
-        dcBalance: 0,
-        storeCount: 0,
-        wheelCount: 0,
-        beaconCount: 0,
-        pendingTicketCount: 0,
-        createTime,
-        operatorName: payload.operatorName
-      }
-      mockRows = [row, ...mockRows]
-      if (payload.userNickName?.trim() && payload.loginEmail?.trim()) {
-        appendRegionAdminUserFromRegion({
-          nickName: payload.userNickName.trim(),
-          userEmail: payload.loginEmail.trim(),
-          regionName: row.regionName,
-          operatorName: payload.operatorName
-        })
-      }
-      resolve(row)
-    }, 200)
+}
+
+/** 新增区域 POST /org/region/createRegion（同步创建登录用户） */
+export function createRegion(payload: Api.Region.CreateRegionPayload): Promise<number> {
+  return request.post<number>({
+    url: '/org/region/createRegion',
+    params: {
+      regionName: payload.regionName,
+      partnerId: payload.partnerId,
+      email: payload.email,
+      password: payload.password,
+      ...(payload.contact?.trim() ? { contact: payload.contact.trim() } : {}),
+      ...(payload.phone?.trim() ? { phone: payload.phone.trim() } : {}),
+      ...(payload.address?.trim() ? { address: payload.address.trim() } : {})
+    }
   })
 }
 
-export function updateRegion(
-  id: number,
-  payload: Partial<
-    Pick<
-      Api.Region.RegionListItem,
-      | 'regionName'
-      | 'regionAddress'
-      | 'regionContactName'
-      | 'regionPhone'
-      | 'partnerId'
-      | 'partnerName'
-      | 'country'
-      | 'countryCode'
-    >
-  >
-): Promise<void> {
-  return new Promise((resolve, reject) => {
-    setTimeout(() => {
-      const idx = mockRows.findIndex((r) => r.id === id)
-      if (idx === -1) {
-        reject(new Error('记录不存在'))
-        return
-      }
-      mockRows[idx] = { ...mockRows[idx], ...payload }
-      resolve()
-    }, 200)
+/** 查询区域详情 GET /org/region/getRegionDetail */
+export async function getRegionDetail(id: number): Promise<Api.Region.RegionListItem> {
+  const data = await request.get<Api.Region.RegionDetail>({
+    url: '/org/region/getRegionDetail',
+    params: { id }
+  })
+  return normalizeRegionListItem({
+    ...data,
+    country: data.countryName ?? '',
+    countryCode: ''
   })
 }
 
+/** 修改区域 POST /org/region/updateRegion */
+export function updateRegion(payload: Api.Region.UpdateRegionPayload): Promise<void> {
+  return request.post<void>({
+    url: '/org/region/updateRegion',
+    params: {
+      id: payload.id,
+      regionName: payload.regionName,
+      ...(payload.contact?.trim() ? { contact: payload.contact.trim() } : {}),
+      ...(payload.phone?.trim() ? { phone: payload.phone.trim() } : {}),
+      ...(payload.address?.trim() ? { address: payload.address.trim() } : {})
+    }
+  })
+}
+
+/** 删除区域 POST /org/region/deleteRegion?id= */
 export function deleteRegion(id: number): Promise<void> {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      mockRows = mockRows.filter((r) => r.id !== id)
-      resolve()
-    }, 200)
+  return request.post<void>({
+    url: `/org/region/deleteRegion?id=${encodeURIComponent(String(id))}`
   })
 }
 
-export function batchDeleteRegions(ids: number[]): Promise<void> {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      const set = new Set(ids)
-      mockRows = mockRows.filter((r) => !set.has(r.id))
-      resolve()
-    }, 200)
-  })
+/** 批量删除（当前无批量接口，循环调用单删） */
+export async function batchDeleteRegions(ids: number[]): Promise<void> {
+  await Promise.all(ids.map((id) => deleteRegion(id)))
 }

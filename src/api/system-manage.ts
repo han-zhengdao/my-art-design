@@ -39,6 +39,29 @@ export function fetchDeleteUser(id: number) {
   })
 }
 
+/**
+ * 修改当前登录用户界面语言
+ * POST /system/user/updateCurrentUserLanguage?language=
+ * @param language 1 中文 2 英文（与 LoginUserInfoResponse.language 一致）
+ */
+export function fetchUpdateCurrentUserLanguage(language: number) {
+  return request.post<null>({
+    url: `/system/user/updateCurrentUserLanguage?language=${encodeURIComponent(String(language))}`,
+    showSuccessMessage: false,
+    showErrorMessage: true
+  })
+}
+
+/** 重置/修改密码 POST /system/user/resetPassword（Body：id、oldPassword、newPassword） */
+export function fetchResetPassword(params: Api.SystemManage.ResetPasswordPayload) {
+  return request.post<null>({
+    url: '/system/user/resetPassword',
+    params,
+    showSuccessMessage: true,
+    showErrorMessage: true
+  })
+}
+
 /** 创建用户时可选角色列表 GET /system/role/getRoleByUserTypeList（Authorization 由拦截器注入） */
 export function fetchGetRoleByUserTypeList() {
   return request.get<Api.SystemManage.RoleByUserTypeItem[]>({

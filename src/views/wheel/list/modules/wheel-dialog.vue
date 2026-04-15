@@ -24,26 +24,25 @@
         onlineLabel(detailRow?.onlineStatus)
       }}</ElDescriptionsItem>
       <ElDescriptionsItem label="电池电量">{{ detailRow?.batteryLevel }}%</ElDescriptionsItem>
-      <ElDescriptionsItem label="GPS精度">{{
-        gpsAccLabel(detailRow?.gpsAccuracy)
-      }}</ElDescriptionsItem>
-      <ElDescriptionsItem label="信标信号">{{
-        detailRow != null ? formatSignalStrength(detailRow.beaconSignal) : '--'
-      }}</ElDescriptionsItem>
-      <ElDescriptionsItem label="LoRa信号">{{
-        detailRow != null ? formatSignalStrength(detailRow.loraSignal) : '--'
-      }}</ElDescriptionsItem>
       <ElDescriptionsItem label="围栏内外">{{
         fenceLabel(detailRow?.fenceStatus)
       }}</ElDescriptionsItem>
-      <ElDescriptionsItem label="出围栏时长">{{
-        detailRow != null ? formatSecondsAsHours(detailRow.outFenceDurationSec) : '--'
+      <ElDescriptionsItem label="出围栏时间">{{
+        detailRow != null
+          ? detailRow.outFenceTime?.trim() ||
+            (detailRow.outFenceDurationSec > 0
+              ? formatSecondsAsHours(detailRow.outFenceDurationSec)
+              : '--')
+          : '--'
       }}</ElDescriptionsItem>
       <ElDescriptionsItem label="出围栏距离">{{
         detailRow != null ? `${detailRow.outFenceDistanceM} m` : '--'
       }}</ElDescriptionsItem>
       <ElDescriptionsItem label="最新定位">{{
         coordText(detailRow?.lastPosition)
+      }}</ElDescriptionsItem>
+      <ElDescriptionsItem label="最新定位时间">{{
+        detailRow?.lastPositionTime ?? '--'
       }}</ElDescriptionsItem>
       <ElDescriptionsItem label="最后通信时间">{{ detailRow?.lastCommTime }}</ElDescriptionsItem>
       <ElDescriptionsItem label="创建时间">{{ detailRow?.createTime }}</ElDescriptionsItem>
@@ -53,62 +52,23 @@
     <ElForm
       v-else-if="mode === 'edit'"
       ref="wheelFormRef"
+      class="wheel-edit-form"
       :model="form"
       :rules="formRules"
-      label-width="120px"
+      label-position="top"
     >
       <ElFormItem label="DevEUI" prop="devEui">
-        <ElInput v-model="form.devEui" disabled maxlength="64" show-word-limit />
+        <ElInput v-model="form.devEui" disabled maxlength="64" show-word-limit class="!w-full" />
       </ElFormItem>
-      <ElFormItem label="所属国家" prop="countryCode">
-        <ElSelect
-          v-model="form.countryCode"
-          class="w-full"
-          :disabled="isLockedByStore"
-          placeholder="请选择"
+      <ElFormItem label="设备状态" prop="deviceStatus">
+        <ElRadioGroup
+          v-model="form.deviceStatus"
+          class="wheel-edit-radio-group flex w-full flex-wrap gap-x-6 gap-y-2"
         >
-          <ElOption
-            v-for="opt in countryOptions"
-            :key="opt.value"
-            :label="opt.label"
-            :value="opt.value"
-          />
-        </ElSelect>
-      </ElFormItem>
-      <ElFormItem label="所属合作商" prop="partnerId">
-        <ElSelect
-          v-model="form.partnerId"
-          class="w-full"
-          :disabled="isLockedByStore || !form.countryCode"
-          placeholder="请选择"
-        >
-          <ElOption v-for="p in partnerOptions" :key="p.id" :label="p.partnerName" :value="p.id" />
-        </ElSelect>
-      </ElFormItem>
-      <ElFormItem label="所属区域" prop="regionId">
-        <ElSelect
-          v-model="form.regionId"
-          class="w-full"
-          :disabled="isLockedByStore || form.partnerId == null"
-          placeholder="请选择"
-        >
-          <ElOption
-            v-for="r in regionOptions"
-            :key="String(r.value)"
-            :label="r.label"
-            :value="r.value"
-          />
-        </ElSelect>
-      </ElFormItem>
-      <ElFormItem label="所属门店" prop="storeId">
-        <ElSelect
-          v-model="form.storeId"
-          class="w-full"
-          :disabled="isLockedByStore || form.regionId == null"
-          placeholder="请选择"
-        >
-          <ElOption v-for="s in storeOptions" :key="s.id" :label="s.storeName" :value="s.id" />
-        </ElSelect>
+          <ElRadio value="IN_USE">使用中</ElRadio>
+          <ElRadio value="SCRAPPED">已报废</ElRadio>
+          <ElRadio value="LOST">已丢失</ElRadio>
+        </ElRadioGroup>
       </ElFormItem>
     </ElForm>
 
@@ -124,67 +84,6 @@
           </div>
 
           <ElForm ref="wheelFormRef" :model="form" :rules="formRules" label-width="120px">
-            <ElFormItem label="所属国家" prop="countryCode">
-              <ElSelect
-                v-model="form.countryCode"
-                class="w-full"
-                :disabled="isLockedByStore"
-                placeholder="请选择"
-              >
-                <ElOption
-                  v-for="opt in countryOptions"
-                  :key="opt.value"
-                  :label="opt.label"
-                  :value="opt.value"
-                />
-              </ElSelect>
-            </ElFormItem>
-            <ElFormItem label="所属合作商" prop="partnerId">
-              <ElSelect
-                v-model="form.partnerId"
-                class="w-full"
-                :disabled="isLockedByStore || !form.countryCode"
-                placeholder="请选择"
-              >
-                <ElOption
-                  v-for="p in partnerOptions"
-                  :key="p.id"
-                  :label="p.partnerName"
-                  :value="p.id"
-                />
-              </ElSelect>
-            </ElFormItem>
-            <ElFormItem label="所属区域" prop="regionId">
-              <ElSelect
-                v-model="form.regionId"
-                class="w-full"
-                :disabled="isLockedByStore || form.partnerId == null"
-                placeholder="请选择"
-              >
-                <ElOption
-                  v-for="r in regionOptions"
-                  :key="String(r.value)"
-                  :label="r.label"
-                  :value="r.value"
-                />
-              </ElSelect>
-            </ElFormItem>
-            <ElFormItem label="所属门店" prop="storeId">
-              <ElSelect
-                v-model="form.storeId"
-                class="w-full"
-                :disabled="isLockedByStore || form.regionId == null"
-                placeholder="请选择"
-              >
-                <ElOption
-                  v-for="s in storeOptions"
-                  :key="s.id"
-                  :label="s.storeName"
-                  :value="s.id"
-                />
-              </ElSelect>
-            </ElFormItem>
-
             <template v-if="singleSubTab === 'manual'">
               <ElFormItem label="DevEUI" prop="devEui">
                 <ElInput
@@ -227,68 +126,7 @@
         </ElTabPane>
 
         <ElTabPane label="批量添加" name="batch" lazy>
-          <ElForm ref="batchFormRef" :model="form" :rules="batchRules" label-width="120px">
-            <ElFormItem label="所属国家" prop="countryCode">
-              <ElSelect
-                v-model="form.countryCode"
-                class="w-full"
-                :disabled="isLockedByStore"
-                placeholder="请选择"
-              >
-                <ElOption
-                  v-for="opt in countryOptions"
-                  :key="opt.value"
-                  :label="opt.label"
-                  :value="opt.value"
-                />
-              </ElSelect>
-            </ElFormItem>
-            <ElFormItem label="所属合作商" prop="partnerId">
-              <ElSelect
-                v-model="form.partnerId"
-                class="w-full"
-                :disabled="isLockedByStore || !form.countryCode"
-                placeholder="请选择"
-              >
-                <ElOption
-                  v-for="p in partnerOptions"
-                  :key="p.id"
-                  :label="p.partnerName"
-                  :value="p.id"
-                />
-              </ElSelect>
-            </ElFormItem>
-            <ElFormItem label="所属区域" prop="regionId">
-              <ElSelect
-                v-model="form.regionId"
-                class="w-full"
-                :disabled="isLockedByStore || form.partnerId == null"
-                placeholder="请选择"
-              >
-                <ElOption
-                  v-for="r in regionOptions"
-                  :key="String(r.value)"
-                  :label="r.label"
-                  :value="r.value"
-                />
-              </ElSelect>
-            </ElFormItem>
-            <ElFormItem label="所属门店" prop="storeId">
-              <ElSelect
-                v-model="form.storeId"
-                class="w-full"
-                :disabled="isLockedByStore || form.regionId == null"
-                placeholder="请选择"
-              >
-                <ElOption
-                  v-for="s in storeOptions"
-                  :key="s.id"
-                  :label="s.storeName"
-                  :value="s.id"
-                />
-              </ElSelect>
-            </ElFormItem>
-          </ElForm>
+          <ElForm ref="batchFormRef" :model="form" :rules="batchRules" label-width="120px"></ElForm>
 
           <div class="mb-3 flex flex-wrap items-center gap-3">
             <ElButton type="primary" @click="downloadWheelTemplate"
@@ -308,7 +146,7 @@
             type="success"
             :closable="false"
             show-icon
-            :title="`已解析 ${batchPreviewCount} 条，将导入到当前所选门店`"
+            :title="`已解析 ${batchPreviewCount} 条，将导入到当前列表筛选所对应的门店`"
           />
         </ElTabPane>
       </ElTabs>
@@ -338,8 +176,7 @@
 <script setup lang="ts">
   import { computed, nextTick, reactive, ref, watch } from 'vue'
   import { formatSecondsAsHours } from '@/utils/duration'
-  import { formatSignalStrength } from '@/utils/signal-strength'
-  import { fetchPartnersByCountry } from '@/api/partner'
+  import { fetchPartnerList, fetchPartnersByCountry } from '@/api/partner'
   import { fetchRegionList } from '@/api/region'
   import { fetchStoreList } from '@/api/store'
   import type { WheelCreatePayload } from '@/api/wheel'
@@ -353,6 +190,11 @@
     modelValue: boolean
     mode: DialogMode
     row?: Api.Wheel.WheelListItem | null
+    /** 列表筛选（超级管理员新增时解析门店上下文） */
+    countryCode?: string
+    filterPartnerId?: number
+    filterRegionId?: number | 'NONE'
+    filterStoreId?: number
     lockedStoreId?: number
     lockedPartnerId?: number
   }>()
@@ -376,16 +218,6 @@
     return '车轮详情'
   })
 
-  const isLockedByStore = computed(() => props.lockedStoreId != null)
-
-  const countryOptions = [
-    { label: '中国', value: 'CN' },
-    { label: '美国', value: 'US' },
-    { label: '日本', value: 'JP' },
-    { label: '挪威', value: 'NO' },
-    { label: '德国', value: 'DE' }
-  ]
-
   const partnerOptions = ref<Api.Partner.PartnerListItem[]>([])
   const regionOptions = ref<{ label: string; value: number | 'NONE' }[]>([])
   const storeOptions = ref<Api.Store.StoreListItem[]>([])
@@ -402,6 +234,7 @@
 
   const form = reactive({
     devEui: '',
+    deviceStatus: undefined as Api.Wheel.DeviceStatus | undefined,
     countryCode: undefined as string | undefined,
     partnerId: undefined as number | undefined,
     regionId: undefined as number | 'NONE' | undefined,
@@ -410,6 +243,7 @@
 
   function resetForm() {
     form.devEui = ''
+    form.deviceStatus = undefined
     form.countryCode = undefined
     form.partnerId = undefined
     form.regionId = undefined
@@ -431,10 +265,6 @@
     const m: Record<string, string> = { ONLINE: '已联网', OFFLINE: '未联网' }
     return s ? (m[s] ?? s) : '--'
   }
-  function gpsAccLabel(s?: Api.Wheel.GpsAccuracy) {
-    const m: Record<string, string> = { PRECISE: '精确', IMPRECISE: '不精确' }
-    return s ? (m[s] ?? s) : '--'
-  }
   function fenceLabel(s?: Api.Wheel.FenceStatus) {
     const m: Record<string, string> = { INSIDE: '围栏内', OUTSIDE: '围栏外' }
     return s ? (m[s] ?? s) : '--'
@@ -450,72 +280,106 @@
         ? []
         : [{ required: true, message: '请输入 DevEUI', trigger: ['blur', 'change'] }])
     ],
-    countryCode: [{ required: true, message: '请选择所属国家', trigger: 'change' }],
-    partnerId: [{ required: true, message: '请选择所属合作商', trigger: 'change' }],
-    regionId: [{ required: true, message: '请选择所属区域', trigger: 'change' }],
-    storeId: [{ required: true, message: '请选择所属门店', trigger: 'change' }]
+    ...(props.mode === 'edit'
+      ? {
+          deviceStatus: [{ required: true, message: '请选择设备状态', trigger: 'change' }]
+        }
+      : {})
   }))
 
-  const batchRules: FormRules = {
-    countryCode: [{ required: true, message: '请选择所属国家', trigger: 'change' }],
-    partnerId: [{ required: true, message: '请选择所属合作商', trigger: 'change' }],
-    regionId: [{ required: true, message: '请选择所属区域', trigger: 'change' }],
-    storeId: [{ required: true, message: '请选择所属门店', trigger: 'change' }]
-  }
+  const batchRules: FormRules = {}
 
-  async function loadPartners() {
-    if (!form.countryCode) {
-      partnerOptions.value = []
-      form.partnerId = undefined
+  /** 新增：不展示国家/合作商/区域/门店表单项，从列表筛选或绑定门店解析 */
+  async function resolveAddWheelContext(): Promise<void> {
+    partnerOptions.value = []
+    regionOptions.value = []
+    storeOptions.value = []
+
+    if (props.lockedStoreId != null) {
+      const list = await fetchStoreList({ current: 1, size: 500 })
+      const store = list.records.find((s) => s.id === props.lockedStoreId)
+      if (store) {
+        form.countryCode = store.countryCode
+        form.partnerId = store.partnerId
+        form.regionId = store.regionId == null ? 'NONE' : store.regionId
+        form.storeId = store.id
+        storeOptions.value = [store]
+        const pres = await fetchPartnerList({ pageNum: 1, pageSize: 500 })
+        const partner = pres.records.find((p) => p.id === store.partnerId)
+        if (partner) partnerOptions.value = [partner]
+        if (form.regionId !== 'NONE' && typeof form.regionId === 'number') {
+          const rlist = await fetchRegionList({
+            current: 1,
+            size: 500,
+            partnerId: store.partnerId,
+            countryCode: store.countryCode
+          })
+          const rec = rlist.records.find((r) => r.id === form.regionId)
+          regionOptions.value = rec ? [{ label: rec.regionName, value: rec.id }] : []
+        } else {
+          regionOptions.value = [{ label: '无区域', value: 'NONE' }]
+        }
+      }
       return
     }
-    let list = await fetchPartnersByCountry(form.countryCode)
-    if (props.lockedPartnerId != null && !isLockedByStore.value) {
-      list = list.filter((p) => p.id === props.lockedPartnerId)
-    }
-    partnerOptions.value = list
-    if (form.partnerId != null && !list.some((p) => p.id === form.partnerId)) {
-      form.partnerId = undefined
-    }
-  }
 
-  async function loadRegions() {
-    if (form.partnerId == null || !form.countryCode) {
-      regionOptions.value = []
+    const code = props.countryCode
+    const pid = props.filterPartnerId
+    const rid = props.filterRegionId
+    const sid = props.filterStoreId
+
+    if (!code || pid == null) {
+      form.countryCode = code
+      form.partnerId = pid
       form.regionId = undefined
-      return
-    }
-    const list = await fetchRegionList({
-      current: 1,
-      size: 500,
-      partnerId: form.partnerId,
-      countryCode: form.countryCode
-    })
-    const opts = list.records.map((r) => ({ label: r.regionName, value: r.id as number }))
-    regionOptions.value = [...opts, { label: '无区域', value: 'NONE' }]
-    if (form.regionId != null && !regionOptions.value.some((o) => o.value === form.regionId)) {
-      form.regionId = 'NONE'
-    }
-    if (form.regionId == null) {
-      form.regionId = 'NONE'
-    }
-  }
-
-  async function loadStores() {
-    if (form.partnerId == null || !form.countryCode || form.regionId == null) {
-      storeOptions.value = []
       form.storeId = undefined
       return
     }
-    const list = await fetchStoreList({
+
+    const partners = await fetchPartnersByCountry(code)
+    partnerOptions.value = partners
+    const partner = partners.find((p) => p.id === pid)
+    if (!partner) {
+      form.countryCode = code
+      form.partnerId = undefined
+      form.regionId = undefined
+      form.storeId = undefined
+      return
+    }
+
+    form.countryCode = code
+    form.partnerId = pid
+
+    const rlist = await fetchRegionList({
       current: 1,
       size: 500,
-      partnerId: form.partnerId,
-      countryCode: form.countryCode,
-      regionId: form.regionId
+      partnerId: pid,
+      countryCode: code
     })
-    storeOptions.value = list.records
-    if (form.storeId != null && !storeOptions.value.some((s) => s.id === form.storeId)) {
+    const ropts = rlist.records.map((r) => ({ label: r.regionName, value: r.id as number }))
+    regionOptions.value = [...ropts, { label: '无区域', value: 'NONE' }]
+
+    let regionVal: number | 'NONE'
+    if (rid === 'NONE') {
+      regionVal = 'NONE'
+    } else if (typeof rid === 'number' && regionOptions.value.some((o) => o.value === rid)) {
+      regionVal = rid
+    } else {
+      regionVal = 'NONE'
+    }
+    form.regionId = regionVal
+
+    const slist = await fetchStoreList({
+      current: 1,
+      size: 500,
+      partnerId: pid,
+      countryCode: code,
+      regionId: regionVal
+    })
+    storeOptions.value = slist.records
+    if (sid != null && storeOptions.value.some((s) => s.id === sid)) {
+      form.storeId = sid
+    } else {
       form.storeId = undefined
     }
   }
@@ -611,7 +475,7 @@
         store ??
         (await fetchStoreList({ current: 1, size: 500 })).records.find((s) => s.id === form.storeId)
       if (!safeStore || form.storeId == null) {
-        ElMessage.warning('请先选择所属门店')
+        ElMessage.warning('请先在列表上方筛选国家、合作商、区域与门店，或确认已绑定门店账号')
         return
       }
       const regionId = safeStore.regionId == null ? null : safeStore.regionId
@@ -641,55 +505,32 @@
   }
 
   watch(
-    () => form.countryCode,
-    async () => {
-      if (!visible.value || props.mode === 'detail') return
-      await loadPartners()
-    }
-  )
-
-  watch(
-    () => [props.modelValue, props.mode, props.row] as const,
+    () =>
+      [
+        props.modelValue,
+        props.mode,
+        props.row,
+        props.countryCode,
+        props.filterPartnerId,
+        props.filterRegionId,
+        props.filterStoreId,
+        props.lockedStoreId,
+        props.lockedPartnerId
+      ] as const,
     async ([open, mode, row]) => {
       if (!open || mode === 'detail') return
       resetForm()
 
       if (mode === 'edit' && row) {
         form.devEui = row.devEui
-        form.countryCode = row.countryCode
-        form.partnerId = row.partnerId
-        form.regionId = row.regionId == null ? 'NONE' : row.regionId
-        form.storeId = row.storeId
+        form.deviceStatus = row.deviceStatus
       } else if (mode === 'add') {
-        if (props.lockedStoreId != null) {
-          const list = await fetchStoreList({ current: 1, size: 500 })
-          const store = list.records.find((s) => s.id === props.lockedStoreId)
-          if (store) {
-            form.countryCode = store.countryCode
-            form.partnerId = store.partnerId
-            form.regionId = store.regionId == null ? 'NONE' : store.regionId
-            form.storeId = store.id
-          }
-        } else if (props.lockedPartnerId != null) {
-          form.partnerId = props.lockedPartnerId
-        }
+        await resolveAddWheelContext()
       }
 
       await nextTick()
-      await loadPartners()
-      await loadRegions()
-      await loadStores()
     },
     { immediate: true }
-  )
-
-  watch(
-    () => [form.partnerId, form.countryCode, form.regionId] as const,
-    async () => {
-      if (props.mode === 'detail' || !visible.value) return
-      await loadRegions()
-      await loadStores()
-    }
   )
 
   watch(
@@ -714,17 +555,42 @@
     if (!wheelFormRef.value) return
     await wheelFormRef.value.validate()
 
+    if (props.mode === 'edit') {
+      const row = props.row
+      if (!row) return
+      emit('submit', {
+        id: row.id,
+        devEui: form.devEui.trim(),
+        deviceStatus: form.deviceStatus,
+        storeId: row.storeId,
+        storeName: row.storeName,
+        regionId: row.regionId ?? null,
+        regionName: row.regionName ?? '无区域',
+        partnerId: row.partnerId,
+        partnerName: row.partnerName,
+        countryCode: row.countryCode,
+        country: row.country
+      })
+      return
+    }
+
     const store = storeOptions.value.find((s) => s.id === form.storeId)
     const safeStore =
       store ??
       (await fetchStoreList({ current: 1, size: 500 })).records.find((s) => s.id === form.storeId)
 
-    if (!safeStore || form.storeId == null) return
+    if (!safeStore || form.storeId == null) {
+      ElMessage.warning(
+        props.lockedStoreId != null
+          ? '无法解析当前账号绑定的门店信息，请稍后重试'
+          : '请先在列表上方筛选中选择国家、合作商、区域与门店，再新增车轮'
+      )
+      return
+    }
 
     const regionId = safeStore.regionId == null ? null : safeStore.regionId
 
     emit('submit', {
-      id: props.mode === 'edit' ? props.row?.id : undefined,
       devEui: form.devEui.trim(),
       storeId: safeStore.id,
       storeName: safeStore.storeName,
@@ -742,7 +608,7 @@
       await batchFormRef.value.validate()
     }
     if (batchParsedPayloads.value.length === 0) {
-      ElMessage.warning('请先选择门店并导入 Excel')
+      ElMessage.warning('请先确认列表筛选门店上下文并导入 Excel')
       return
     }
     emit('batch-submit', batchParsedPayloads.value)
@@ -752,3 +618,22 @@
     resetForm()
   }
 </script>
+
+<style scoped>
+  /** 编辑表单：标签置顶、与控件统一左对齐 */
+  .wheel-edit-form :deep(.el-form-item__label) {
+    justify-content: flex-start;
+    padding: 0 0 4px;
+    line-height: 1.5;
+  }
+
+  .wheel-edit-form :deep(.el-form-item__content) {
+    padding-left: 18px;
+    line-height: 1.5;
+  }
+
+  .wheel-edit-radio-group :deep(.el-radio) {
+    padding-left: 8px;
+    margin-right: 0;
+  }
+</style>

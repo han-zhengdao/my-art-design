@@ -32,8 +32,10 @@
  * @author Art Design Pro Team
  */
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
+import { ref, computed, isRef } from 'vue'
+import { clearCountryListCache } from '@/api/country'
 import { LanguageEnum } from '@/enums/appEnum'
+import i18n from '@/locales'
 import { router } from '@/router'
 import { useSettingStore } from './setting'
 import { useWorktabStore } from './worktab'
@@ -92,12 +94,23 @@ export const useUserStore = defineStore(
     }
 
     /**
-     * 设置语言
-     * @param lang 语言枚举值
+     * 设置界面语言（前端 i18n 与 Pinia 持久化 language）
+     * 同步 info.language 为后端约定：1 中文 2 英文
+     * 与 vue-i18n 的 locale 保持一致，避免仅改 store 导致 $t 与接口 Accept-Language 不一致
      */
     const setLanguage = (lang: LanguageEnum) => {
       setPageTitle(router.currentRoute.value)
       language.value = lang
+      const code = lang === LanguageEnum.EN ? 2 : 1
+      if (info.value && Object.keys(info.value).length > 0) {
+        info.value = { ...info.value, language: code }
+      }
+      const globalLocale = i18n.global.locale
+      if (isRef(globalLocale)) {
+        globalLocale.value = lang
+      } else {
+        ;(i18n.global as { locale: LanguageEnum }).locale = lang
+      }
     }
 
     /**
@@ -161,6 +174,7 @@ export const useUserStore = defineStore(
         accessToken.value = ''
         // 清空刷新令牌
         refreshToken.value = ''
+        clearCountryListCache()
         // 注意：不清空工作台标签页，等下次登录时根据用户判断
         // 移除iframe路由缓存
         sessionStorage.removeItem('iframeRoutes')

@@ -10,7 +10,6 @@
         <ElDropdownMenu>
           <ElDropdownItem @click="emit('recharge-dc')">充值 DC</ElDropdownItem>
           <ElDropdownItem @click="emit('price')">单价设置</ElDropdownItem>
-          <ElDropdownItem @click="emit('assign')">分配 DC</ElDropdownItem>
         </ElDropdownMenu>
       </template>
     </ElDropdown>
@@ -26,6 +25,5 @@
     detail: []
     'recharge-dc': []
     price: []
-    assign: []
   }>()
 </script>

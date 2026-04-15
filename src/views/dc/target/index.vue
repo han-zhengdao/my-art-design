@@ -83,32 +83,6 @@
         <ElButton type="primary" @click="submitPrice">保存</ElButton>
       </template>
     </ElDialog>
-
-    <ElDialog v-model="assignVisible" title="DC 分配" width="480px" destroy-on-close>
-      <ElForm label-position="top">
-        <ElFormItem label="分配类型" required>
-          <ElRadioGroup v-model="assignForm.assignType">
-            <ElRadio value="REGION">区域</ElRadio>
-            <ElRadio value="STORE">门店</ElRadio>
-          </ElRadioGroup>
-        </ElFormItem>
-        <ElFormItem label="分配对象" required>
-          <ElSelect v-model="assignForm.targetName" placeholder="请选择" class="w-full" filterable>
-            <ElOption v-for="opt in assignTargetOptions" :key="opt" :label="opt" :value="opt" />
-          </ElSelect>
-        </ElFormItem>
-        <ElFormItem label="可分配 DC 余额">
-          <ElInput :model-value="String(actionRow?.allocatableBalance ?? '')" disabled />
-        </ElFormItem>
-        <ElFormItem label="分配额度" required>
-          <ElInputNumber v-model="assignForm.amount" :min="1" :precision="0" class="!w-full" />
-        </ElFormItem>
-      </ElForm>
-      <template #footer>
-        <ElButton @click="assignVisible = false">取消</ElButton>
-        <ElButton type="primary" @click="submitAssign">确定</ElButton>
-      </template>
-    </ElDialog>
   </div>
 </template>
 
@@ -172,20 +146,6 @@
     minBalanceDc: 100 as number | undefined
   })
 
-  const assignVisible = ref(false)
-  const assignForm = ref({
-    assignType: 'REGION' as 'REGION' | 'STORE',
-    targetName: '',
-    amount: undefined as number | undefined
-  })
-
-  const assignTargetOptions = computed(() => {
-    if (assignForm.value.assignType === 'REGION') {
-      return ['华东一区', '西南运营中心', '加州湾区', '无区域']
-    }
-    return ['浦东旗舰店', '成都高新店', 'SF Bay Store', 'Oslo Downtown']
-  })
-
   function openDetail(row: Row) {
     detailRow.value = row
     detailVisible.value = true
@@ -200,12 +160,6 @@
   function openPrice(row: Row) {
     actionRow.value = row
     priceVisible.value = true
-  }
-
-  function openAssign(row: Row) {
-    actionRow.value = row
-    assignForm.value = { assignType: 'REGION', targetName: '', amount: undefined }
-    assignVisible.value = true
   }
 
   function submitRechargeDc() {
@@ -224,19 +178,6 @@
     }
     ElMessage.success('单价与预警额度已保存（Mock）')
     priceVisible.value = false
-  }
-
-  function submitAssign() {
-    if (
-      !assignForm.value.targetName ||
-      assignForm.value.amount == null ||
-      assignForm.value.amount <= 0
-    ) {
-      ElMessage.warning('请完善分配信息')
-      return
-    }
-    ElMessage.success('分配已提交（Mock）')
-    assignVisible.value = false
   }
 
   const {
@@ -274,8 +215,7 @@
             h(DcTargetActions, {
               onDetail: () => openDetail(row),
               onRechargeDc: () => openRechargeDc(row),
-              onPrice: () => openPrice(row),
-              onAssign: () => openAssign(row)
+              onPrice: () => openPrice(row)
             })
         }
       ]

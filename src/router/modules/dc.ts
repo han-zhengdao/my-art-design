@@ -23,6 +23,16 @@ export const dcRoutes: AppRouteRecord = {
       }
     },
     {
+      path: 'allocate',
+      name: 'DcAllocate',
+      component: '/dc/allocate',
+      meta: {
+        title: 'menus.dc.allocate',
+        icon: 'ri:share-circle-line',
+        keepAlive: true
+      }
+    },
+    {
       path: 'recharge-record',
       name: 'DcRechargeRecord',
       component: '/dc/recharge-record',

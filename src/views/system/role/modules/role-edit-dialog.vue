@@ -19,14 +19,7 @@
           <ElInput v-model="form.roleName" placeholder="请输入角色名称" />
         </ElFormItem>
         <ElFormItem label="角色编码" prop="roleCode">
-          <ElSelect v-model="form.roleCode" placeholder="请选择角色编码" class="w-full">
-            <ElOption
-              v-for="opt in systemRoleCodeOptions"
-              :key="opt.value"
-              :label="opt.label"
-              :value="opt.value"
-            />
-          </ElSelect>
+          <ElInput v-model="form.roleCode" placeholder="请输入角色编码" clearable class="w-full" />
         </ElFormItem>
         <ElFormItem label="角色类型" prop="roleType">
           <ElSelect v-model="form.roleType" placeholder="请选择角色类型" class="w-full">
@@ -56,6 +49,8 @@
     fetchGetRoleDetail,
     fetchUpdateRole
   } from '@/api/system-manage'
+  import { getDictDataDisplayLabel } from '@/utils/dict-label'
+  import { useI18n } from 'vue-i18n'
 
   type RoleListItem = Api.SystemManage.RoleListItem
   type RoleForm = Pick<RoleListItem, 'roleId' | 'roleName' | 'roleCode' | 'roleType'>
@@ -79,6 +74,8 @@
 
   const emit = defineEmits<Emits>()
 
+  const { locale } = useI18n()
+
   const formRef = ref<FormInstance>()
   const detailLoading = ref(false)
 
@@ -90,34 +87,29 @@
     set: (value) => emit('update:modelValue', value)
   })
 
-  /** 与用户管理「对应角色」一致（系统管理员、合作商管理员等） */
-  const systemRoleCodeOptions = [
-    { label: '系统管理员', value: 'R_ADMIN' },
-    { label: '合作商管理员', value: 'PARTNER_ADMIN' },
-    { label: '区域管理员', value: 'REGION_ADMIN' },
-    { label: '门店管理员', value: 'STORE_ADMIN' },
-    { label: '门店员工', value: 'STORE_STAFF' }
-  ]
-
+  /** GET /system/dict/getDictDataByDictCodeList?dictCode=role_type */
   const roleTypeOptions = ref<{ label: string; value: number }[]>([])
 
-  function roleTypeSelectLabel(dictKey: string, dictValue: string): string {
-    const k = Number(dictKey)
-    if (k === 1) return '系统'
-    if (k === 2) return '用户'
-    return dictValue
-  }
-
-  onMounted(async () => {
+  async function loadRoleTypeDict() {
     try {
       const list = await fetchGetDictDataByDictCodeList('role_type')
-      roleTypeOptions.value = list.map((d) => ({
-        label: roleTypeSelectLabel(d.dictKey, d.dictValue),
+      if (!Array.isArray(list) || list.length === 0) {
+        roleTypeOptions.value = []
+        return
+      }
+      const sorted = [...list].sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0))
+      const lc = locale.value
+      roleTypeOptions.value = sorted.map((d) => ({
+        label: getDictDataDisplayLabel(d, lc),
         value: Number(d.dictKey)
       }))
     } catch {
       roleTypeOptions.value = []
     }
+  }
+
+  watch(locale, () => {
+    if (props.modelValue) void loadRoleTypeDict()
   })
 
   /**
@@ -128,7 +120,10 @@
       { required: true, message: '请输入角色名称', trigger: 'blur' },
       { min: 2, max: 20, message: '长度在 2 到 20 个字符', trigger: 'blur' }
     ],
-    roleCode: [{ required: true, message: '请选择角色编码', trigger: 'change' }],
+    roleCode: [
+      { required: true, message: '请输入角色编码', trigger: 'blur' },
+      { min: 1, max: 64, message: '长度在 1 到 64 个字符', trigger: 'blur' }
+    ],
     roleType: [{ required: true, message: '请选择角色类型', trigger: 'change' }]
   })
 
@@ -154,11 +149,12 @@
    */
   const initForm = async () => {
     if (props.dialogType === 'add') {
+      const firstType = roleTypeOptions.value[0]?.value
       Object.assign(form, {
         roleId: 0,
         roleName: '',
         roleCode: '',
-        roleType: 1
+        roleType: firstType !== undefined && !Number.isNaN(firstType) ? firstType : 1
       })
       return
     }
@@ -178,14 +174,19 @@
   watch(
     () => props.modelValue,
     async (open) => {
-      if (open) await initForm()
+      if (!open) return
+      await loadRoleTypeDict()
+      await initForm()
     }
   )
 
   watch(
     () => props.roleData,
     async () => {
-      if (props.modelValue && props.dialogType === 'edit') await initForm()
+      if (props.modelValue && props.dialogType === 'edit') {
+        await loadRoleTypeDict()
+        await initForm()
+      }
     },
     { deep: true }
   )

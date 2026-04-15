@@ -1,8 +1,8 @@
 <template>
   <ElDialog
     v-model="visible"
-    :title="dialogTitle"
-    :width="680"
+    :title="$t(dialogTitleKey)"
+    :width="720"
     align-center
     destroy-on-close
     @closed="handleClosed"
@@ -14,8 +14,8 @@
       finish-status="success"
       class="partner-dialog-steps"
     >
-      <ElStep title="合作商信息" />
-      <ElStep title="合作商账户" />
+      <ElStep :title="$t('partnerPage.dialog.stepInfo')" />
+      <ElStep :title="$t('partnerPage.dialog.stepAccount')" />
     </ElSteps>
 
     <ElForm
@@ -23,35 +23,47 @@
       ref="partnerFormRef"
       :model="form"
       :rules="formRules"
-      label-width="100px"
+      label-width="150px"
     >
-      <ElFormItem label="合作商名称" prop="partnerName">
-        <ElInput v-model="form.partnerName" placeholder="请输入" maxlength="100" show-word-limit />
+      <ElFormItem :label="$t('partnerPage.dialog.partnerName')" prop="partnerName">
+        <ElInput
+          v-model="form.partnerName"
+          :placeholder="$t('partnerPage.dialog.inputPlaceholder')"
+          maxlength="100"
+          show-word-limit
+          :disabled="mode === 'edit'"
+        />
       </ElFormItem>
-      <ElFormItem label="企业地址" prop="enterpriseAddress">
-        <ElInput v-model="form.enterpriseAddress" placeholder="请输入企业地址" />
+      <ElFormItem :label="$t('partnerPage.dialog.address')" prop="enterpriseAddress">
+        <ElInput
+          v-model="form.enterpriseAddress"
+          :placeholder="$t('partnerPage.dialog.addressPlaceholder')"
+        />
       </ElFormItem>
-      <ElFormItem label="联系人" prop="contactName">
-        <ElInput v-model="form.contactName" />
+      <ElFormItem :label="$t('partnerPage.dialog.contactName')" prop="contactName">
+        <ElInput
+          v-model="form.contactName"
+          :placeholder="$t('partnerPage.dialog.inputPlaceholder')"
+        />
       </ElFormItem>
-      <ElFormItem label="联系电话" prop="phone">
-        <ElInput v-model="form.phone" />
+      <ElFormItem :label="$t('partnerPage.dialog.phone')" prop="phone">
+        <ElInput v-model="form.phone" :placeholder="$t('partnerPage.dialog.inputPlaceholder')" />
       </ElFormItem>
-      <ElFormItem label="所属国家" prop="countryCode">
-        <ElSelect v-model="form.countryCode" placeholder="请选择" class="w-full">
+      <ElFormItem :label="$t('partnerPage.dialog.country')" prop="countryId">
+        <ElSelect
+          v-model="form.countryId"
+          :placeholder="$t('partnerPage.dialog.selectCountry')"
+          class="w-full"
+          filterable
+          :loading="countriesLoading"
+        >
           <ElOption
-            v-for="opt in countryOptions"
+            v-for="opt in countrySelectOptions"
             :key="opt.value"
             :label="opt.label"
             :value="opt.value"
           />
         </ElSelect>
-      </ElFormItem>
-      <ElFormItem label="IoT Token" prop="iotToken">
-        <ElInput v-model="form.iotToken" placeholder="请输入IoT Token" />
-      </ElFormItem>
-      <ElFormItem label="Tenant ID" prop="tenantId">
-        <ElInput v-model="form.tenantId" placeholder="请输入Tenant ID" />
       </ElFormItem>
     </ElForm>
 
@@ -67,60 +79,83 @@
           type="info"
           :closable="false"
           show-icon
-          title="将创建合作商管理员账户，并同步至「用户管理」。"
+          :title="$t('partnerPage.dialog.alertAccount')"
         />
       </div>
-      <ElFormItem label="昵称" prop="userNickName">
-        <ElInput v-model="accountForm.userNickName" placeholder="账户显示昵称" maxlength="50" />
+      <ElFormItem :label="$t('partnerPage.dialog.loginEmail')" prop="loginEmail">
+        <ElInput
+          v-model="accountForm.loginEmail"
+          :placeholder="$t('partnerPage.dialog.loginEmailPlaceholder')"
+        />
       </ElFormItem>
-      <ElFormItem label="登录邮箱" prop="loginEmail">
-        <ElInput v-model="accountForm.loginEmail" placeholder="用于登录的邮箱" />
-      </ElFormItem>
-      <ElFormItem label="登录密码" prop="loginPassword">
+      <ElFormItem :label="$t('partnerPage.dialog.loginPassword')" prop="loginPassword">
         <ElInput
           v-model="accountForm.loginPassword"
           type="password"
           show-password
-          placeholder="请设置登录密码"
+          :placeholder="$t('partnerPage.dialog.loginPasswordPlaceholder')"
           autocomplete="new-password"
         />
       </ElFormItem>
     </ElForm>
 
     <ElDescriptions v-else-if="mode === 'detail'" :column="1" border>
-      <ElDescriptionsItem label="ID">{{ detailRow?.id }}</ElDescriptionsItem>
-      <ElDescriptionsItem label="用户昵称">
-        {{ detailRow?.userNickName || '--' }}
+      <ElDescriptionsItem :label="$t('partnerPage.dialog.detail.id')">{{
+        detailRow?.id
+      }}</ElDescriptionsItem>
+      <ElDescriptionsItem :label="$t('partnerPage.dialog.detail.loginEmail')">
+        {{ detailRow?.loginEmail || $t('partnerPage.emptyText') }}
       </ElDescriptionsItem>
-      <ElDescriptionsItem label="登录邮箱">
-        {{ detailRow?.loginEmail || '--' }}
-      </ElDescriptionsItem>
-      <ElDescriptionsItem label="合作商名称">{{ detailRow?.partnerName }}</ElDescriptionsItem>
-      <ElDescriptionsItem label="企业地址">{{ detailRow?.enterpriseAddress }}</ElDescriptionsItem>
-      <ElDescriptionsItem label="联系人">{{ detailRow?.contactName }}</ElDescriptionsItem>
-      <ElDescriptionsItem label="联系电话">{{ detailRow?.phone }}</ElDescriptionsItem>
-      <ElDescriptionsItem label="所属国家">{{ detailRow?.country }}</ElDescriptionsItem>
-      <ElDescriptionsItem label="IoT Token">{{ detailRow?.iotToken }}</ElDescriptionsItem>
-      <ElDescriptionsItem label="Tenant ID">{{ detailRow?.tenantId }}</ElDescriptionsItem>
-      <ElDescriptionsItem label="DC余额">{{ detailRow?.dcBalance }}</ElDescriptionsItem>
-      <ElDescriptionsItem label="区域数">{{ detailRow?.regionCount }}</ElDescriptionsItem>
-      <ElDescriptionsItem label="门店数">{{ detailRow?.storeCount }}</ElDescriptionsItem>
-      <ElDescriptionsItem label="车轮总数">{{ detailRow?.wheelCount }}</ElDescriptionsItem>
-      <ElDescriptionsItem label="信标总数">{{ detailRow?.beaconCount }}</ElDescriptionsItem>
-      <ElDescriptionsItem label="创建时间">{{ detailRow?.createTime }}</ElDescriptionsItem>
-      <ElDescriptionsItem label="操作人">{{ detailRow?.operatorName }}</ElDescriptionsItem>
+      <ElDescriptionsItem :label="$t('partnerPage.dialog.detail.partnerName')">{{
+        detailRow?.partnerName
+      }}</ElDescriptionsItem>
+      <ElDescriptionsItem :label="$t('partnerPage.dialog.detail.address')">{{
+        detailRow?.enterpriseAddress || detailRow?.address || $t('partnerPage.emptyText')
+      }}</ElDescriptionsItem>
+      <ElDescriptionsItem :label="$t('partnerPage.dialog.detail.contactName')">{{
+        detailRow?.contactName || detailRow?.contact || $t('partnerPage.emptyText')
+      }}</ElDescriptionsItem>
+      <ElDescriptionsItem :label="$t('partnerPage.dialog.detail.phone')">{{
+        detailRow?.phone
+      }}</ElDescriptionsItem>
+      <ElDescriptionsItem :label="$t('partnerPage.dialog.detail.country')">{{
+        detailRow?.country
+      }}</ElDescriptionsItem>
+      <ElDescriptionsItem :label="$t('partnerPage.dialog.detail.dcBalance')">{{
+        detailRow?.dcBalance
+      }}</ElDescriptionsItem>
+      <ElDescriptionsItem :label="$t('partnerPage.dialog.detail.regionCount')">{{
+        detailRow?.regionCount
+      }}</ElDescriptionsItem>
+      <ElDescriptionsItem :label="$t('partnerPage.dialog.detail.storeCount')">{{
+        detailRow?.storeCount
+      }}</ElDescriptionsItem>
+      <ElDescriptionsItem :label="$t('partnerPage.dialog.detail.wheelCount')">{{
+        detailRow?.wheelCount
+      }}</ElDescriptionsItem>
+      <ElDescriptionsItem :label="$t('partnerPage.dialog.detail.beaconCount')">{{
+        detailRow?.beaconCount
+      }}</ElDescriptionsItem>
     </ElDescriptions>
 
     <template #footer v-if="mode !== 'detail'">
       <template v-if="mode === 'add'">
-        <ElButton @click="visible = false">取消</ElButton>
-        <ElButton v-if="addStep === 1" @click="goPrevStep">上一步</ElButton>
-        <ElButton v-if="addStep === 0" type="primary" @click="goNextStep">下一步</ElButton>
-        <ElButton v-if="addStep === 1" type="primary" @click="submitAdd">确定</ElButton>
+        <ElButton @click="visible = false">{{ $t('partnerPage.dialog.footerCancel') }}</ElButton>
+        <ElButton v-if="addStep === 1" @click="goPrevStep">{{
+          $t('partnerPage.dialog.footerPrev')
+        }}</ElButton>
+        <ElButton v-if="addStep === 0" type="primary" @click="goNextStep">{{
+          $t('partnerPage.dialog.footerNext')
+        }}</ElButton>
+        <ElButton v-if="addStep === 1" type="primary" @click="submitAdd">{{
+          $t('partnerPage.dialog.footerConfirm')
+        }}</ElButton>
       </template>
       <template v-else>
-        <ElButton @click="visible = false">取消</ElButton>
-        <ElButton type="primary" @click="submitEdit">确定</ElButton>
+        <ElButton @click="visible = false">{{ $t('partnerPage.dialog.footerCancel') }}</ElButton>
+        <ElButton type="primary" @click="submitEdit">{{
+          $t('partnerPage.dialog.footerConfirm')
+        }}</ElButton>
       </template>
     </template>
   </ElDialog>
@@ -129,12 +164,17 @@
 <script setup lang="ts">
   import { computed, reactive, ref, watch } from 'vue'
   import type { FormInstance, FormRules } from 'element-plus'
+  import { useI18n } from 'vue-i18n'
+  import { fetchCountryList, getCountryDisplayName } from '@/api/country'
+  import { PARTNER_COUNTRY_CODE_TO_ID } from '@/api/partner'
+  import { useUserStore } from '@/store/modules/user'
+  import { LanguageEnum } from '@/enums/appEnum'
 
   type DialogMode = 'add' | 'edit' | 'detail'
 
   type PartnerDialogSubmitPayload = Partial<Api.Partner.PartnerListItem> & {
     country?: string
-    userNickName?: string
+    countryId?: number
     loginEmail?: string
     loginPassword?: string
   }
@@ -150,25 +190,38 @@
     (e: 'submit', payload: PartnerDialogSubmitPayload): void
   }>()
 
+  const userStore = useUserStore()
+  const { t } = useI18n()
+
   const visible = computed({
     get: () => props.modelValue,
     set: (v) => emit('update:modelValue', v)
   })
 
-  const countryOptions = [
-    { label: '中国', value: 'CN' },
-    { label: '美国', value: 'US' },
-    { label: '日本', value: 'JP' },
-    { label: '挪威', value: 'NO' },
-    { label: '德国', value: 'DE' }
-  ]
+  const countryList = ref<Api.Country.CountryListItem[]>([])
+  const countriesLoading = ref(false)
 
-  const countryLabel = (code: string) => countryOptions.find((o) => o.value === code)?.label ?? code
+  const countryLocale = computed<'zh' | 'en'>(() =>
+    userStore.language === LanguageEnum.EN ? 'en' : 'zh'
+  )
 
-  const dialogTitle = computed(() => {
-    if (props.mode === 'add') return '新增合作商'
-    if (props.mode === 'edit') return '编辑合作商'
-    return '合作商详情'
+  const countrySelectOptions = computed(() =>
+    countryList.value.map((c) => ({
+      label: getCountryDisplayName(c, countryLocale.value),
+      value: c.id
+    }))
+  )
+
+  function countryLabelById(cid: number | undefined): string {
+    if (cid == null) return ''
+    const row = countryList.value.find((c) => c.id === cid)
+    return row ? getCountryDisplayName(row, countryLocale.value) : ''
+  }
+
+  const dialogTitleKey = computed(() => {
+    if (props.mode === 'add') return 'partnerPage.dialog.titleAdd'
+    if (props.mode === 'edit') return 'partnerPage.dialog.titleEdit'
+    return 'partnerPage.dialog.titleDetail'
   })
 
   const detailRow = computed(() => props.row ?? null)
@@ -185,9 +238,7 @@
 
   const form = reactive({
     partnerName: '',
-    countryCode: 'CN',
-    iotToken: '',
-    tenantId: '',
+    countryId: undefined as number | undefined,
     contactName: '',
     phone: '',
     enterpriseAddress: '',
@@ -197,61 +248,63 @@
   })
 
   const accountForm = reactive({
-    userNickName: '',
     loginEmail: '',
     loginPassword: ''
   })
 
-  const formRules: FormRules = {
-    partnerName: [{ required: true, message: '请输入合作商名称', trigger: 'blur' }],
-    countryCode: [{ required: true, message: '请选择国家', trigger: 'change' }],
-    iotToken: [{ required: true, message: '请输入IoT Token', trigger: 'blur' }],
-    tenantId: [{ required: true, message: '请输入Tenant ID', trigger: 'blur' }],
-    contactName: [{ required: true, message: '请输入联系人', trigger: 'blur' }],
-    phone: [{ required: true, message: '请输入联系电话', trigger: 'blur' }],
-    enterpriseAddress: [{ required: true, message: '请输入企业地址', trigger: 'blur' }]
-  }
+  const formRules = computed<FormRules>(() => ({
+    partnerName: [
+      { required: true, message: t('partnerPage.validation.partnerName'), trigger: 'blur' }
+    ],
+    countryId: [{ required: true, message: t('partnerPage.validation.country'), trigger: 'change' }]
+  }))
 
-  const accountRules: FormRules = {
-    userNickName: [{ required: true, message: '请输入昵称', trigger: 'blur' }],
+  const accountRules = computed<FormRules>(() => ({
     loginEmail: [
-      { required: true, message: '请输入登录邮箱', trigger: 'blur' },
-      { type: 'email', message: '请输入有效邮箱', trigger: 'blur' }
+      { required: true, message: t('partnerPage.validation.loginEmail'), trigger: 'blur' },
+      { type: 'email', message: t('partnerPage.validation.emailFormat'), trigger: 'blur' }
     ],
     loginPassword: [
-      { required: true, message: '请输入登录密码', trigger: 'blur' },
-      { min: 6, message: '密码至少 6 位', trigger: 'blur' }
+      { required: true, message: t('partnerPage.validation.loginPassword'), trigger: 'blur' },
+      { min: 6, message: t('partnerPage.validation.passwordMin'), trigger: 'blur' }
     ]
-  }
+  }))
 
   function resetAccountForm() {
-    accountForm.userNickName = ''
     accountForm.loginEmail = ''
     accountForm.loginPassword = ''
   }
 
   watch(
     () => [props.modelValue, props.mode, props.row] as const,
-    ([open, mode, row]) => {
+    async ([open, mode, row]) => {
       if (!open || mode === 'detail') return
+
+      countriesLoading.value = true
+      try {
+        const list = await fetchCountryList()
+        countryList.value = list
+      } finally {
+        countriesLoading.value = false
+      }
+
       if (mode === 'edit' && row) {
         addStep.value = 0
-        form.partnerName = row.partnerName
-        form.countryCode = row.countryCode
-        form.iotToken = row.iotToken
-        form.tenantId = row.tenantId
-        form.contactName = row.contactName
-        form.phone = row.phone
-        form.enterpriseAddress = row.enterpriseAddress
-        form.regionCount = row.regionCount
-        form.storeCount = row.storeCount
-        form.wheelCount = row.wheelCount
+        form.partnerName = row.partnerName ?? ''
+        form.countryId =
+          row.countryId ??
+          (row.countryCode ? PARTNER_COUNTRY_CODE_TO_ID[row.countryCode] : undefined) ??
+          countryList.value[0]?.id
+        form.contactName = row.contactName ?? row.contact ?? ''
+        form.phone = row.phone ?? ''
+        form.enterpriseAddress = row.enterpriseAddress ?? row.address ?? ''
+        form.regionCount = row.regionCount ?? 0
+        form.storeCount = row.storeCount ?? 0
+        form.wheelCount = row.wheelCount ?? 0
       } else if (mode === 'add') {
         addStep.value = 0
         form.partnerName = ''
-        form.countryCode = 'CN'
-        form.iotToken = ''
-        form.tenantId = ''
+        form.countryId = countryList.value[0]?.id
         form.contactName = ''
         form.phone = ''
         form.enterpriseAddress = ''
@@ -286,8 +339,7 @@
     await accountFormRef.value.validate()
     emit('submit', {
       ...form,
-      country: countryLabel(form.countryCode),
-      userNickName: accountForm.userNickName.trim(),
+      country: countryLabelById(form.countryId),
       loginEmail: accountForm.loginEmail.trim(),
       loginPassword: accountForm.loginPassword
     })
@@ -299,7 +351,7 @@
     await partnerFormRef.value.validate()
     emit('submit', {
       ...form,
-      country: countryLabel(form.countryCode),
+      country: countryLabelById(form.countryId),
       id: props.row?.id
     })
     visible.value = false

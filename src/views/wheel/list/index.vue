@@ -39,6 +39,10 @@
       v-model="dialogVisible"
       :mode="dialogMode"
       :row="currentRow"
+      :country-code="searchForm.countryCode"
+      :filter-partner-id="searchForm.partnerId"
+      :filter-region-id="searchForm.regionId"
+      :filter-store-id="searchForm.storeId"
       :locked-store-id="lockedStoreId"
       :locked-partner-id="lockedPartnerId"
       @submit="handleDialogSubmit"
@@ -67,15 +71,13 @@
   import { useUserStore } from '@/store/modules/user'
   import { ElButton, ElDropdown, ElDropdownItem, ElDropdownMenu } from 'element-plus'
   import { ElMessage, ElMessageBox } from 'element-plus'
-  import { formatSecondsAsHours } from '@/utils/duration'
-  import { formatSignalStrength } from '@/utils/signal-strength'
   import { computed, h, nextTick, ref } from 'vue'
 
   defineOptions({ name: 'WheelList' })
 
   type WheelItem = Api.Wheel.WheelListItem
   type DialogMode = 'add' | 'edit' | 'detail'
-  type ExtraMode = 'location' | 'track' | 'nav'
+  type ExtraMode = 'location' | 'track'
 
   const userStore = useUserStore()
 
@@ -136,10 +138,6 @@
   }
   function onlineLabel(s: Api.Wheel.OnlineStatus) {
     const m: Record<string, string> = { ONLINE: '已联网', OFFLINE: '未联网' }
-    return m[s] ?? s
-  }
-  function gpsAccLabel(s: Api.Wheel.GpsAccuracy) {
-    const m: Record<string, string> = { PRECISE: '精确', IMPRECISE: '不精确' }
     return m[s] ?? s
   }
   function fenceLabel(s: Api.Wheel.FenceStatus) {
@@ -217,29 +215,6 @@
           formatter: (row: WheelItem) => `${row.batteryLevel}%`
         },
         {
-          prop: 'gpsAccuracy',
-          label: 'GPS精度',
-          width: 'auto',
-          minWidth: 100,
-          formatter: (row: WheelItem) => gpsAccLabel(row.gpsAccuracy)
-        },
-        {
-          prop: 'beaconSignal',
-          label: '信标信号',
-          width: 'auto',
-          minWidth: 160,
-          sortable: 'custom',
-          formatter: (row: WheelItem) => formatSignalStrength(row.beaconSignal)
-        },
-        {
-          prop: 'loraSignal',
-          label: 'LoRa信号',
-          width: 'auto',
-          minWidth: 160,
-          sortable: 'custom',
-          formatter: (row: WheelItem) => formatSignalStrength(row.loraSignal)
-        },
-        {
           prop: 'fenceStatus',
           label: '围栏内外',
           width: 'auto',
@@ -247,11 +222,11 @@
           formatter: (row: WheelItem) => fenceLabel(row.fenceStatus)
         },
         {
-          prop: 'outFenceDurationSec',
-          label: '出围栏时长',
+          prop: 'outFenceTime',
+          label: '出围栏时间',
           width: 'auto',
-          minWidth: 120,
-          formatter: (row: WheelItem) => formatSecondsAsHours(row.outFenceDurationSec)
+          minWidth: 170,
+          formatter: (row: WheelItem) => row.outFenceTime?.trim() || '--'
         },
         {
           prop: 'outFenceDistanceM',
@@ -262,10 +237,16 @@
         },
         {
           prop: 'lastPosition',
-          label: '最新定位（坐标）',
+          label: '最新定位',
           width: 'auto',
           minWidth: 180,
           formatter: (row: WheelItem) => coordText(row.lastPosition)
+        },
+        {
+          prop: 'lastPositionTime',
+          label: '最新定位时间',
+          width: 'auto',
+          minWidth: 170
         },
         { prop: 'lastCommTime', label: '最后通信时间', width: 'auto', minWidth: 170 },
         { prop: 'createTime', label: '创建时间', width: 'auto', minWidth: 170 },
@@ -317,11 +298,6 @@
                           ElDropdownItem,
                           { onClick: () => openExtra('track', row) },
                           () => '轨迹回放'
-                        ),
-                        h(
-                          ElDropdownItem,
-                          { onClick: () => openExtra('nav', row) },
-                          () => '地图导航'
                         )
                       ])
                   }
@@ -367,9 +343,7 @@
 
   function handleSortChange(data: { prop: string; order: 'ascending' | 'descending' | null }) {
     const map: Record<string, string> = {
-      batteryLevel: 'batteryLevel',
-      beaconSignal: 'beaconSignal',
-      loraSignal: 'loraSignal'
+      batteryLevel: 'batteryLevel'
     }
     const sp = searchParams as Record<string, unknown>
     if (!data.order) {
@@ -462,6 +436,7 @@
         ElMessage.success('新增成功')
       } else if (dialogMode.value === 'edit' && payload.id != null) {
         await updateWheel(payload.id, {
+          deviceStatus: payload.deviceStatus,
           storeId: payload.storeId,
           storeName: payload.storeName,
           regionId: payload.regionId,

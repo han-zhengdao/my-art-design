@@ -11,7 +11,11 @@
 
 <script setup lang="ts">
   import { computed, ref, watch } from 'vue'
-  import { fetchPartnersByCountry } from '@/api/partner'
+  import { useI18n } from 'vue-i18n'
+  import { fetchPartnerList } from '@/api/partner'
+  import { fetchCountryList, getCountryDisplayName } from '@/api/country'
+  import { useUserStore } from '@/store/modules/user'
+  import { LanguageEnum } from '@/enums/appEnum'
 
   interface Props {
     modelValue: Api.Region.RegionSearchParams
@@ -24,6 +28,8 @@
 
   const props = defineProps<Props>()
   const emit = defineEmits<Emits>()
+  const userStore = useUserStore()
+  const { t } = useI18n()
 
   const searchBarRef = ref()
   const formData = computed({
@@ -33,61 +39,87 @@
 
   const rules = {}
 
-  const countryOptions = [
-    { label: '中国', value: 'CN' },
-    { label: '美国', value: 'US' },
-    { label: '日本', value: 'JP' },
-    { label: '挪威', value: 'NO' },
-    { label: '德国', value: 'DE' }
-  ]
+  const countryOptions = ref<{ label: string; value: number }[]>([])
+  const countryLoading = ref(false)
+  const countryLocale = computed<'zh' | 'en'>(() =>
+    userStore.language === LanguageEnum.EN ? 'en' : 'zh'
+  )
 
   const partnerSearchOptions = ref<Api.Partner.PartnerListItem[]>([])
 
+  async function loadCountryOptions() {
+    countryLoading.value = true
+    try {
+      const list = await fetchCountryList()
+      countryOptions.value = list.map((c) => ({
+        label: getCountryDisplayName(c, countryLocale.value),
+        value: c.id
+      }))
+    } finally {
+      countryLoading.value = false
+    }
+  }
+
+  watch(countryLocale, () => {
+    loadCountryOptions()
+  })
+
   watch(
-    () => props.modelValue.countryCode,
-    async (code, prev) => {
-      if (code !== prev && props.modelValue.partnerId != null) {
+    () => props.modelValue.countryId,
+    async (countryId, prev) => {
+      if (countryId !== prev && props.modelValue.partnerId != null) {
         emit('update:modelValue', { ...props.modelValue, partnerId: undefined })
       }
-      if (!code) {
+      if (!countryId) {
         partnerSearchOptions.value = []
         return
       }
-      partnerSearchOptions.value = await fetchPartnersByCountry(code)
+      const res = await fetchPartnerList({
+        pageNum: 1,
+        pageSize: 500,
+        countryId
+      })
+      partnerSearchOptions.value = res.records
     },
     { immediate: true }
   )
 
+  loadCountryOptions()
+
   const formItems = computed(() => [
     {
-      label: '区域名称',
+      label: t('regionPage.search.regionName'),
       key: 'regionName',
       labelWidth: 'auto',
       type: 'input',
-      placeholder: '支持模糊搜索',
+      placeholder: t('regionPage.search.regionNamePlaceholder'),
       clearable: true
     },
     {
-      label: '所属国家',
-      key: 'countryCode',
+      label: t('regionPage.search.country'),
+      key: 'countryId',
       labelWidth: 'auto',
       span: 4,
       type: 'select',
       props: {
-        placeholder: '全部',
+        placeholder: t('regionPage.search.placeholderAll'),
         clearable: true,
-        options: countryOptions
+        loading: countryLoading.value,
+        filterable: true,
+        options: countryOptions.value
       }
     },
     {
-      label: '所属合作商',
+      label: t('regionPage.search.partner'),
       key: 'partnerId',
       type: 'select',
       labelWidth: 'auto',
       props: {
-        placeholder: formData.value.countryCode ? '全部' : '请先选择国家',
+        placeholder: formData.value.countryId
+          ? t('regionPage.search.placeholderAll')
+          : t('regionPage.search.placeholderSelectCountryFirst'),
         clearable: true,
-        disabled: !formData.value.countryCode,
+        disabled: !formData.value.countryId,
         options: partnerSearchOptions.value.map((p) => ({
           label: p.partnerName,
           value: p.id
